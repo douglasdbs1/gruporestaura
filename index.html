@@ -385,22 +385,49 @@ function statePayload(){
 }
 async function loadFromSupabase(){
   if(!supabaseEnabled) return false;
-  const {data,error}=await supabaseClient.from(SUPABASE_TABLE).select("payload").eq("key",SUPABASE_STATE_KEY).maybeSingle();
-  if(error){console.error(error);showToast("Não consegui carregar do Supabase. Usando dados locais.",true);return false;}
+  const {data,error}=await supabaseClient
+    .from(SUPABASE_TABLE)
+    .select("key,payload,updated_at")
+    .eq("key",SUPABASE_STATE_KEY)
+    .maybeSingle();
+
+  if(error){
+    console.error("Supabase load error:", error);
+    showToast("Não consegui carregar do Supabase. Usando dados locais.",true);
+    return false;
+  }
+
   if(data && data.payload){
     lojas = data.payload.golive || [];
     dbExtra = data.payload.lojas || [];
+    console.info("Dados carregados do Supabase:", data.updated_at);
     return true;
   }
-  await saveToSupabase(true);
+
+  console.warn("Registro main não existe no Supabase. Criando com os dados embutidos do HTML...");
+  return await seedSupabaseInitialState();
+}
+async function seedSupabaseInitialState(){
+  if(!supabaseEnabled) return false;
+  const {error}=await supabaseClient
+    .from(SUPABASE_TABLE)
+    .insert({key:SUPABASE_STATE_KEY,payload:statePayload(),updated_at:new Date().toISOString()});
+  if(error){
+    console.error("Supabase seed error:", error);
+    showToast("Tabela criada, mas não consegui criar o registro inicial no Supabase.",true);
+    return false;
+  }
+  console.info("Registro inicial criado no Supabase.");
   return true;
 }
 async function saveToSupabase(silent=false){
   if(isBooting) return;
   saveLocal(); saveDbLocal();
   if(!supabaseEnabled){ if(!silent) showToast("Salvo localmente. Configure o Supabase para salvar online."); return; }
-  const {error}=await supabaseClient.from(SUPABASE_TABLE).upsert({key:SUPABASE_STATE_KEY,payload:statePayload(),updated_at:new Date().toISOString()},{onConflict:"key"});
-  if(error){console.error(error); if(!silent) showToast("Erro ao salvar no Supabase. Backup local mantido.",true);}
+  const {error}=await supabaseClient
+    .from(SUPABASE_TABLE)
+    .upsert({key:SUPABASE_STATE_KEY,payload:statePayload(),updated_at:new Date().toISOString()},{onConflict:"key"});
+  if(error){console.error("Supabase save error:", error); if(!silent) showToast("Erro ao salvar no Supabase. Backup local mantido.",true);}
   else if(!silent) showToast("Salvo no Supabase.");
 }
 async function initApp(){
