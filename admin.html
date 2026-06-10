@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Presence Control</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
 <style>
 :root{
   --bg:#f2f0ec;--surface:#fff;--surface2:#f7f5f1;--border:#e0ddd5;--border2:#c8c4bb;
@@ -37,6 +38,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 /* PAGE NAV */
 .page-nav{background:#fff;border-bottom:1px solid var(--border);position:sticky;top:52px;z-index:99;display:flex;padding:0 24px;}
 .pnav-btn{font-family:var(--font);font-size:12px;font-weight:500;padding:10px 14px;border:none;background:transparent;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-1px;display:flex;align-items:center;gap:5px;transition:color .15s;}
+.pnav-btn .pnav-icon{font-size:13px;opacity:.75;}
 .pnav-btn:hover{color:var(--text2);}
 .pnav-btn.on{color:var(--teal-mid);border-bottom-color:var(--teal-mid);font-weight:600;}
 .pnav-btn.disabled{cursor:default;opacity:.4;}
@@ -321,9 +323,9 @@ body.admin.locked .kb-card, body.admin.locked tbody tr, body.admin.locked .tl-it
 </div>
 
 <nav class="page-nav">
-  <button class="pnav-btn on" id="pnav-gl" onclick="setPage('gl')">⚡ Go-Live</button>
-  <button class="pnav-btn" id="pnav-db" onclick="setPage('db')">🏪 Lojas</button>
-  <button class="pnav-btn disabled">? Suporte <small style="font-size:9px;opacity:.5">em breve</small></button>
+  <button class="pnav-btn on" id="pnav-gl" onclick="setPage('gl')"><i class="fa-solid fa-bolt pnav-icon"></i> Go-Live</button>
+  <button class="pnav-btn" id="pnav-db" onclick="setPage('db')"><i class="fa-solid fa-store pnav-icon"></i> Lojas</button>
+  <button class="pnav-btn disabled"><i class="fa-solid fa-headset pnav-icon"></i> Suporte <small style="font-size:9px;opacity:.5">em breve</small></button>
 </nav>
 
 <div class="content" id="content"></div>
@@ -604,6 +606,8 @@ function fmtDate(s){
   return `${day}/${mon}${t}`;
 }
 function daysDiff(s){if(!s||s==='1')return null;const d=parseDate(s);if(!d)return null;return Math.round((d-TODAY)/86400000);}
+function prevBusinessDay(d){const r=new Date(d);r.setDate(r.getDate()-1);while(r.getDay()===0||r.getDay()===6)r.setDate(r.getDate()-1);return r;}
+function fmtDateObj(d){const day=String(d.getDate()).padStart(2,'0');const mon=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'][d.getMonth()];return `${day}/${mon}`;}
 function isOverdue(l){return l.status!=='concluido'&&l.goLive&&daysDiff(l.goLive)<0;}
 function stepsDone(l){
   let done=[];
@@ -681,14 +685,14 @@ function renderGL(){
   const ab=all.filter(l=>l.status==='aberto').length;
   const co=all.filter(l=>l.status==='concluido').length;
   const proxGL=all.filter(l=>l.goLive&&daysDiff(l.goLive)>=0).sort((a,b)=>parseDate(a.goLive)-parseDate(b.goLive)).slice(0,2);
-  const proxPGL=all.filter(l=>l.preGoLive&&daysDiff(l.preGoLive)>=0).sort((a,b)=>parseDate(a.preGoLive)-parseDate(b.preGoLive)).slice(0,2);
+  const proxPGL=all.filter(l=>l.goLive&&parseDate(l.goLive)).map(l=>({l,pgl:prevBusinessDay(parseDate(l.goLive))})).filter(x=>Math.round((x.pgl-TODAY)/86400000)>=0).sort((a,b)=>a.pgl-b.pgl).slice(0,2);
 
   const glSpot=proxGL.length?proxGL.map(l=>{
     const d=daysDiff(l.goLive),t=l.goLive.includes(' ')?l.goLive.trim().split(' ')[1]:'';
     const lbl=d===0?`<span style="color:var(--teal-mid);font-weight:800">HOJE${t?' — '+t:''}</span>`:`<span style="color:#c0392b">${fmtDate(l.goLive)}</span>`;
     return `<div class="spot-item"><div class="spot-name">${l.loja}<small>${l.responsavel||l.grupo}</small></div>${lbl}</div>`;
   }).join(''):'<div class="spot-empty">Nenhum agendado.</div>';
-  const pglSpot=proxPGL.length?proxPGL.map(l=>`<div class="spot-item"><div class="spot-name">${l.loja}<small>${l.responsavel||l.grupo}</small></div><span class="spot-date" style="color:var(--indigo)">${fmtDate(l.preGoLive)}</span></div>`).join(''):'<div class="spot-empty">Nenhum agendado.</div>';
+  const pglSpot=proxPGL.length?proxPGL.map(({l,pgl})=>`<div class="spot-item"><div class="spot-name">${l.loja}<small>${l.responsavel||l.grupo}</small></div><span class="spot-date" style="color:var(--indigo)">${fmtDateObj(pgl)}</span></div>`).join(''):'<div class="spot-empty">Nenhum agendado.</div>';
 
   document.getElementById('content').innerHTML=`
     <div class="stats-row">
@@ -964,35 +968,37 @@ function renderDB(){
       <div class="db-stat"><div class="lbl">Sistema Antigo</div><div class="val" style="color:var(--text3)">${antigo}</div></div>
     </div>
     <div class="toolbar">
-      <input class="tb" id="db-q" placeholder="Buscar loja ou nº..." oninput="renderDbTable()" style="color:#111110;caret-color:#111110;">
-      <select class="tb" id="db-fr" onchange="renderDbTable()">
-        <option value="">Todas as redes</option>
-        <option value="rj">Restaura Jeans</option>
-        <option value="ml">Minha Lavanderia</option>
-        <option value="both">Mega</option>
-      </select>
-      <select class="tb" id="db-fs" onchange="renderDbTable()">
-        <option value="">Todos os status</option>
-        <option value="antigo">Sistema Antigo / Contrato Pendente</option>
-        <option value="transicao">Em Transição</option>
-        <option value="ativo">Presence Ativo</option>
-      </select>
-      <select class="tb" id="db-fres" onchange="renderDbTable()">
-        <option value="">Todos consultores</option>
-        ${TEAM.map(t=>`<option value="${t}">${t}</option>`).join('')}
-      </select>
-      <select class="tb" id="db-uf" onchange="renderDbTable()">
-        <option value="">Todos UF</option>
-        ${[...new Set(getDatabase().map(l=>ufFromName(l.nome)).filter(Boolean))].sort().map(u=>`<option value="${u}">${u}</option>`).join('')}
-      </select>
-      <select class="tb" id="db-numero" onchange="renderDbTable()">
-        <option value="">Com/sem nº</option><option value="com">Com nº Presence</option><option value="sem">Sem nº Presence</option>
-      </select>
-      <select class="tb" id="db-alerta-f" onchange="renderDbTable()">
-        <option value="">Todos contatos</option><option value="1">Com sinalizador ⚠</option><option value="0">Sem sinalizador</option>
-      </select>
-      <button class="btn-sm" onclick="exportDbCSV()">CSV</button>
-      <button class="btn-add edit-only" onclick="openDbModal()">+ Nova loja</button>
+      <div class="tb-row">
+        <input class="tb" id="db-q" placeholder="Buscar loja ou nº..." oninput="renderDbTable()" style="color:#111110;caret-color:#111110;">
+        <select class="tb" id="db-fr" onchange="renderDbTable()">
+          <option value="">Todas as redes</option>
+          <option value="rj">Restaura Jeans</option>
+          <option value="ml">Minha Lavanderia</option>
+          <option value="both">Mega</option>
+        </select>
+        <select class="tb" id="db-fs" onchange="renderDbTable()">
+          <option value="">Todos os status</option>
+          <option value="antigo">Sistema Antigo / Contrato Pendente</option>
+          <option value="transicao">Em Transição</option>
+          <option value="ativo">Presence Ativo</option>
+        </select>
+        <select class="tb" id="db-fres" onchange="renderDbTable()">
+          <option value="">Todos consultores</option>
+          ${TEAM.map(t=>`<option value="${t}">${t}</option>`).join('')}
+        </select>
+        <select class="tb" id="db-uf" onchange="renderDbTable()">
+          <option value="">Todos UF</option>
+          ${[...new Set(getDatabase().map(l=>ufFromName(l.nome)).filter(Boolean))].sort().map(u=>`<option value="${u}">${u}</option>`).join('')}
+        </select>
+        <select class="tb" id="db-numero" onchange="renderDbTable()">
+          <option value="">Com/sem nº</option><option value="com">Com nº Presence</option><option value="sem">Sem nº Presence</option>
+        </select>
+        <select class="tb" id="db-alerta-f" onchange="renderDbTable()">
+          <option value="">Todos contatos</option><option value="1">Com sinalizador ⚠</option><option value="0">Sem sinalizador</option>
+        </select>
+        <button class="btn-sm" onclick="exportDbCSV()">CSV</button>
+        <button class="btn-add edit-only" onclick="openDbModal()">+ Nova loja</button>
+      </div>
     </div>
     <div id="db-table"></div>
   `;
