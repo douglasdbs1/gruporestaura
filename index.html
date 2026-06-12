@@ -1211,6 +1211,8 @@ function exportCSV(){
 }
 
 // ── DB PAGE ──
+let dbQuick='all';
+function setDbQuick(v){dbQuick=v;renderDB();}
 function renderDB(){
   const database=getDatabase();
   const total=database.length,ativo=database.filter(l=>l.status==='ativo').length,trans=database.filter(l=>l.status==='transicao').length,antigo=database.filter(l=>l.status==='antigo').length;
@@ -1222,6 +1224,16 @@ function renderDB(){
       <div class="db-stat"><div class="lbl">Sistema Antigo</div><div class="val" style="color:var(--text3)">${antigo}</div></div>
     </div>
     <div class="toolbar">
+      <div class="tb-row">
+        <div class="quick-tabs">
+          <button class="qtab${dbQuick==='all'?' on':''}" onclick="setDbQuick('all')">Todas</button>
+          <button class="qtab${dbQuick==='ativo'?' on':''}" onclick="setDbQuick('ativo')">Presence ativo</button>
+          <button class="qtab${dbQuick==='transicao'?' on':''}" onclick="setDbQuick('transicao')">Em transição</button>
+          <button class="qtab${dbQuick==='antigo'?' on':''}" onclick="setDbQuick('antigo')">Sistema antigo</button>
+          <button class="qtab${dbQuick==='semnum'?' on':''}" onclick="setDbQuick('semnum')">Sem nº</button>
+          <button class="qtab${dbQuick==='alerta'?' on':''}" onclick="setDbQuick('alerta')">Sinalizadas</button>
+        </div>
+      </div>
       <div class="tb-row">
         <input class="tb" id="db-q" placeholder="Buscar loja ou nº..." oninput="renderDbTable()" style="color:#111110;caret-color:#111110;">
         <select class="tb" id="db-fr" onchange="renderDbTable()">
@@ -1278,6 +1290,11 @@ function renderDbTable(){
     if(fNumero==='sem'&&hasPresenceNumber(l))return false;
     if(fAlerta==='1'&&!l.alerta)return false;
     if(fAlerta==='0'&&l.alerta)return false;
+    if(dbQuick==='ativo'&&l.status!=='ativo')return false;
+    if(dbQuick==='transicao'&&l.status!=='transicao')return false;
+    if(dbQuick==='antigo'&&l.status!=='antigo')return false;
+    if(dbQuick==='semnum'&&hasPresenceNumber(l))return false;
+    if(dbQuick==='alerta'&&!l.alerta)return false;
     return true;
   });
   const rows=filtered.map(l=>{
