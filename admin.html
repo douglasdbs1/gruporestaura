@@ -379,10 +379,12 @@ body.admin.locked .kb-card, body.admin.locked tbody tr, body.admin.locked .tl-it
 .active-card.yellow{border-color:#edd06b;box-shadow:0 0 0 1px rgba(201,154,20,.13),0 0 20px rgba(201,154,20,.22),0 12px 30px rgba(21,23,26,.06);}
 .active-card.orange{border-color:#ec9b43;box-shadow:0 0 0 1px rgba(207,103,21,.16),0 0 22px rgba(207,103,21,.26),0 12px 30px rgba(21,23,26,.06);}
 .active-card.red{border-color:#e47777;box-shadow:0 0 0 1px rgba(157,28,28,.16),0 0 24px rgba(157,28,28,.30),0 12px 30px rgba(21,23,26,.07);}
+.active-card.blue{border-color:#90c8f3;box-shadow:0 0 0 1px rgba(21,85,154,.12),0 0 20px rgba(21,85,154,.20),0 12px 30px rgba(21,23,26,.06);}
 .active-card.ok:before{background:linear-gradient(90deg,#10a66f,#87dfb6);}
 .active-card.yellow:before{background:linear-gradient(90deg,#d69d00,#f2d76b);}
 .active-card.orange:before{background:linear-gradient(90deg,#c85b00,#f2a65a);}
 .active-card.red:before{background:linear-gradient(90deg,#a91919,#ee8585);}
+.active-card.blue:before{background:linear-gradient(90deg,#1765ad,#8dc8f3);}
 .active-card.pulse{animation:activePulse 1.6s ease-in-out infinite;}
 @keyframes activePulse{0%,100%{box-shadow:0 0 0 1px rgba(157,28,28,.14),0 0 16px rgba(157,28,28,.22),0 10px 26px rgba(21,23,26,.05);}50%{box-shadow:0 0 0 3px rgba(157,28,28,.18),0 0 30px rgba(157,28,28,.42),0 10px 26px rgba(21,23,26,.08);}}
 .active-card-head{width:100%;display:flex;align-items:center;justify-content:center;padding-top:12px;margin-bottom:9px;}
@@ -393,7 +395,9 @@ body.admin.locked .kb-card, body.admin.locked tbody tr, body.admin.locked .tl-it
 .active-health.yellow{background:#fff4c7;color:#8a6500;}
 .active-health.orange{background:#ffe2c2;color:#a54a00;}
 .active-health.red{background:#fde2e2;color:#a71919;}
+.active-health.blue{background:#e4f1ff;color:#15559a;}
 .active-health.ok:before{content:"";width:9px;height:9px;border-radius:50%;background:#0f9f6b;box-shadow:0 0 0 4px rgba(15,159,107,.14),0 0 12px rgba(15,159,107,.45);}
+.active-health.blue:before{content:"";width:9px;height:9px;border-radius:50%;background:#1b74bd;box-shadow:0 0 0 4px rgba(27,116,189,.14),0 0 12px rgba(27,116,189,.38);}
 .active-health.yellow:before,.active-health.orange:before{content:"!";line-height:1;}
 .active-health.red:before{content:"\f0f3";font-family:"Font Awesome 6 Free";font-weight:900;font-size:11px;line-height:1;}
 .active-meta{display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;margin-bottom:12px;min-height:20px;}
@@ -786,6 +790,7 @@ const FASES = [
   {key:'goLive',     label:'Go-live'},
 ];
 const FASE_DEFAULTS = ['','','','17:30','09:00'];
+const ACTIVE_DEFAULT_UPDATED = '15/06/2026';
 const EMBEDDED_ACTIVE_HEALTH = [
   {loja:"SC S\u00c3O JOS\u00c9",num:"2269",rede:"both",status:"ok",since:"",responsavel:"Gl\u00e1vio",obs:"Funcionando"},
   {loja:"SC VIDEIRA",num:"2313",rede:"both",status:"ok",since:"",responsavel:"Gl\u00e1vio",obs:"Funcionando"},
@@ -956,27 +961,35 @@ function activeAgeDays(since){
   d.setHours(0,0,0,0);
   return Math.max(1,Math.floor((TODAY-d)/86400000)+1);
 }
+function activeUpdatedAgeDays(updatedAt){
+  const d=parseDate(updatedAt||'');
+  if(!d)return null;
+  d.setHours(0,0,0,0);
+  return Math.max(0,Math.floor((TODAY-d)/86400000));
+}
 function activeStatusInfo(l){
   const age=l.status==='pending'||l.status==='down'?activeAgeDays(l.since):null;
+  const staleAge=l.status==='ok'?activeUpdatedAgeDays(l.updatedAt):null;
   if(l.status==='down') return {cls:'red pulse',label:'Alerta',icon:'!',age};
   if(l.status==='pending'){
     if(age!==null&&age>=3) return {cls:'red pulse',label:'Pendente',icon:'!',age};
     if(age!==null&&age>=2) return {cls:'orange',label:'Pendente',icon:'!',age};
     return {cls:'yellow',label:'Pendente',icon:'!',age};
   }
+  if(staleAge!==null&&staleAge>7) return {cls:'blue',label:'Revisar contato',icon:'',age:staleAge,stale:true};
   return {cls:'ok',label:'Tudo ok',icon:'',age:null};
 }
 function getActiveRecords(){
   const map=new Map();
-  activeHealth.forEach((l,i)=>map.set(activeKey(l),{...l,_idx:i,_source:'manual'}));
+  activeHealth.forEach((l,i)=>map.set(activeKey(l),{...l,updatedAt:l.updatedAt||ACTIVE_DEFAULT_UPDATED,_idx:i,_source:'manual'}));
   getDatabase().filter(l=>l.status==='ativo').forEach(l=>{
-    const rec={loja:l.nome,num:l.num||'',rede:l.rede,status:'ok',since:'',responsavel:l.responsavel||'',obs:l.obs||'Funcionando',_source:'auto'};
+    const rec={loja:l.nome,num:l.num||'',rede:l.rede,status:'ok',since:'',responsavel:l.responsavel||'',obs:l.obs||'Funcionando',updatedAt:l.updatedAt||ACTIVE_DEFAULT_UPDATED,_source:'auto'};
     const key=activeKey(rec);
     if(!map.has(key))map.set(key,rec);
   });
   return [...map.values()].sort((a,b)=>{
     const sa=activeStatusInfo(a),sb=activeStatusInfo(b);
-    const rank=s=>s.cls.includes('red')?0:s.cls==='orange'?1:s.cls==='yellow'?2:3;
+    const rank=s=>s.cls.includes('red')?0:s.cls==='orange'?1:s.cls==='yellow'?2:s.cls==='blue'?3:4;
     const r=rank(sa)-rank(sb);
     return r||a.loja.localeCompare(b.loja,'pt');
   });
@@ -990,18 +1003,20 @@ function renderActive(){
   const pending=all.filter(l=>l.status==='pending').length;
   const down=all.filter(l=>l.status==='down').length;
   const alerts=all.filter(l=>l.status==='down'||activeStatusInfo(l).cls.includes('red')).length;
+  const stale=all.filter(l=>activeStatusInfo(l).stale).length;
   document.getElementById('content').innerHTML=`
     <div class="active-summary">
       <div class="stat"><div class="lbl">Ativos acompanhados</div><div class="val">${all.length}</div><div class="sub">lojas em opera&ccedil;&atilde;o</div></div>
       <div class="stat"><div class="lbl">Tudo ok</div><div class="val g">${ok}</div><div class="sub">sem pend&ecirc;ncia</div></div>
       <div class="stat"><div class="lbl">Pend&ecirc;ncias</div><div class="val i">${pending}</div><div class="sub">em acompanhamento</div></div>
-      <div class="stat"><div class="lbl">Alertas</div><div class="val" style="color:#9d1c1c">${alerts}</div><div class="sub">${down} sem funcionamento</div></div>
+      <div class="stat"><div class="lbl">Revisar contato</div><div class="val b">${stale}</div><div class="sub">${alerts} alertas cr&iacute;ticos</div></div>
     </div>
     <div class="toolbar">
       <div class="tb-row">
         <div class="quick-tabs">
           <button class="qtab${activeQuick==='all'?' on':''}" onclick="setActiveQuick('all')">Todas</button>
           <button class="qtab${activeQuick==='ok'?' on':''}" onclick="setActiveQuick('ok')">Tudo ok</button>
+          <button class="qtab${activeQuick==='stale'?' on':''}" onclick="setActiveQuick('stale')">Revisar contato</button>
           <button class="qtab${activeQuick==='pending'?' on':''}" onclick="setActiveQuick('pending')">Pend&ecirc;ncias</button>
           <button class="qtab${activeQuick==='red'?' on':''}" onclick="setActiveQuick('red')">Alertas</button>
         </div>
@@ -1014,7 +1029,8 @@ function renderActive(){
 }
 function renderActiveContent(){
   let list=getActiveRecords();
-  if(activeQuick==='ok')list=list.filter(l=>l.status==='ok');
+  if(activeQuick==='ok')list=list.filter(l=>l.status==='ok'&&!activeStatusInfo(l).stale);
+  if(activeQuick==='stale')list=list.filter(l=>activeStatusInfo(l).stale);
   if(activeQuick==='pending')list=list.filter(l=>l.status==='pending');
   if(activeQuick==='red')list=list.filter(l=>l.status==='down'||activeStatusInfo(l).cls.includes('red'));
   const rows=list.map(l=>{
