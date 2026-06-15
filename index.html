@@ -371,26 +371,36 @@ body.admin.locked .kb-card, body.admin.locked tbody tr, body.admin.locked .tl-it
 @media(max-width:900px){.support-layout{grid-template-columns:1fr;}.support-ticket{grid-template-columns:78px 1fr;}.support-meta{grid-column:1/-1;justify-content:flex-start;}}
 
 /* ACTIVE PRESENCE */
-.active-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(245px,1fr));gap:12px;}
-.active-card{position:relative;background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px;cursor:pointer;overflow:hidden;transition:transform .14s ease,box-shadow .14s ease,border-color .14s ease;}
-.active-card:hover{transform:translateY(-1px);}
-.active-card.ok{border-color:#9ddfbd;box-shadow:0 0 0 1px rgba(15,139,99,.12),0 0 18px rgba(15,139,99,.20),0 10px 26px rgba(21,23,26,.05);}
-.active-card.yellow{border-color:#f0d46b;box-shadow:0 0 0 1px rgba(201,154,20,.12),0 0 18px rgba(201,154,20,.20),0 10px 26px rgba(21,23,26,.05);}
-.active-card.orange{border-color:#f1a14b;box-shadow:0 0 0 1px rgba(207,103,21,.15),0 0 18px rgba(207,103,21,.24),0 10px 26px rgba(21,23,26,.05);}
-.active-card.red{border-color:#ee8585;box-shadow:0 0 0 1px rgba(157,28,28,.14),0 0 20px rgba(157,28,28,.28),0 10px 26px rgba(21,23,26,.05);}
+.active-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:14px;}
+.active-card{position:relative;min-height:174px;background:linear-gradient(180deg,#fff 0,#fbfcfd 100%);border:1px solid var(--border);border-radius:12px;padding:16px 16px 14px;cursor:pointer;overflow:hidden;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;transition:transform .14s ease,box-shadow .14s ease,border-color .14s ease;}
+.active-card:before{content:"";position:absolute;left:0;right:0;top:0;height:4px;background:#d8e0e7;}
+.active-card:hover{transform:translateY(-2px);}
+.active-card.ok{border-color:#98dec0;box-shadow:0 0 0 1px rgba(15,139,99,.10),0 0 20px rgba(15,139,99,.18),0 12px 30px rgba(21,23,26,.06);}
+.active-card.yellow{border-color:#edd06b;box-shadow:0 0 0 1px rgba(201,154,20,.13),0 0 20px rgba(201,154,20,.22),0 12px 30px rgba(21,23,26,.06);}
+.active-card.orange{border-color:#ec9b43;box-shadow:0 0 0 1px rgba(207,103,21,.16),0 0 22px rgba(207,103,21,.26),0 12px 30px rgba(21,23,26,.06);}
+.active-card.red{border-color:#e47777;box-shadow:0 0 0 1px rgba(157,28,28,.16),0 0 24px rgba(157,28,28,.30),0 12px 30px rgba(21,23,26,.07);}
+.active-card.ok:before{background:linear-gradient(90deg,#10a66f,#87dfb6);}
+.active-card.yellow:before{background:linear-gradient(90deg,#d69d00,#f2d76b);}
+.active-card.orange:before{background:linear-gradient(90deg,#c85b00,#f2a65a);}
+.active-card.red:before{background:linear-gradient(90deg,#a91919,#ee8585);}
 .active-card.pulse{animation:activePulse 1.6s ease-in-out infinite;}
 @keyframes activePulse{0%,100%{box-shadow:0 0 0 1px rgba(157,28,28,.14),0 0 16px rgba(157,28,28,.22),0 10px 26px rgba(21,23,26,.05);}50%{box-shadow:0 0 0 3px rgba(157,28,28,.18),0 0 30px rgba(157,28,28,.42),0 10px 26px rgba(21,23,26,.08);}}
-.active-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px;}
-.active-store{font-size:14px;font-weight:800;color:var(--text);line-height:1.18;}
-.active-store small{display:block;font-size:10px;font-weight:600;color:var(--text3);margin-top:3px;}
-.active-health{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:800;border-radius:999px;padding:4px 8px;white-space:nowrap;}
+.active-card-head{width:100%;display:flex;align-items:center;justify-content:center;padding-top:10px;margin-bottom:9px;}
+.active-store{font-size:15px;font-weight:850;color:var(--text);line-height:1.18;max-width:210px;}
+.active-store small{display:flex;justify-content:center;align-items:center;gap:6px;font-size:10px;font-weight:700;color:var(--text3);margin-top:7px;}
+.active-health{position:absolute;right:12px;top:12px;display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:850;border-radius:999px;padding:5px 9px;white-space:nowrap;box-shadow:0 1px 2px rgba(21,23,26,.06);}
 .active-health.ok{background:var(--teal-bg);color:var(--teal);}
 .active-health.yellow{background:#fff5cf;color:#8a6500;}
 .active-health.orange{background:#ffe6cf;color:#a54a00;}
 .active-health.red{background:var(--red-bg);color:var(--red);}
-.active-meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:10px;}
-.active-obs{font-size:11px;color:var(--text2);line-height:1.42;min-height:32px;}
-.active-age{position:absolute;right:12px;bottom:10px;font-size:10px;font-weight:800;color:var(--text3);}
+.active-status-dot{width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 0 3px rgba(255,255,255,.75);}
+.active-meta{display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;margin-bottom:12px;min-height:20px;}
+.active-obs{font-size:12px;color:var(--text2);line-height:1.42;min-height:38px;display:flex;align-items:center;justify-content:center;max-width:220px;}
+.active-age{position:absolute;right:12px;bottom:10px;font-size:10px;font-weight:850;color:var(--text3);background:#eef2f5;border:1px solid #dbe2e8;border-radius:999px;padding:2px 7px;}
+.active-card .store-num-pill.after{margin-left:0;background:#f3f6f8;color:#5b6570;}
+.active-card .tag-rj,.active-card .tag-ml,.active-card .tag-mega{font-size:10px;padding:3px 8px;box-shadow:0 1px 2px rgba(21,23,26,.05);}
+.active-card .tag-resp{background:#eef0ff;color:#34439a;padding:3px 8px;font-weight:750;}
+.active-card .tag-db{padding:3px 8px;font-weight:750;}
 .active-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px;}
 @media(max-width:800px){.active-summary{grid-template-columns:repeat(2,1fr);}.active-grid{grid-template-columns:1fr;}}
 
@@ -1010,9 +1020,9 @@ function renderActiveContent(){
     const idx=l._idx??-1;
     const ageTxt=info.age!==null?`${info.age}d`:'';
     return `<div class="active-card ${info.cls}" onclick="openActiveModal(${idx},'${esc(activeKey(l))}')">
+      <span class="active-health ${info.cls.split(' ')[0]}"><span class="active-status-dot"></span>${info.icon?info.icon+' ':''}${info.label}</span>
       <div class="active-card-head">
-        <div class="active-store">${esc(l.loja)}<small>${redeLabel(l.rede)} ${l.num?`<span class="store-num-pill after">${esc(l.num)}</span>`:''}</small></div>
-        <span class="active-health ${info.cls.split(' ')[0]}">${info.icon?info.icon+' ':''}${info.label}</span>
+        <div class="active-store">${esc(l.loja)}<small>${redeLabel(l.rede)}${l.num?`<span class="store-num-pill after">${esc(l.num)}</span>`:''}</small></div>
       </div>
       <div class="active-meta">${l.responsavel?`<span class="tag-resp">${esc(l.responsavel)}</span>`:''}${l._source==='auto'?'<span class="tag-db">auto</span>':''}</div>
       <div class="active-obs">${esc(l.obs||'Funcionando')}</div>
