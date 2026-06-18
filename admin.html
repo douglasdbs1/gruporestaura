@@ -6,6 +6,7 @@
 <title>Presence Control</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
 <style>
 :root{
   --bg:#f2f0ec;--surface:#fff;--surface2:#f7f5f1;--border:#e0ddd5;--border2:#c8c4bb;
@@ -477,6 +478,10 @@ td.oc{max-width:260px;}
 </head>
 <body>
 
+<div class="logo-bar" style="background:#fff;text-align:center;padding:14px 16px;border-bottom:1px solid #e6e6e6;">
+  <img src="logo.png" alt="Grupo Restaura Franchising" style="height:64px;width:auto;max-width:90%;display:inline-block;vertical-align:middle;">
+</div>
+
 <div class="topbar">
   <div class="brand-pill rj"><div class="brand-dot rj"></div><span class="rj-r">RESTAURA</span>&nbsp;<span class="rj-j">JEANS</span></div>
   <div class="brand-pill ml"><div class="brand-dot ml"></div>MINHA LAVANDERIA</div>
@@ -706,6 +711,8 @@ td.oc{max-width:260px;}
 
 <input type="file" id="json-input" accept=".json" style="display:none" onchange="loadJSON(event)">
 
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // ── SUPABASE CONFIG ──
@@ -1699,6 +1706,8 @@ function openSupportModal(idx=-1){
   document.getElementById('sup-resp').value=t.responsavel||'';
   document.getElementById('sup-aberto').value=t.abertoEm||'';
   document.getElementById('sup-fechado').value=t.fechadoEm||'';
+  mkPicker(document.getElementById('sup-aberto'),true);
+  mkPicker(document.getElementById('sup-fechado'),true);
   document.getElementById('sup-assunto').value=t.assunto||'';
   document.getElementById('sup-desc').value=t.descricao||'';
   document.getElementById('sup-evento').value='';
@@ -1847,6 +1856,7 @@ function openActiveModal(idx=-1,key=''){
   document.getElementById('active-rede').value=l.rede||'rj';
   document.getElementById('active-status').value=l.status||'ok';
   document.getElementById('active-since').value=l.since||'';
+  mkPicker(document.getElementById('active-since'),false);
   document.getElementById('active-resp').value=l.responsavel||'';
   document.getElementById('active-obs').value=l.obs||'';
   renderActiveTickets(l.loja,l.num);
@@ -1912,6 +1922,26 @@ function deleteDbLoja(){
   if(dbModalIdx<0)return;
   if(!confirm(`Excluir "${dbExtra[dbModalIdx].nome}"?`))return;
   dbExtra.splice(dbModalIdx,1);saveDb();closeDbModal();renderDB();
+}
+
+// ── DATE PICKER (flatpickr) ──
+// Mantém o valor no mesmo formato DD/MM/AAAA HH:MM; se o CDN falhar, vira input de texto normal.
+function mkPicker(el,withTime,defTime){
+  if(!el||!window.flatpickr)return;
+  if(el._flatpickr)el._flatpickr.destroy();
+  const cfg={locale:'pt',allowInput:true,dateFormat:withTime?'d/m/Y H:i':'d/m/Y'};
+  if(withTime){cfg.enableTime=true;cfg.time_24hr=true;if(defTime){const p=defTime.split(':');cfg.defaultHour=+p[0];cfg.defaultMinute=+p[1];}}
+  flatpickr(el,cfg);
+}
+function initFlowPickers(){
+  FASES.forEach((f,i)=>{
+    if(f.checkOnly)return;
+    const el=document.getElementById('fd-'+i);
+    if(!el)return;
+    // não anexa em valores-sentinela como "1" (fase concluída sem data) — só em vazio ou data
+    if(el.value&&!/^\d{1,2}\/\d{1,2}\/\d{4}/.test(el.value))return;
+    mkPicker(el,true,FASE_DEFAULTS[i]||'');
+  });
 }
 
 // ── GL MODAL ──
@@ -2086,6 +2116,7 @@ function openModal(idx=-1){
   document.getElementById('f-resp').value=l.responsavel||'';
   document.getElementById('f-status').value=l.status;
   document.getElementById('flow-steps').innerHTML=buildFlowSteps(l);
+  initFlowPickers();
   const lv=document.getElementById('log-view');
   lv.dataset.log=l.log||'';lv.innerHTML=buildLogView(l.log||'');
   document.getElementById('f-note').value='';
