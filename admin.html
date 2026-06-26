@@ -433,6 +433,24 @@ body.admin.locked .kb-card, body.admin.locked tbody tr, body.admin.locked .tl-it
 .hero-bar span{display:block;height:100%;}
 .hero-bar .s-ok{background:#10a66f;}.hero-bar .s-att{background:#e8b324;}.hero-bar .s-prob{background:#cf3030;}
 @media(max-width:640px){.active-hero{grid-template-columns:1fr;}.active-hero .hero-main{border-right:none;border-bottom:1px solid var(--border);padding-right:0;padding-bottom:14px;}}
+/* TOPO: hero + proximos go-lives */
+.active-top{display:grid;grid-template-columns:minmax(0,2.6fr) minmax(240px,1fr);gap:16px;margin-bottom:16px;align-items:stretch;}
+.active-top .active-hero{margin-bottom:0;height:100%;}
+@media(max-width:860px){.active-top{grid-template-columns:1fr;}}
+.gl-next{background:#fff;border:1px solid var(--border);border-radius:14px;padding:15px 17px;display:flex;flex-direction:column;min-width:0;}
+.gl-next-hd{font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#5b6470;display:flex;align-items:center;gap:7px;margin-bottom:11px;}
+.gl-next-hd .c{margin-left:auto;background:var(--surface2);border:1px solid var(--border);border-radius:999px;padding:1px 9px;color:var(--text2);font-size:11px;}
+.gl-next-list{display:flex;flex-direction:column;gap:7px;overflow:auto;max-height:240px;}
+.gl-next-item{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:7px 10px;border:1px solid var(--border);border-radius:9px;cursor:pointer;background:var(--surface2);}
+.gl-next-item:hover{border-color:var(--teal-mid);}
+.gl-next-date{display:flex;flex-direction:column;align-items:center;line-height:1;min-width:30px;}
+.gl-next-date .d{font-size:16px;font-weight:850;color:var(--text);}
+.gl-next-date .m{font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text3);margin-top:2px;}
+.gl-next-main{min-width:0;}
+.gl-next-loja{font-size:12px;font-weight:750;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.gl-next-sub{font-size:10px;color:var(--text3);margin-top:3px;display:flex;align-items:center;gap:5px;}
+.gl-next-when{font-size:10px;font-weight:800;white-space:nowrap;}
+.gl-next-empty{font-size:12px;color:var(--text3);font-style:italic;padding:14px 2px;text-align:center;}
 /* SELO DE STATUS NO CARD */
 .active-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;letter-spacing:.01em;padding:4px 11px 4px 8px;border-radius:999px;margin-bottom:2px;}
 .active-badge .bdot{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;font-size:10px;font-weight:900;color:#fff;line-height:1;}
@@ -1112,7 +1130,19 @@ function renderActive(){
   all.forEach(l=>{cnt[activeSimpleState(l).key]++;});
   const tot=all.length||1;
   const pct=k=>Math.round(cnt[k]/tot*100);
+  const MES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  const upcoming=lojas.filter(l=>l.status!=='concluido'&&inNextDays(l.goLive,10)).sort((a,b)=>parseDate(a.goLive)-parseDate(b.goLive));
+  const glItems=upcoming.map(l=>{
+    const d=parseDate(l.goLive),diff=daysDiff(l.goLive);
+    const day=String(d.getDate()).padStart(2,'0'),mon=MES[d.getMonth()];
+    const when=diff===0?'HOJE':diff===1?'amanhã':'em '+diff+'d';
+    const wc=diff===0?'#0b7a52':diff<=3?'#a85b00':'#5b6470';
+    const rtag=(g=>{g=(g||'').toLowerCase();return g.includes('minha lavanderia')?'<span class="tag-ml">ML</span>':g.includes('mega')?'<span class="tag-mega">MEGA</span>':'<span class="tag-rj">RJ</span>';})(l.grupo);
+    return `<div class="gl-next-item" onclick="setPage('gl');openModal(${lojaIdx(l)})"><div class="gl-next-date"><span class="d">${day}</span><span class="m">${mon}</span></div><div class="gl-next-main"><div class="gl-next-loja">${esc(l.loja)}</div><div class="gl-next-sub">${rtag}${l.responsavel?'<span>'+esc(l.responsavel)+'</span>':''}</div></div><div class="gl-next-when" style="color:${wc}">${when}</div></div>`;
+  }).join('');
+  const glCard=`<div class="gl-next"><div class="gl-next-hd"><i class="fa-solid fa-bolt"></i> Próximos go-lives <span style="font-weight:600;text-transform:none;letter-spacing:0;color:#9aa1ab;">10 dias</span><span class="c">${upcoming.length}</span></div><div class="gl-next-list">${glItems||'<div class="gl-next-empty">Nenhum go-live nos próximos 10 dias.</div>'}</div></div>`;
   document.getElementById('content').innerHTML=`
+    <div class="active-top">
     <div class="active-hero">
       <div class="hero-main">
         <div class="hero-num">${all.length}</div>
@@ -1130,6 +1160,8 @@ function renderActive(){
           ${cnt.prob?`<span class="s-prob" style="width:${pct('prob')}%"></span>`:''}
         </div>
       </div>
+    </div>
+    ${glCard}
     </div>
     <div class="toolbar">
       <div class="tb-row">
