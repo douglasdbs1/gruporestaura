@@ -800,7 +800,7 @@ function initSupabase(){
   return true;
 }
 function statePayload(){
-  return {version:1, updatedAt:new Date().toISOString(), golive:lojas, lojas:dbExtra, suporte:supportTickets, presenceAtivo:activeHealth};
+  return {version:1, updatedAt:new Date().toISOString(), golive:lojas, lojas:dbExtra, suporte:supportTickets, presenceAtivo:activeHealth, crm:crmData};
 }
 async function loadFromSupabase(){
   if(!supabaseEnabled) return false;
@@ -821,6 +821,7 @@ async function loadFromSupabase(){
     dbExtra = data.payload.lojas || [];
     supportTickets = data.payload.suporte || [];
     activeHealth = data.payload.presenceAtivo || JSON.parse(JSON.stringify(EMBEDDED_ACTIVE_HEALTH));
+    crmData = data.payload.crm || crmData;
     console.info("Dados carregados do Supabase:", data.updated_at);
     return true;
   }
@@ -844,7 +845,7 @@ async function seedSupabaseInitialState(){
 async function saveToSupabase(silent=false){
   if(isBooting) return;
   if(!canEdit()){ if(!silent) showToast("Modo somente leitura. Alterações não foram salvas.", true); return; }
-  saveLocal(); saveDbLocal(); saveSupportLocal(); saveActiveLocal();
+  saveLocal(); saveDbLocal(); saveSupportLocal(); saveActiveLocal(); saveCrmLocal();
   if(!supabaseEnabled){ if(!silent) showToast("Salvo localmente. Configure o Supabase para salvar online."); return; }
   const {error}=await supabaseClient.rpc("save_presence_control_state",{
     p_token: ADMIN_RPC_TOKEN,
@@ -855,7 +856,7 @@ async function saveToSupabase(silent=false){
 }
 async function initApp(){
   applyModeUi();
-  load(); loadDb(); loadSupport(); loadActive(); initSupabase();
+  load(); loadDb(); loadSupport(); loadActive(); loadCrm(); initSupabase();
   if(supabaseEnabled) await loadFromSupabase();
   isBooting=false;
   setPage("active");
@@ -901,6 +902,7 @@ let lojas   = [];
 let dbExtra = [];
 let supportTickets = [];
 let activeHealth = [];
+let crmData = {implantacao:[],atualizadoEm:''}; // preenchido pelo sync diário do Zoho (sync/zoho_sync.js)
 function buildStubs(){
   const xNums=new Set(lojas.map(l=>l.num).filter(n=>n&&n.trim()));
   const xNameRede=new Set(lojas.map(l=>l.loja+'|'+redeFromGrupo(l.grupo)));
@@ -927,6 +929,7 @@ function saveLocal()   { localStorage.setItem('pc_gl_v1',  JSON.stringify(lojas)
 function saveDbLocal() { localStorage.setItem('pc_db_v1',  JSON.stringify(dbExtra)); }
 function saveSupportLocal() { localStorage.setItem('pc_support_v1', JSON.stringify(supportTickets)); }
 function saveActiveLocal() { localStorage.setItem('pc_active_v1', JSON.stringify(activeHealth)); }
+function saveCrmLocal() { localStorage.setItem('pc_crm_v1', JSON.stringify(crmData)); }
 function save(){ saveToSupabase(); }
 function saveDb(){ saveToSupabase(); }
 function saveSupport(){ saveToSupabase(); }
@@ -935,6 +938,7 @@ function load()   { lojas   = JSON.parse(localStorage.getItem('pc_gl_v1') || 'nu
 function loadDb() { dbExtra = JSON.parse(localStorage.getItem('pc_db_v1') || 'null') || JSON.parse(JSON.stringify(EMBEDDED_LOJAS));  }
 function loadSupport() { supportTickets = JSON.parse(localStorage.getItem('pc_support_v1') || 'null') || []; }
 function loadActive() { activeHealth = JSON.parse(localStorage.getItem('pc_active_v1') || 'null') || JSON.parse(JSON.stringify(EMBEDDED_ACTIVE_HEALTH)); }
+function loadCrm() { crmData = JSON.parse(localStorage.getItem('pc_crm_v1') || 'null') || crmData; }
 
 function saveAll() {
   const d={version:1,exportedAt:new Date().toISOString(),golive:lojas,lojas:dbExtra,suporte:supportTickets,presenceAtivo:activeHealth};
@@ -986,6 +990,32 @@ function prevBusinessDay(d){const r=new Date(d);r.setDate(r.getDate()-1);while(r
 function fmtDateObj(d){const day=String(d.getDate()).padStart(2,'0');const mon=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'][d.getMonth()];return `${day}/${mon}`;}
 function esc(v){return String(v||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function isOverdue(l){return l.status!=='concluido'&&l.goLive&&daysDiff(l.goLive)<0;}
+// ── CRM (Zoho, sync diário via sync/zoho_sync.js) ──
+function crmFor(l){
+  const n=String(l.num||'').replace(/\D/g,'');
+  if(!n||!crmData||!Array.isArray(crmData.implantacao))return null;
+  return crmData.implantacao.find(r=>String(r.num||'').replace(/\D/g,'')===n)||null;
+}
+function effGoLive(l){
+  if(l.goLive)return l.goLive;
+  const c=crmFor(l);
+  return (c&&c.golive)||'';
+}
+function crmSignBar(l){
+  if(l.status==='concluido')return '';
+  const c=crmFor(l);
+  if(!c||!c.assinatura)return '';
+  const d=parseDate(c.assinatura);
+  if(!d)return '';
+  const dias=Math.max(0,Math.round((TODAY-d)/86400000));
+  const pct=Math.min(100,Math.round(dias/60*100));
+  const cor=dias>=60?'#c0392b':dias>=45?'#d98200':'#10a66f';
+  return `<div class="sign-bar">
+    <div class="sign-track"><div class="sign-fill" style="width:${pct}%;background:${cor}"></div></div>
+    <span class="sign-days" style="color:${cor}">${dias}/60</span>
+    <div class="sign-tip"><b>${dias} dia${dias===1?'':'s'} desde o contrato assinado.</b><small>Contrato assinado dia ${esc(c.assinatura.slice(0,5))}</small></div>
+  </div>`;
+}
 function stepsDone(l){
   let done=[];
   for(let i=0;i<FASES.length;i++){
@@ -1141,14 +1171,16 @@ function renderActive(){
   const pct=k=>Math.round(cnt[k]/tot*100);
   const resps=[...new Set(getActiveRecords().map(l=>l.responsavel).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt'));
   const MES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
-  const upcoming=lojas.filter(l=>l.status!=='concluido'&&inNextDays(l.goLive,10)).sort((a,b)=>parseDate(a.goLive)-parseDate(b.goLive));
+  const upcoming=lojas.filter(l=>l.status!=='concluido'&&inNextDays(effGoLive(l),10)).sort((a,b)=>parseDate(effGoLive(a))-parseDate(effGoLive(b)));
   const glItems=upcoming.map(l=>{
-    const d=parseDate(l.goLive),diff=daysDiff(l.goLive);
+    const gd=effGoLive(l);
+    const d=parseDate(gd),diff=daysDiff(gd);
     const day=String(d.getDate()).padStart(2,'0'),mon=MES[d.getMonth()];
     const when=diff===0?'HOJE':diff===1?'amanhã':'em '+diff+'d';
     const wc=diff===0?'#0b7a52':diff<=3?'#a85b00':'#5b6470';
     const rtag=(g=>{g=(g||'').toLowerCase();return g.includes('minha lavanderia')?'<span class="tag-ml">ML</span>':g.includes('mega')?'<span class="tag-mega">MEGA</span>':'<span class="tag-rj">RJ</span>';})(l.grupo);
-    return `<div class="gl-next-item" onclick="setPage('gl');openModal(${lojaIdx(l)})"><div class="gl-next-date"><span class="d">${day}</span><span class="m">${mon}</span></div><div class="gl-next-main"><div class="gl-next-loja">${esc(l.loja)}</div><div class="gl-next-sub">${rtag}${l.responsavel?'<span>'+esc(l.responsavel)+'</span>':''}</div></div><div class="gl-next-when" style="color:${wc}">${when}</div></div>`;
+    const crmTag=!l.goLive?'<span class="tag-crm" title="Data marcada no CRM (Zoho)">CRM</span>':'';
+    return `<div class="gl-next-item" onclick="setPage('gl');openModal(${lojaIdx(l)})"><div class="gl-next-date"><span class="d">${day}</span><span class="m">${mon}</span></div><div class="gl-next-main"><div class="gl-next-loja">${esc(l.loja)}</div><div class="gl-next-sub">${rtag}${crmTag}${l.responsavel?'<span>'+esc(l.responsavel)+'</span>':''}</div></div><div class="gl-next-when" style="color:${wc}">${when}</div></div>`;
   }).join('');
   const glCard=`<div class="gl-next"><div class="gl-next-hd"><i class="fa-solid fa-bolt"></i> Próximos go-lives <span style="font-weight:600;text-transform:none;letter-spacing:0;color:#9aa1ab;">10 dias</span><span class="c">${upcoming.length}</span></div><div class="gl-next-list">${glItems||'<div class="gl-next-empty">Nenhum go-live nos próximos 10 dias.</div>'}</div></div>`;
   document.getElementById('content').innerHTML=`
@@ -1295,14 +1327,15 @@ function renderGL(){
   const overdue=all.filter(l=>isOverdue(l)).length;
   const noDate=all.filter(l=>l.status!=='concluido'&&!l.goLive).length;
   const activeMonth=all.filter(l=>{const d=parseDate(l.goLive);return l.status==='concluido'&&d&&d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}).length;
-  const proxGL=all.filter(l=>l.goLive&&daysDiff(l.goLive)>=0&&daysDiff(l.goLive)<=6).sort((a,b)=>parseDate(a.goLive)-parseDate(b.goLive));
+  const proxGL=all.filter(l=>{const g=effGoLive(l);return g&&daysDiff(g)>=0&&daysDiff(g)<=6;}).sort((a,b)=>parseDate(effGoLive(a))-parseDate(effGoLive(b)));
   const proxPGL=all.filter(l=>l.goLive&&parseDate(l.goLive)).map(l=>({l,pgl:prevBusinessDay(parseDate(l.goLive))})).filter(x=>Math.round((x.pgl-TODAY)/86400000)>=0).sort((a,b)=>a.pgl-b.pgl).slice(0,2);
   const missingSchedule=all.filter(l=>l.status!=='concluido'&&!l.goLive).slice(0,3);
   const blocked=all.filter(l=>l.status!=='concluido'&&countDone(l)<3).slice(0,4);
 
   const glSpot=proxGL.length?proxGL.map(l=>{
-    const d=daysDiff(l.goLive),t=l.goLive.includes(' ')?l.goLive.trim().split(' ')[1]:'';
-    const lbl=d===0?`<span style="color:var(--teal-mid);font-weight:800">HOJE${t?' — '+t:''}</span>`:`<span style="color:#c0392b">${fmtDate(l.goLive)}</span>`;
+    const g=effGoLive(l);
+    const d=daysDiff(g),t=g.includes(' ')?g.trim().split(' ')[1]:'';
+    const lbl=d===0?`<span style="color:var(--teal-mid);font-weight:800">HOJE${t?' — '+t:''}</span>`:`<span style="color:#c0392b">${fmtDate(g)}${!l.goLive?' <small style="color:#8a91a0">CRM</small>':''}</span>`;
     return `<div class="spot-item"><div class="spot-name">${lojaNumPill(l)}${l.loja}<small>${l.responsavel||l.grupo}</small></div>${lbl}</div>`;
   }).join(''):'<div class="spot-empty">Nenhum agendado.</div>';
   const pglSpot=proxPGL.length?proxPGL.map(({l,pgl})=>`<div class="spot-item"><div class="spot-name">${lojaNumPill(l)}${l.loja}<small>${l.responsavel||l.grupo}</small></div><span class="spot-date" style="color:var(--indigo)">${fmtDateObj(pgl)}</span></div>`).join(''):'<div class="spot-empty">Nenhum agendado.</div>';
@@ -1432,13 +1465,15 @@ function renderKanban(active,concluded){
         const idx=lojaIdx(l);
         const pct=Math.round(countDone(l)/FASES.length*100);
         const od=isOverdue(l);
+        const crm=crmFor(l);
         const diff=daysDiff(l.goLive);
-        const dateLabel=!l.goLive?'<span class="kb-date">sem data</span>':diff===0?'<span class="kb-date today">HOJE</span>':diff!==null&&diff<0?`<span class="kb-date" style="color:#c0392b">atrasado ${Math.abs(diff)}d</span>`:`<span class="kb-date">${fmtDate(l.goLive)}</span>`;
+        const dateLabel=!l.goLive?(crm&&crm.golive?`<span class="kb-date crm" title="Data marcada no CRM (Zoho)">CRM ${fmtDate(crm.golive)}</span>`:'<span class="kb-date">sem data</span>'):diff===0?'<span class="kb-date today">HOJE</span>':diff!==null&&diff<0?`<span class="kb-date" style="color:#c0392b">atrasado ${Math.abs(diff)}d</span>`:`<span class="kb-date">${fmtDate(l.goLive)}</span>`;
         const rede=l.grupo&&l.grupo.toLowerCase().includes('minha lavanderia')?'<span class="tag-ml">ML</span>':'<span class="tag-rj">RJ</span>';
         return `<div class="kb-card${od?' overdue':''}${l._stub?' stub-card':''}" onclick="openModal(${idx})">
           <div class="kb-name">${lojaNumPill(l)}${l.loja}${l.alerta?'<span style="color:#c0392b;font-size:11px"> ⚠</span>':''}</div>
           <div class="kb-meta">${rede}${l.responsavel?`<span class="tag-resp">${l.responsavel}</span>`:''}${l._stub?'<span class="tag-db">Lojas</span>':''}${dateLabel}</div>
           <div class="kb-prog"><div class="kb-prog-f" style="width:${pct}%"></div></div>
+          ${crmSignBar(l)}
         </div>`;
       }).join(''):'<div class="kb-empty">Nenhuma loja</div>'}
     </div>`;
