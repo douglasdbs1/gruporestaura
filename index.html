@@ -1525,7 +1525,8 @@ function renderTV(){
   };
   const updated=crmData&&crmData.atualizadoEm?new Date(crmData.atualizadoEm).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'sem sincronização do CRM';
   const view=getViewLojas();
-  const rail={ativo:view.filter(l=>l.status==='concluido').length,assinado:view.filter(l=>l.status==='aberto').length,agendado:view.filter(l=>l.status==='agendado').length};
+  // "Sistema ativo" usa a mesma conta do hero da tela Ativa (Presence Ativo + go-lives concluidos, sem a Retaguarda Matriz)
+  const rail={ativo:getActiveRecords().filter(l=>!isHQActive(l)).length,assinado:view.filter(l=>l.status==='aberto').length,agendado:view.filter(l=>l.status==='agendado').length};
   document.getElementById('content').innerHTML=`<div class="tv-wrap">
     <div class="tv-head">
       <div><div class="tv-kicker">Presence Control</div><div class="tv-title">Go-lives no radar</div><div class="tv-sub">Painel rotativo para acompanhamento da franqueadora</div></div>
