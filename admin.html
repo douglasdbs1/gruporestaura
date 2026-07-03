@@ -1413,9 +1413,10 @@ function tvWhen(diff){
 function tvRecord(l){
   const crm=crmFor(l);
   const crmAgendado=crm&&crm.golive&&/agendado/i.test(crm.status||'');
-  const g=l.goLive||(crmAgendado?crm.golive:'');
+  const crmFuture=crmAgendado&&daysDiff(crm.golive)>0;
+  const g=l.status==='aberto'?(crmFuture?crm.golive:''):(l.goLive||(crmAgendado?crm.golive:''));
   const d=parseDate(g);
-  return {...l,_tvDate:g,_tvParsed:d,_tvDiff:daysDiff(g),_tvCrm:!!(!l.goLive&&crmAgendado),_tvAssinatura:crm&&crm.assinatura,_tvSource:l.goLive?'PRESENCE':crmAgendado?'ZOHO':''};
+  return {...l,_tvDate:g,_tvParsed:d,_tvDiff:daysDiff(g),_tvCrm:!!(!l.goLive&&(l.status==='aberto'?crmFuture:crmAgendado)),_tvAssinatura:crm&&crm.assinatura,_tvSource:l.goLive?'PRESENCE':(l.status==='aberto'?crmFuture:crmAgendado)?'ZOHO':''};
 }
 function tvUpcoming(){
   return getViewLojas().filter(l=>l.status!=='concluido').map(tvRecord)
