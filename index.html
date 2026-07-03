@@ -1409,6 +1409,10 @@ function tvWhen(diff){
   if(diff<0)return {big:`-${Math.abs(diff)}d`,small:'atrasado'};
   return {big:`${diff}d`,small:'para o go-live'};
 }
+function tvHidden(l){
+  const crm=crmFor(l);
+  return l&&l.status==='aberto'&&crm&&/agendado/i.test(crm.status||'')&&daysDiff(crm.golive)<=0;
+}
 function tvRecord(l){
   const crm=crmFor(l);
   const crmAgendado=crm&&crm.golive&&/agendado/i.test(crm.status||'');
@@ -1418,7 +1422,7 @@ function tvRecord(l){
   return {...l,_tvDate:g,_tvParsed:d,_tvDiff:daysDiff(g),_tvCrm:!!(!l.goLive&&(l.status==='aberto'?crmFuture:crmAgendado)),_tvAssinatura:crm&&crm.assinatura,_tvSource:l.goLive?'PRESENCE':(l.status==='aberto'?crmFuture:crmAgendado)?'ZOHO':''};
 }
 function tvUpcoming(){
-  return getViewLojas().filter(l=>l.status!=='concluido').map(tvRecord)
+  return getViewLojas().filter(l=>l.status!=='concluido'&&!tvHidden(l)).map(tvRecord)
     .filter(l=>l._tvParsed&&l._tvDiff!==null&&l._tvDiff>=0&&l._tvDiff<=30)
     .sort((a,b)=>a._tvParsed-b._tvParsed);
 }
@@ -1481,7 +1485,7 @@ function tvSignAge(l){
   return Math.max(0,Math.round((TODAY-d)/86400000));
 }
 function tvSlideRisks(){
-  const active=getViewLojas().filter(l=>l.status!=='concluido').map(tvRecord);
+  const active=getViewLojas().filter(l=>l.status!=='concluido'&&!tvHidden(l)).map(tvRecord);
   const seen=new Set(); // 1 card por loja
   const list=active.map(l=>({l,age:tvSignAge(l)}))
     .filter(x=>x.age!==null)
@@ -1534,14 +1538,14 @@ function startTV(){
 }
 function renderTV(){
   const items=tvUpcoming();
-  const all=getViewLojas().filter(l=>l.status!=='concluido').map(tvRecord);
+  const all=getViewLojas().filter(l=>l.status!=='concluido'&&!tvHidden(l)).map(tvRecord);
   const stats={
     today:items.filter(l=>l._tvDiff===0).length,
     week:items.filter(l=>l._tvDiff>=0&&l._tvDiff<=7).length,
     noDate:all.filter(l=>!l._tvDate).length
   };
   const updated=crmData&&crmData.atualizadoEm?new Date(crmData.atualizadoEm).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'sem sincronização do CRM';
-  const view=getViewLojas();
+  const view=getViewLojas().filter(l=>!tvHidden(l));
   // "Sistema ativo" usa a mesma conta do hero da tela Ativa (Presence Ativo + go-lives concluidos, sem Retaguarda Matriz)
   const rail={ativo:getActiveRecords().filter(l=>!isHQActive(l)).length,assinado:view.filter(l=>l.status==='aberto').length,agendado:view.filter(l=>l.status==='agendado').length};
   document.getElementById('content').innerHTML=`<div class="tv-wrap">
