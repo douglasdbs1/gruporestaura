@@ -621,7 +621,7 @@ td.oc{max-width:260px;}
   <button class="pnav-btn" id="pnav-gl" onclick="setPage('gl')"><i class="fa-solid fa-bolt pnav-icon"></i> Go-Live</button>
   <button class="pnav-btn" id="pnav-db" onclick="setPage('db')"><i class="fa-solid fa-store pnav-icon"></i> Lojas</button>
   <button class="pnav-btn" id="pnav-sup" onclick="setPage('sup')"><i class="fa-solid fa-headset pnav-icon"></i> Suporte</button>
-  <button class="pnav-btn edit-only" id="pnav-tv" onclick="setPage('tv')"><i class="fa-solid fa-display pnav-icon"></i> TV</button>
+  <button class="pnav-btn" id="pnav-tv" onclick="setPage('tv')"><i class="fa-solid fa-display pnav-icon"></i> TV</button>
 </nav>
 
 <div class="content" id="content"></div>
@@ -1346,14 +1346,13 @@ function renderActiveContent(){
 let currentPage='active';
 let tvSlide=0,tvTimer=null,tvClockTimer=null,tvRefreshTimer=null;
 function setPage(p){
-  if(p==='tv'&&!canEdit())p='active';
   currentPage=p;
   document.body.classList.toggle('tv-mode',p==='tv');
   document.getElementById('pnav-gl').className='pnav-btn'+(p==='gl'?' on':'');
   document.getElementById('pnav-active').className='pnav-btn'+(p==='active'?' on':'');
   document.getElementById('pnav-db').className='pnav-btn'+(p==='db'?' on':'');
   document.getElementById('pnav-sup').className='pnav-btn'+(p==='sup'?' on':'');
-  document.getElementById('pnav-tv').className='pnav-btn edit-only'+(p==='tv'?' on':'');
+  document.getElementById('pnav-tv').className='pnav-btn'+(p==='tv'?' on':'');
   if(p!=='tv')stopTV();
   renderPage();
 }
