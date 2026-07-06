@@ -1085,6 +1085,10 @@ function crmFor(l){
   if(!n||!crmData||!Array.isArray(crmData.implantacao))return null;
   return crmData.implantacao.find(r=>String(r.num||'').replace(/\D/g,'')===n)||null;
 }
+function crmMetric(k,fallback=null){
+  const v=crmData&&crmData.metricas?crmData.metricas[k]:null;
+  return Number.isFinite(Number(v))?Number(v):fallback;
+}
 function effGoLive(l){
   if(l.status==='aberto')return ''; // aguardando = sem data efetiva (ignora até a data do CRM)
   if(l.goLive)return l.goLive;
@@ -1548,7 +1552,11 @@ function renderTV(){
   const updated=crmData&&crmData.atualizadoEm?new Date(crmData.atualizadoEm).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'sem sincronização do CRM';
   const view=getViewLojas().filter(l=>!tvHidden(l));
   // "Sistema ativo" usa a mesma conta do hero da tela Ativa (Presence Ativo + go-lives concluidos, sem Retaguarda Matriz)
-  const rail={ativo:getActiveRecords().filter(l=>!isHQActive(l)).length,assinado:view.filter(l=>l.status==='aberto').length,agendado:view.filter(l=>l.status==='agendado').length};
+  const rail={
+    ativo:crmMetric('implantados',getActiveRecords().filter(l=>!isHQActive(l)).length),
+    assinado:crmMetric('contratos',view.filter(l=>l.status==='aberto').length),
+    agendado:crmMetric('agendados',view.filter(l=>l.status==='agendado').length)
+  };
   document.getElementById('content').innerHTML=`<div class="tv-wrap">
     <div class="tv-head">
       <div><div class="tv-kicker">Presence Control</div><div class="tv-title">Go-lives no radar</div><div class="tv-sub">Painel rotativo para acompanhamento da franqueadora</div></div>
@@ -1562,7 +1570,7 @@ function renderTV(){
       </div>
       <aside class="tv-rail">
         <div class="tv-stat ok"><div class="n">${rail.ativo}</div><div class="l">Sistema ativo</div></div>
-        <div class="tv-stat"><div class="n">${rail.assinado}</div><div class="l">Contrato assinado</div></div>
+        <div class="tv-stat"><div class="n">${rail.assinado}</div><div class="l">Contratos assinados</div></div>
         <div class="tv-stat"><div class="n">${rail.agendado}</div><div class="l">Go-live agendado</div></div>
       </aside>
     </div>
