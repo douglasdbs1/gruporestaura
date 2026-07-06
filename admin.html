@@ -928,7 +928,7 @@ function applyModeUi(){
   document.body.classList.toggle("admin", APP_MODE === "admin");
   document.body.classList.toggle("locked", APP_MODE === "admin" && !adminUnlocked);
   const p=document.getElementById("mode-pill");
-  if(p) p.textContent = consultorUser ? consultorUser.nome : (APP_MODE === "viewer" ? "Somente leitura" : (adminUnlocked ? "Admin" : "Admin bloqueado"));
+  if(p) p.textContent = canEdit() ? "Douglas" : (consultorUser ? consultorUser.nome : (APP_MODE === "viewer" ? "Somente leitura" : (adminUnlocked ? "Admin" : "Admin bloqueado")));
 }
 let supabaseClient = null;
 let supabaseEnabled = false;
@@ -1466,7 +1466,7 @@ function mineStores(){
 function renderMine(){
   if(!canEdit()&&!consultorUser){renderConsultorLogin();return;}
   currentMineStores=mineStores();
-  const who=canEdit()?'Admin':consultorUser.nome;
+  const who=canEdit()?'Douglas':consultorUser.nome;
   const doneCount=currentMineStores.filter(l=>checklistProgress(l).done===CHECKLIST_ITENS.length).length;
   const cards=currentMineStores.map((l,i)=>{const p=checklistProgress(l),c=checklistFor(l),cls=p.done===p.total?' ready':p.done?' warn':'';const updated=c.updatedAt?`Atualizado ${new Date(c.updatedAt).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}`:'Sem atualização';return `<div class="mine-card${cls}" onclick="openChecklistModal(${i})"><div><div class="mine-card-title">${esc(l.loja)}</div><div class="mine-card-meta">${redeTagHtml(l)}${l.num?`<span class="store-num-pill after">${esc(l.num)}</span>`:''}<span class="tag-resp">${esc(l.responsavel||'Sem consultor')}</span>${badgeHtml(l.status)}</div></div><div class="mine-progress"><div class="mine-progress-top"><span>${p.done}/${p.total} itens concluídos</span><span>${p.pct}%</span></div><div class="mine-track"><div class="mine-fill" style="width:${p.pct}%"></div></div><div class="mine-sub" style="margin-top:8px">${esc(updated)}</div></div></div>`;}).join('');
   document.getElementById('content').innerHTML=`<div class="mine-head"><div><div class="mine-title">Minhas lojas</div><div class="mine-sub">${currentMineStores.length} loja(s) em acompanhamento. ${doneCount} com checklist completo.</div></div><div class="mine-user"><span class="tag-resp">${esc(who)}</span>${consultorUser?'<button class="btn-sm" onclick="consultorLogout()">Sair</button>':''}</div></div>${cards?`<div class="mine-grid">${cards}</div>`:'<div class="mine-empty">Nenhuma loja em implantação para este consultor.</div>'}`;
@@ -1493,7 +1493,7 @@ async function saveChecklistModal(){
   if(!canSaveChecklist()){showToast('Faça login para salvar o checklist.',true);return;}
   const key=document.getElementById('check-key').value||currentChecklistKey;if(!key)return;
   const itens={};document.querySelectorAll('#check-list input[data-check]').forEach(i=>{itens[i.dataset.check]=i.checked;});
-  checklistCadastros[key]={itens,obs:document.getElementById('check-obs').value.trim(),updatedAt:new Date().toISOString(),updatedBy:consultorUser?consultorUser.nome:'Admin'};
+  checklistCadastros[key]={itens,obs:document.getElementById('check-obs').value.trim(),updatedAt:new Date().toISOString(),updatedBy:canEdit()?'Douglas':(consultorUser?consultorUser.nome:'Admin')};
   closeChecklistModal();await persistChecklist();
 }
 
@@ -2668,6 +2668,8 @@ function adminLogin(){
   if(v===ADMIN_PASSWORD){
     adminUnlocked=true;
     sessionStorage.setItem('pc_admin_unlocked','1');
+    sessionStorage.removeItem('pc_consultor_user');
+    consultorUser=null;
     applyModeUi();
     setPage('active');
     showToast('Edição liberada para esta sessão.');
