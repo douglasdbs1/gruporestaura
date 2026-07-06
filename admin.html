@@ -503,6 +503,32 @@ body.tv-mode .content{max-width:none;padding:0;background:#0f1417;}
 .atk-assunto{font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .atk-sub{font-size:10px;color:var(--text3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .atk-empty{font-size:11px;color:var(--text3);font-style:italic;padding:4px 0;}
+.mine-head{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center;background:#fff;border:1px solid var(--border);border-radius:8px;padding:16px 18px;margin-bottom:14px;}
+.mine-title{font-size:24px;font-weight:850;color:var(--text);line-height:1.05;}
+.mine-sub{font-size:12px;color:var(--text2);margin-top:5px;line-height:1.45;}
+.mine-user{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap;}
+.mine-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;}
+.mine-card{background:#fff;border:1px solid var(--border);border-left:6px solid var(--indigo);border-radius:8px;padding:16px;cursor:pointer;min-height:166px;display:flex;flex-direction:column;gap:12px;transition:transform .14s ease,border-color .14s ease,box-shadow .14s ease;}
+.mine-card:hover{transform:translateY(-2px);border-color:var(--teal-mid);box-shadow:0 10px 24px rgba(21,23,26,.08);}
+.mine-card.ready{border-left-color:var(--teal-mid);}
+.mine-card.warn{border-left-color:#d99b00;}
+.mine-card-title{font-size:17px;font-weight:850;line-height:1.12;color:var(--text);}
+.mine-card-meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+.mine-progress{margin-top:auto;}
+.mine-progress-top{display:flex;justify-content:space-between;gap:10px;font-size:11px;font-weight:800;color:var(--text2);margin-bottom:6px;}
+.mine-track{height:7px;background:#eef1f3;border-radius:999px;overflow:hidden;}
+.mine-fill{height:100%;background:var(--teal-mid);border-radius:999px;}
+.mine-empty{background:#fff;border:1px dashed var(--border2);border-radius:8px;padding:30px;text-align:center;color:var(--text3);font-size:13px;font-weight:700;}
+.consultor-login{max-width:430px;margin:54px auto;background:#fff;border:1px solid var(--border);border-radius:8px;padding:24px;box-shadow:0 14px 34px rgba(21,23,26,.07);}
+.consultor-login h2{font-size:22px;margin-bottom:8px;}
+.consultor-login p{font-size:12px;color:var(--text2);line-height:1.45;margin-bottom:16px;}
+.consultor-login input,.consultor-login select{width:100%;font-family:var(--font);font-size:13px;padding:10px 11px;border:1px solid var(--border2);border-radius:6px;margin-bottom:10px;}
+.consultor-login button{width:100%;font-family:var(--font);font-size:13px;font-weight:800;padding:10px 14px;border:1px solid var(--teal-mid);border-radius:6px;background:var(--teal-bg);color:var(--teal);cursor:pointer;}
+.check-note{font-size:12px;line-height:1.5;color:var(--text2);background:#f7f9fb;border:1px solid #dbe2e8;border-radius:8px;padding:12px 14px;margin-bottom:14px;}
+.check-list{display:grid;gap:8px;margin-bottom:14px;}
+.check-item{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer;}
+.check-item input{width:18px;height:18px;accent-color:var(--teal-mid);margin-top:1px;cursor:pointer;}
+.check-item span{font-size:13px;font-weight:700;line-height:1.35;color:var(--text);}
 .active-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px;}
 @media(max-width:800px){.active-summary{grid-template-columns:repeat(2,1fr);}.active-grid{grid-template-columns:1fr;}}
 /* HERO RESUMO ATIVO */
@@ -636,6 +662,7 @@ td.oc{max-width:260px;}
 </div>
 
 <nav class="page-nav">
+  <button class="pnav-btn" id="pnav-mine" onclick="setPage('mine')"><i class="fa-solid fa-user-check pnav-icon"></i> Minhas lojas</button>
   <button class="pnav-btn on" id="pnav-active" onclick="setPage('active')"><i class="fa-solid fa-heart-pulse pnav-icon"></i> Sistema Presence Ativo</button>
   <button class="pnav-btn" id="pnav-gl" onclick="setPage('gl')"><i class="fa-solid fa-bolt pnav-icon"></i> Go-Live</button>
   <button class="pnav-btn" id="pnav-db" onclick="setPage('db')"><i class="fa-solid fa-store pnav-icon"></i> Lojas</button>
@@ -833,6 +860,26 @@ td.oc{max-width:260px;}
 </div>
 </div>
 
+<!-- MODAL CHECKLIST CADASTROS -->
+<div class="overlay" id="ov-check" onclick="if(event.target===this)closeChecklistModal()">
+<div class="modal">
+  <div class="mhdr"><h2 id="check-mtitle">Checklist de cadastros</h2><button class="xbtn" onclick="closeChecklistModal()">&times;</button></div>
+  <div class="mbody">
+    <input type="hidden" id="check-key" value="">
+    <div class="check-note">
+      Os cadastros iniciais s&atilde;o de responsabilidade do franqueado, pois somente ele conhece a realidade e os funcion&aacute;rios da pr&oacute;pria loja. O papel do consultor &eacute; orientar, validar e esclarecer d&uacute;vidas durante esse processo para reduzir o risco de cancelamento da transi&ccedil;&atilde;o.
+    </div>
+    <div class="check-list" id="check-list"></div>
+    <div class="fg full"><label>Observa&ccedil;&otilde;es</label><textarea id="check-obs" style="min-height:82px;" placeholder="Pend&ecirc;ncias, retorno do franqueado ou pontos para o suporte..."></textarea></div>
+    <div id="check-meta" style="font-size:11px;color:var(--text3);margin-top:8px;"></div>
+  </div>
+  <div class="mfooter">
+    <button class="btn-cancel" onclick="closeChecklistModal()">Cancelar</button>
+    <button class="btn-save" onclick="saveChecklistModal()">Salvar</button>
+  </div>
+</div>
+</div>
+
 <!-- MODAL IMPORTAR CHAMADOS (Claude Desktop) -->
 <div class="overlay" id="ov-import" onclick="if(event.target===this)closeImportModal()">
 <div class="modal">
@@ -866,14 +913,22 @@ const SUPABASE_STATE_KEY = "main";
 const APP_MODE = "admin"; // viewer | admin
 const ADMIN_PASSWORD = "douglas2026"; // troque se quiser
 const ADMIN_RPC_TOKEN = "pc_edit_token_douglas_2026_4c2a9b8f"; // precisa ser igual ao token do SQL
+const CONSULTOR_USERS = [
+  {id:"marcelo",nome:"Marcelo",senha:"marcelo2026"},
+  {id:"glavio",nome:"Gl\u00e1vio",senha:"glavio2026"},
+  {id:"maiara",nome:"Maiara",senha:"maiara2026"},
+  {id:"bruno",nome:"Bruno",senha:"bruno2026"},
+];
 let adminUnlocked = APP_MODE === "admin" && sessionStorage.getItem("pc_admin_unlocked") === "1";
+let consultorUser = JSON.parse(sessionStorage.getItem("pc_consultor_user") || "null");
 function canEdit(){ return APP_MODE === "admin" && adminUnlocked; }
+function canSaveChecklist(){ return canEdit() || !!consultorUser; }
 function applyModeUi(){
   document.body.classList.toggle("viewer", APP_MODE === "viewer");
   document.body.classList.toggle("admin", APP_MODE === "admin");
   document.body.classList.toggle("locked", APP_MODE === "admin" && !adminUnlocked);
   const p=document.getElementById("mode-pill");
-  if(p) p.textContent = APP_MODE === "viewer" ? "Somente leitura" : (adminUnlocked ? "Admin" : "Admin bloqueado");
+  if(p) p.textContent = consultorUser ? consultorUser.nome : (APP_MODE === "viewer" ? "Somente leitura" : (adminUnlocked ? "Admin" : "Admin bloqueado"));
 }
 let supabaseClient = null;
 let supabaseEnabled = false;
@@ -888,7 +943,7 @@ function initSupabase(){
   return true;
 }
 function statePayload(){
-  return {version:1, updatedAt:new Date().toISOString(), golive:lojas, lojas:dbExtra, suporte:supportTickets, presenceAtivo:activeHealth, crm:crmData};
+  return {version:1, updatedAt:new Date().toISOString(), golive:lojas, lojas:dbExtra, suporte:supportTickets, presenceAtivo:activeHealth, crm:crmData, checklistCadastros};
 }
 async function loadFromSupabase(){
   if(!supabaseEnabled) return false;
@@ -910,6 +965,7 @@ async function loadFromSupabase(){
     supportTickets = data.payload.suporte || [];
     activeHealth = data.payload.presenceAtivo || JSON.parse(JSON.stringify(EMBEDDED_ACTIVE_HEALTH));
     crmData = data.payload.crm || crmData;
+    checklistCadastros = data.payload.checklistCadastros || {};
     console.info("Dados carregados do Supabase:", data.updated_at);
     return true;
   }
@@ -933,7 +989,7 @@ async function seedSupabaseInitialState(){
 async function saveToSupabase(silent=false){
   if(isBooting) return;
   if(!canEdit()){ if(!silent) showToast("Modo somente leitura. Alterações não foram salvas.", true); return; }
-  saveLocal(); saveDbLocal(); saveSupportLocal(); saveActiveLocal(); saveCrmLocal();
+  saveLocal(); saveDbLocal(); saveSupportLocal(); saveActiveLocal(); saveCrmLocal(); saveChecklistLocal();
   if(!supabaseEnabled){ if(!silent) showToast("Salvo localmente. Configure o Supabase para salvar online."); refreshTVIfOpen(); return; }
   const {error}=await supabaseClient.rpc("save_presence_control_state",{
     p_token: ADMIN_RPC_TOKEN,
@@ -945,10 +1001,10 @@ async function saveToSupabase(silent=false){
 }
 async function initApp(){
   applyModeUi();
-  load(); loadDb(); loadSupport(); loadActive(); loadCrm(); initSupabase();
+  load(); loadDb(); loadSupport(); loadActive(); loadCrm(); loadChecklist(); initSupabase();
   if(supabaseEnabled) await loadFromSupabase();
   isBooting=false;
-  setPage("active");
+  setPage(APP_MODE === "viewer" ? "mine" : "active");
   if(APP_MODE === "admin" && !adminUnlocked) renderAdminLogin();
   applyModeUi();
 }
@@ -967,6 +1023,17 @@ const FASES = [
   {key:'goLive',     label:'Go-live'},
 ];
 const FASE_DEFAULTS = ['','','','17:30','09:00'];
+const CHECKLIST_ITENS = [
+  {key:'precosFranquia',label:'Revisar e confirmar os Preços da Franquia.'},
+  {key:'produtosIndispensaveis',label:'Verificar produtos ou serviços indispensáveis para a operação da loja.'},
+  {key:'pacotes',label:'Conferir se os pacotes utilizados pela loja estão cadastrados.'},
+  {key:'servicoKg',label:'Cadastrar o serviço por kg.'},
+  {key:'equipe',label:'Cadastrar toda a equipe e funcionários.'},
+  {key:'fornecedores',label:'Cadastrar fornecedores e transportadoras.'},
+  {key:'whatsapp',label:'Testar e validar o WhatsApp.'},
+  {key:'testeBasico',label:'Realizar teste básico do sistema, incluindo criação de ROLs e serviços recorrentes.'},
+  {key:'pendenciasProdutos',label:'Relatar produtos e serviços ainda não cadastrados para avaliação do suporte.'},
+];
 const ACTIVE_DEFAULT_UPDATED = '15/06/2026';
 const EMBEDDED_ACTIVE_HEALTH = [
   {loja:"SC S\u00c3O JOS\u00c9",num:"2269",rede:"both",status:"ok",since:"",responsavel:"Gl\u00e1vio",obs:"Funcionando"},
@@ -992,6 +1059,7 @@ let dbExtra = [];
 let supportTickets = [];
 let activeHealth = [];
 let crmData = {implantacao:[],atualizadoEm:''}; // preenchido pelo sync diário do Zoho (sync/zoho_sync.js)
+let checklistCadastros = {};
 function buildStubs(){
   const xNums=new Set(lojas.map(l=>l.num).filter(n=>n&&n.trim()));
   const xNameRede=new Set(lojas.map(l=>l.loja+'|'+redeFromGrupo(l.grupo)));
@@ -1019,6 +1087,7 @@ function saveDbLocal() { localStorage.setItem('pc_db_v1',  JSON.stringify(dbExtr
 function saveSupportLocal() { localStorage.setItem('pc_support_v1', JSON.stringify(supportTickets)); }
 function saveActiveLocal() { localStorage.setItem('pc_active_v1', JSON.stringify(activeHealth)); }
 function saveCrmLocal() { localStorage.setItem('pc_crm_v1', JSON.stringify(crmData)); }
+function saveChecklistLocal() { localStorage.setItem('pc_checklist_v1', JSON.stringify(checklistCadastros)); }
 function save(){ saveToSupabase(); }
 function saveDb(){ saveToSupabase(); }
 function saveSupport(){ saveToSupabase(); }
@@ -1028,9 +1097,10 @@ function loadDb() { dbExtra = JSON.parse(localStorage.getItem('pc_db_v1') || 'nu
 function loadSupport() { supportTickets = JSON.parse(localStorage.getItem('pc_support_v1') || 'null') || []; }
 function loadActive() { activeHealth = JSON.parse(localStorage.getItem('pc_active_v1') || 'null') || JSON.parse(JSON.stringify(EMBEDDED_ACTIVE_HEALTH)); }
 function loadCrm() { crmData = JSON.parse(localStorage.getItem('pc_crm_v1') || 'null') || crmData; }
+function loadChecklist() { checklistCadastros = JSON.parse(localStorage.getItem('pc_checklist_v1') || 'null') || {}; }
 
 function saveAll() {
-  const d={version:1,exportedAt:new Date().toISOString(),golive:lojas,lojas:dbExtra,suporte:supportTickets,presenceAtivo:activeHealth};
+  const d={version:1,exportedAt:new Date().toISOString(),golive:lojas,lojas:dbExtra,suporte:supportTickets,presenceAtivo:activeHealth,checklistCadastros};
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([JSON.stringify(d,null,2)],{type:'application/json'}));
   a.download='presence_backup_'+new Date().toISOString().slice(0,10)+'.json';
@@ -1043,7 +1113,7 @@ function loadJSON(e) {
   r.onload=async ev=>{
     try {
       const d=JSON.parse(ev.target.result);
-      if(d.golive&&d.lojas){lojas=d.golive;dbExtra=d.lojas;supportTickets=d.suporte||[];activeHealth=d.presenceAtivo||JSON.parse(JSON.stringify(EMBEDDED_ACTIVE_HEALTH));await saveToSupabase(true);renderPage();showToast(lojas.length+' go-lives, '+dbExtra.length+' lojas, '+supportTickets.length+' chamados e '+activeHealth.length+' ativos carregados e salvos.');}
+      if(d.golive&&d.lojas){lojas=d.golive;dbExtra=d.lojas;supportTickets=d.suporte||[];activeHealth=d.presenceAtivo||JSON.parse(JSON.stringify(EMBEDDED_ACTIVE_HEALTH));checklistCadastros=d.checklistCadastros||{};await saveToSupabase(true);renderPage();showToast(lojas.length+' go-lives, '+dbExtra.length+' lojas, '+supportTickets.length+' chamados e '+activeHealth.length+' ativos carregados e salvos.');}
       else if(Array.isArray(d)){lojas=d;await saveToSupabase(true);renderPage();showToast(d.length+' go-lives carregados e salvos.');}
       else throw 0;
     } catch{showToast('Arquivo inválido.',true);}
@@ -1368,6 +1438,65 @@ function renderActiveContent(){
 }
 
 // ── PAGE NAV ──
+// Minhas lojas / checklist
+let currentMineStores=[];
+let currentChecklistKey='';
+function consultorLogin(){
+  const id=(document.getElementById('consultor-user')||{value:''}).value;
+  const senha=(document.getElementById('consultor-pass')||{value:''}).value;
+  const u=CONSULTOR_USERS.find(x=>x.id===id&&x.senha===senha);
+  if(!u){const m=document.getElementById('consultor-login-msg');if(m)m.style.display='block';return;}
+  consultorUser={id:u.id,nome:u.nome};
+  sessionStorage.setItem('pc_consultor_user',JSON.stringify(consultorUser));
+  applyModeUi();
+  setPage('mine');
+}
+function consultorLogout(){sessionStorage.removeItem('pc_consultor_user');consultorUser=null;applyModeUi();setPage('mine');}
+function renderConsultorLogin(){
+  document.getElementById('content').innerHTML=`<div class="consultor-login"><h2>Acesso do consultor</h2><p>Entre para ver somente suas lojas em implantação e atualizar o checklist de cadastros iniciais.</p><select id="consultor-user"><option value="marcelo">Marcelo</option><option value="glavio">Gl&aacute;vio</option><option value="maiara">Maiara</option><option value="bruno">Bruno</option></select><input id="consultor-pass" type="password" placeholder="Senha" onkeydown="if(event.key==='Enter')consultorLogin()"><button onclick="consultorLogin()">Entrar</button><p id="consultor-login-msg" style="display:none;color:#8b1a1a;margin:10px 0 0">Usuário ou senha inválidos.</p></div>`;
+}
+function checklistKey(l){return (l.num&&l.num.trim())?'num:'+l.num.trim():'loja:'+normLojaName(l.loja)+'|'+redeFromGrupo(l.grupo,l.rede);}
+function checklistFor(l){return checklistCadastros[checklistKey(l)]||{itens:{},obs:'',updatedAt:'',updatedBy:''};}
+function checklistProgress(l){const c=checklistFor(l),done=CHECKLIST_ITENS.filter(i=>c.itens&&c.itens[i.key]).length,total=CHECKLIST_ITENS.length;return {done,total,pct:Math.round(done/total*100)};}
+function mineStores(){
+  const list=getViewLojas().filter(l=>l.status!=='concluido');
+  const name=consultorUser&&normLojaName(consultorUser.nome);
+  return list.filter(l=>canEdit()||!name||normLojaName(l.responsavel)===name).sort((a,b)=>checklistProgress(a).pct-checklistProgress(b).pct||String(a.loja).localeCompare(String(b.loja),'pt'));
+}
+function renderMine(){
+  if(!canEdit()&&!consultorUser){renderConsultorLogin();return;}
+  currentMineStores=mineStores();
+  const who=canEdit()?'Admin':consultorUser.nome;
+  const doneCount=currentMineStores.filter(l=>checklistProgress(l).done===CHECKLIST_ITENS.length).length;
+  const cards=currentMineStores.map((l,i)=>{const p=checklistProgress(l),c=checklistFor(l),cls=p.done===p.total?' ready':p.done?' warn':'';const updated=c.updatedAt?`Atualizado ${new Date(c.updatedAt).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}`:'Sem atualização';return `<div class="mine-card${cls}" onclick="openChecklistModal(${i})"><div><div class="mine-card-title">${esc(l.loja)}</div><div class="mine-card-meta">${redeTagHtml(l)}${l.num?`<span class="store-num-pill after">${esc(l.num)}</span>`:''}<span class="tag-resp">${esc(l.responsavel||'Sem consultor')}</span>${badgeHtml(l.status)}</div></div><div class="mine-progress"><div class="mine-progress-top"><span>${p.done}/${p.total} itens concluídos</span><span>${p.pct}%</span></div><div class="mine-track"><div class="mine-fill" style="width:${p.pct}%"></div></div><div class="mine-sub" style="margin-top:8px">${esc(updated)}</div></div></div>`;}).join('');
+  document.getElementById('content').innerHTML=`<div class="mine-head"><div><div class="mine-title">Minhas lojas</div><div class="mine-sub">${currentMineStores.length} loja(s) em acompanhamento. ${doneCount} com checklist completo.</div></div><div class="mine-user"><span class="tag-resp">${esc(who)}</span>${consultorUser?'<button class="btn-sm" onclick="consultorLogout()">Sair</button>':''}</div></div>${cards?`<div class="mine-grid">${cards}</div>`:'<div class="mine-empty">Nenhuma loja em implantação para este consultor.</div>'}`;
+}
+function openChecklistModal(idx){
+  const l=currentMineStores[idx];if(!l)return;currentChecklistKey=checklistKey(l);
+  const c=checklistFor(l),p=checklistProgress(l);
+  document.getElementById('check-key').value=currentChecklistKey;
+  document.getElementById('check-mtitle').textContent='Checklist - '+l.loja;
+  document.getElementById('check-list').innerHTML=CHECKLIST_ITENS.map(i=>`<label class="check-item"><input type="checkbox" data-check="${i.key}" ${c.itens&&c.itens[i.key]?'checked':''}><span>${esc(i.label)}</span></label>`).join('');
+  document.getElementById('check-obs').value=c.obs||'';
+  document.getElementById('check-meta').textContent=c.updatedAt?`Última atualização: ${new Date(c.updatedAt).toLocaleString('pt-BR')} por ${c.updatedBy||'-'} | ${p.done}/${p.total} concluídos`:'Ainda sem atualização.';
+  document.getElementById('ov-check').classList.add('open');
+}
+function closeChecklistModal(){document.getElementById('ov-check').classList.remove('open');currentChecklistKey='';}
+async function persistChecklist(){
+  saveChecklistLocal();
+  if(!supabaseEnabled){showToast('Checklist salvo localmente.');renderMine();return;}
+  const {error}=await supabaseClient.rpc("save_presence_control_state",{p_token:ADMIN_RPC_TOKEN,p_payload:statePayload()});
+  if(error){console.error("Supabase checklist save error:",error);showToast('Erro ao salvar checklist no Supabase.',true);return;}
+  showToast('Checklist salvo.');renderMine();
+}
+async function saveChecklistModal(){
+  if(!canSaveChecklist()){showToast('Faça login para salvar o checklist.',true);return;}
+  const key=document.getElementById('check-key').value||currentChecklistKey;if(!key)return;
+  const itens={};document.querySelectorAll('#check-list input[data-check]').forEach(i=>{itens[i.dataset.check]=i.checked;});
+  checklistCadastros[key]={itens,obs:document.getElementById('check-obs').value.trim(),updatedAt:new Date().toISOString(),updatedBy:consultorUser?consultorUser.nome:'Admin'};
+  closeChecklistModal();await persistChecklist();
+}
+
 let currentPage='active';
 let tvSlide=0,tvTimer=null,tvClockTimer=null,tvRefreshTimer=null;
 const TV_REFRESH_MS=60000;
@@ -1375,6 +1504,7 @@ function setPage(p){
   if(p==='tv'&&!canEdit())p='active';
   currentPage=p;
   document.body.classList.toggle('tv-mode',p==='tv');
+  document.getElementById('pnav-mine').className='pnav-btn'+(p==='mine'?' on':'');
   document.getElementById('pnav-gl').className='pnav-btn'+(p==='gl'?' on':'');
   document.getElementById('pnav-active').className='pnav-btn'+(p==='active'?' on':'');
   document.getElementById('pnav-db').className='pnav-btn'+(p==='db'?' on':'');
@@ -1384,13 +1514,13 @@ function setPage(p){
   renderPage();
 }
 function updateSysSub(){const m={active:'Lojas em operação',gl:'Implantações em andamento',db:'Base geral de lojas',sup:'Chamados de suporte',tv:'Painel de monitor'};const el=document.getElementById('sys-sub');if(el)el.textContent=m[currentPage]||'';}
-function renderPage(){updateSysSub();if(currentPage==='gl')renderGL();else if(currentPage==='active')renderActive();else if(currentPage==='db')renderDB();else if(currentPage==='tv')renderTV();else renderSupport();}
+function renderPage(){updateSysSub();if(currentPage==='mine'){const el=document.getElementById('sys-sub');if(el)el.textContent='Minhas lojas';renderMine();}else if(currentPage==='gl')renderGL();else if(currentPage==='active')renderActive();else if(currentPage==='db')renderDB();else if(currentPage==='tv')renderTV();else renderSupport();}
 
 // ── TV PAGE ──
 function refreshTVIfOpen(){if(currentPage==='tv')renderTV();}
 function refreshTVFromLocalIfOpen(){
   if(currentPage!=='tv')return;
-  load(); loadDb(); loadSupport(); loadActive(); loadCrm();
+  load(); loadDb(); loadSupport(); loadActive(); loadCrm(); loadChecklist();
   renderTV();
 }
 function stopTV(){
@@ -2606,7 +2736,7 @@ function deleteLoja(){
 
 // ── INIT ──
 window.addEventListener('storage',e=>{
-  if(['pc_gl_v1','pc_db_v1','pc_support_v1','pc_active_v1','pc_crm_v1'].includes(e.key))refreshTVFromLocalIfOpen();
+  if(['pc_gl_v1','pc_db_v1','pc_support_v1','pc_active_v1','pc_crm_v1','pc_checklist_v1'].includes(e.key))refreshTVFromLocalIfOpen();
 });
 document.getElementById('hdate').textContent='Hoje: '+TODAY.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
 initApp();
