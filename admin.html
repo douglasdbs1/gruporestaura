@@ -247,6 +247,13 @@ td.oc{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 .cc-b.ag{background:var(--teal-bg);color:var(--teal);}
 .cc-b.ab{background:#ede0f8;color:#5a2d8c;}
 .cc-b.ok{background:var(--blue-bg);color:var(--blue);}
+.cc-usage{padding:9px 13px;border-bottom:1px solid #f0ede8;display:grid;gap:5px;background:#fbfaf8;}
+.cc-use-line{display:flex;justify-content:space-between;font-size:10px;font-weight:700;color:var(--text2);}
+.cc-use-line b{color:var(--text);font-size:11px;}
+.cc-usebar{height:5px;border-radius:999px;background:#ece8e1;overflow:hidden;}
+.cc-usebar span{display:block;height:100%;background:var(--indigo);border-radius:999px;}
+.cc-usebar.teal span{background:#10a66f;}
+.cc-use-meta{font-size:10px;color:var(--text3);margin-top:2px;}
 .cc-row{display:flex;align-items:center;gap:7px;padding:7px 13px;border-bottom:1px solid #f7f5f1;}
 .cc-row:last-child{border-bottom:none;}
 .cc-loja{flex:1;font-size:11px;font-weight:500;color:var(--text);}
@@ -770,9 +777,9 @@ td.oc{max-width:260px;}
       </div>
       <div class="fg"></div>
     </div>
-    <div class="flow-sec">
-      <div class="flow-sec-title">Fluxo de implementação</div>
-      <div class="flow-steps" id="flow-steps"></div>
+    <div class="fg-grid">
+      <div class="fg"><label>Go-live (marcado com o franqueado)</label><input type="text" id="f-golive" placeholder="DD/MM/AAAA 09:00"></div>
+      <div class="fg"></div>
     </div>
     <div class="fg full" style="margin-bottom:14px;">
       <label>Histórico de anotações</label>
@@ -961,6 +968,7 @@ function applyModeUi(){
 }
 let supabaseClient = null;
 let supabaseEnabled = false;
+let lastStateUpdatedAt = null;
 let isBooting = true;
 function hasSupabaseConfig(){
   return SUPABASE_URL.startsWith("https://") && SUPABASE_ANON_KEY && !SUPABASE_ANON_KEY.startsWith("COLE_AQUI");
@@ -989,6 +997,7 @@ async function loadFromSupabase(){
   }
 
   if(data && data.payload){
+    lastStateUpdatedAt = data.updated_at || null;
     lojas = data.payload.golive || [];
     dbExtra = data.payload.lojas || [];
     supportTickets = data.payload.suporte || [];
@@ -1042,16 +1051,9 @@ async function initApp(){
 const EMBEDDED_GOLIVE = [{"loja":"SC TUBARÃO","grupo":"Franquias Restaura Jeans","num":"2307","status":"agendado","franqueado":"","instalacao":"1","responsavel":"Glávio","inauguracao":"","tickets":"","treinLoja":"1","treinRetag":"1","preGoLive":"1","goLive":"16/06/2026 09:00","log":"[01/06/2026 09:00] Pendente retorno da franqueadora sobre go live. Sugerido 1 mês após alinhamento (28/05)."},{"loja":"PR PONTA GROSSA","grupo":"Franquias Restaura Jeans","num":"2322","status":"agendado","franqueado":"","instalacao":"1","responsavel":"Glávio","inauguracao":"","tickets":"#716986","treinLoja":"1","treinRetag":"1","preGoLive":"1","goLive":"18/06/2026 09:00","log":"[01/06/2026 09:00] Solicitado vídeo de treinamento sobre costura - em preparação."},{"loja":"RS PORTO ALEGRE MOINHOS","grupo":"Franquias Restaura Jeans","num":"2317","status":"aberto","franqueado":"Milton Rodrigues","instalacao":"","responsavel":"Maiara","inauguracao":"","tickets":"#713634","treinLoja":"27/05/2026 10:00","treinRetag":"","preGoLive":"","goLive":"","log":"[01/06/2026 09:00] Aguardar agendar go live de azenha e moinho do vento. Contrato Molinho pendente."},{"loja":"SP JAÇANÃ","grupo":"Franquias Restaura Jeans","num":"2324","status":"agendado","franqueado":"","instalacao":"1","responsavel":"Marcelo","inauguracao":"15/06/2026","tickets":"#717270","treinLoja":"1","treinRetag":"1","preGoLive":"1","goLive":"18/06/2026 09:00","log":"[01/06/2026 09:00] Aguardando retorno franqueadora."},{"loja":"PR FRANCISCO BELTRÃO","grupo":"Franquias Restaura Jeans","num":"2310","status":"aberto","franqueado":"","instalacao":"","responsavel":"Glávio","inauguracao":"","tickets":"#714799","treinLoja":"","treinRetag":"26/05/2026 14:00","preGoLive":"","goLive":"","log":"[01/06/2026 09:00] Cronograma confirmado - exceto go live. Colocamos para 26/05."},{"loja":"RS PORTO ALEGRE AZENHA","grupo":"Franquias Restaura Jeans","num":"2317","status":"aberto","franqueado":"Milton Rodrigues","instalacao":"","responsavel":"Maiara","inauguracao":"","tickets":"#713634 #713620","treinLoja":"26/05/2026 10:00","treinRetag":"","preGoLive":"","goLive":"","log":"[01/06/2026 09:00] Aguardar agendamento — ticket unidade Azenha / Franqueado Milton + Moinho do Vento."},{"loja":"RJ CAMPOS DOS GOYTACAZES","grupo":"Minha Lavanderia","num":"2280","status":"aberto","franqueado":"","instalacao":"","responsavel":"Maiara","inauguracao":"","tickets":"","treinLoja":"","treinRetag":"","preGoLive":"","goLive":"","log":"[01/06/2026 09:00] Cliente notificado em 18/05. Retornar 20/05 para nova tentativa de agendamento."},{"loja":"SP PIRASSUNUNGA","grupo":"Franquias Restaura Jeans","num":"2320","status":"agendado","franqueado":"","instalacao":"1","responsavel":"Bruno","inauguracao":"","tickets":"#716531","treinLoja":"1","treinRetag":"1","preGoLive":"1","goLive":"17/06/2026 09:00","log":"[01/06/2026 09:00] Cronograma confirmado. Solicitado a partir de 09/06."},{"loja":"SP PIRACICABA","grupo":"Franquias Restaura Jeans","num":"2303","status":"concluido","franqueado":"","instalacao":"","responsavel":"Bruno","inauguracao":"","tickets":"#709397","treinLoja":"","treinRetag":"","preGoLive":"","goLive":"","log":"[20/05/2026 10:00] Go live realizado com sucesso."},{"loja":"RS PELOTAS","grupo":"Franquias Restaura Jeans","num":"2323","status":"concluido","franqueado":"","instalacao":"1","responsavel":"Marcelo","inauguracao":"","tickets":"#717264","treinLoja":"1","treinRetag":"1","preGoLive":"1","goLive":"23/07/2026 09:00","log":"[01/06/2026 09:00] Confirmado — a partir de julho, fora da operação no momento."},{"loja":"SC JARAGUÁ DO SUL","grupo":"Franquias Restaura Jeans","num":"2330","status":"agendado","franqueado":"","instalacao":"1","responsavel":"Glávio","inauguracao":"","tickets":"#718226","treinLoja":"1","treinRetag":"1","preGoLive":"1","goLive":"11/06/2026 09:00","log":"[01/06/2026 09:00] Cronograma confirmado 22/05."},{"loja":"RS PORTO ALEGRE BOM FIM","num":"2321","grupo":"Franquias Restaura Jeans","franqueado":"","responsavel":"Maiara","status":"agendado","inauguracao":"","tickets":"#716534","log":"[01/06/2026 09:00] Confirmado. Instalação: 22/05 14:30, GL: 03/06 09:00.","instalacao":"1","treinLoja":"1","treinRetag":"1","preGoLive":"1","goLive":"09/06/2026 09:00"},{"loja":"RS PORTO ALEGRE PETRÓPOLIS","grupo":"Franquias Restaura Jeans","num":"2317","status":"agendado","franqueado":"","instalacao":"1","responsavel":"Maiara","inauguracao":"","tickets":"#713634","treinLoja":"1","treinRetag":"1","preGoLive":"1","goLive":"08/06/2026 09:00","log":"[01/06/2026 09:00] Treinamentos ok — pendente confirmação go live."},{"loja":"SP CAMPINAS JD. AURÉLIA","grupo":"Franquias Restaura Jeans","num":"2328","status":"agendado","franqueado":"","instalacao":"1","responsavel":"Bruno","inauguracao":"","tickets":"#718071","treinLoja":"1","treinRetag":"1","preGoLive":"1","goLive":"29/06/2026 09:30","log":"[01/06/2026 09:00] Cronograma confirmado.\n[22/06/2026 17:08] Ticket #718071: go-live reagendado para 29/06/2026 09:30 devido a funcionarios em ferias."},{"loja":"RS TEUTÔNIA","grupo":"Minha Lavanderia","num":"2327","status":"concluido","franqueado":"","instalacao":"1","responsavel":"Marcelo","inauguracao":"","tickets":"#718239","treinLoja":"1","treinRetag":"1","preGoLive":"1","goLive":"10/06/2026 09:00","log":"[01/06/2026 09:00] Treino Loja: 28/05 10:00, Instalação: 28/05 13:30, Treino Retag: 29/05 10:00."}];
 const EMBEDDED_LOJAS  = [{"nome":"AM MANAUS","num":"","rede":"ml","status":"antigo","alerta":false,"responsavel":"Maiara","obs":""},{"nome":"ES LINHARES","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Maiara","obs":""},{"nome":"GO CATALÃO","num":"2336","rede":"rj","status":"transicao","alerta":false,"responsavel":"Maiara","obs":"Contrato assinado 02/06/2026 — iniciar treinamento e instalação"},{"nome":"GO GOIÂNIA JD. GOIÁS","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Maiara","obs":""},{"nome":"GO MINEIROS","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Maiara","obs":""},{"nome":"GO OESTE","num":"","rede":"ml","status":"antigo","alerta":false,"responsavel":"Maiara","obs":""},{"nome":"GO PARQUE AMAZÔNIA","num":"","rede":"ml","status":"antigo","alerta":false,"responsavel":"Maiara","obs":""},{"nome":"MT CUIABÁ","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Maiara","obs":""},{"nome":"PB JOÃO PESSOA","num":"","rede":"rj","status":"antigo","alerta":true,"responsavel":"Maiara","obs":"Dificuldade de comunicação"},{"nome":"PB JOÃO PESSOA","num":"","rede":"ml","status":"antigo","alerta":false,"responsavel":"Maiara","obs":""},{"nome":"PB TAMBAÚ","num":"","rede":"ml","status":"antigo","alerta":false,"responsavel":"Maiara","obs":""},{"nome":"RJ DUQUE DE CAXIAS","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Maiara","obs":""},{"nome":"RJ JACAREPAGUÁ","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Maiara","obs":""},{"nome":"RJ RECREIO","num":"","rede":"ml","status":"antigo","alerta":false,"responsavel":"Maiara","obs":""},{"nome":"RJ VILA ISABEL","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Maiara","obs":""},{"nome":"RS BENTO GONÇALVES","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Maiara","obs":"Serra"},{"nome":"RS CACHOEIRINHA","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Maiara","obs":"Metropolitana"},{"nome":"RS CANELA","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Maiara","obs":"Serra"},{"nome":"RS CANOAS","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Maiara","obs":"Metropolitana"},{"nome":"RS CAXIAS","num":"","rede":"ml","status":"antigo","alerta":false,"responsavel":"Maiara","obs":"Serra"},{"nome":"RS CAXIAS CENTRO","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Maiara","obs":"Serra"},{"nome":"RS CAXIAS SÃO PELEGRINO","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Maiara","obs":"Serra"},{"nome":"RS FARROUPILHA","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Maiara","obs":"Serra"},{"nome":"RS GRAVATAÍ","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Maiara","obs":"Metropolitana"},{"nome":"RS MORADA DO VALE I","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Maiara","obs":"Gravataí"},{"nome":"RS NOVO HAMBURGO","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Maiara","obs":"Vale do Sinos"},{"nome":"RS PORTO ALEGRE CRISTAL","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Maiara","obs":"Porto Alegre - ZS"},{"nome":"RS PORTO ALEGRE LINDOIA","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Maiara","obs":"Porto Alegre - ZN"},{"nome":"RS SÃO LEOPOLDO","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Maiara","obs":"Vale do Sinos"},{"nome":"SP SÃO ROQUE","num":"","rede":"ml","status":"antigo","alerta":false,"responsavel":"Maiara","obs":""},{"nome":"SP VARGEM GRANDE","num":"","rede":"ml","status":"antigo","alerta":false,"responsavel":"Maiara","obs":""},{"nome":"RJ MARICÁ","num":"2304","rede":"rj","status":"ativo","alerta":false,"responsavel":"Maiara","obs":"Go-Live Finalizado"},{"nome":"GO CRISTALINA","num":"2272","rede":"ml","status":"ativo","alerta":false,"responsavel":"Maiara","obs":"Go-Live Finalizado"},{"nome":"AL MACEIÓ","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Marcelo","obs":""},{"nome":"BA BARREIRAS","num":"2274","rede":"ml","status":"ativo","alerta":false,"responsavel":"Marcelo","obs":"Presence Ativo"},{"nome":"BA SALVADOR","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Marcelo","obs":""},{"nome":"BA SALVADOR","num":"","rede":"ml","status":"antigo","alerta":false,"responsavel":"Marcelo","obs":""},{"nome":"MA BALSAS","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Marcelo","obs":""},{"nome":"MS CAMPO GRANDE","num":"2359","rede":"ml","status":"transicao","alerta":false,"responsavel":"Marcelo","obs":"Contrato assinado"},{"nome":"PA BELÉM","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Marcelo","obs":""},{"nome":"PA PARAUAPEBAS","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Marcelo","obs":""},{"nome":"PE CARPINA","num":"","rede":"ml","status":"antigo","alerta":false,"responsavel":"Marcelo","obs":""},{"nome":"PE RECIFE","num":"","rede":"ml","status":"antigo","alerta":false,"responsavel":"Marcelo","obs":""},{"nome":"PE RECIFE AFONSO FALCÃO","num":"","rede":"ml","status":"antigo","alerta":false,"responsavel":"Marcelo","obs":""},{"nome":"PE RECIFE MADALENA","num":"2334","rede":"ml","status":"transicao","alerta":false,"responsavel":"Marcelo","obs":"Contrato assinado"},{"nome":"PI PICOS","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Marcelo","obs":""},{"nome":"RN MOSSORÓ","num":"","rede":"ml","status":"antigo","alerta":true,"responsavel":"Marcelo","obs":"Dificuldade de comunicação"},{"nome":"RS CAMAQUÃ","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Marcelo","obs":"Sul/Costa Doce"},{"nome":"RS CARAZINHO","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Marcelo","obs":"Norte"},{"nome":"RS CASSINO","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Marcelo","obs":"Extremo Sul"},{"nome":"RS CRUZ ALTA","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Marcelo","obs":"Noroeste"},{"nome":"RS HORIZONTINA","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Marcelo","obs":"Noroeste - Uma das mais distantes"},{"nome":"RS IJUÍ","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Marcelo","obs":"Noroeste"},{"nome":"RS LAJEADO","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Marcelo","obs":"Vale do Taquari"},{"nome":"RS LIVRAMENTO MEGA","num":"","rede":"both","status":"antigo","alerta":false,"responsavel":"Marcelo","obs":"Fronteira Oeste"},{"nome":"RS PASSO FUNDO","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Marcelo","obs":"Norte"},{"nome":"RS PASSO FUNDO SÃO CRISTÓVÃO","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Marcelo","obs":"Norte"},{"nome":"RS SANTA CRUZ DO SUL","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Marcelo","obs":"Vale do Rio Pardo"},{"nome":"RS SANTA MARIA MEGA","num":"","rede":"both","status":"antigo","alerta":false,"responsavel":"Marcelo","obs":"Central"},{"nome":"RS SANTA ROSA MEGA","num":"2332","rede":"both","status":"transicao","alerta":false,"responsavel":"Marcelo","obs":"Noroeste"},{"nome":"RS SANTO ÂNGELO","num":"2337","rede":"rj","status":"transicao","alerta":false,"responsavel":"Marcelo","obs":"Missões"},{"nome":"SP HIGIENÓPOLIS MEGA","num":"","rede":"both","status":"antigo","alerta":false,"responsavel":"Marcelo","obs":""},{"nome":"SP CASA VERDE","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Marcelo","obs":""},{"nome":"SP JARDINS","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Marcelo","obs":""},{"nome":"SP MOEMA","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Marcelo","obs":""},{"nome":"SP PARQUE SÃO JORGE","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Marcelo","obs":""},{"nome":"SP PENHA","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Marcelo","obs":""},{"nome":"SP PONTE RASA","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Marcelo","obs":""},{"nome":"SP SAÚDE","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Marcelo","obs":""},{"nome":"SP SILVA BUENO","num":"","rede":"rj","status":"antigo","alerta":true,"responsavel":"Marcelo","obs":"Dificuldade de comunicação"},{"nome":"SP VILA CARRÃO","num":"2352","rede":"rj","status":"transicao","alerta":false,"responsavel":"Marcelo","obs":"Contrato assinado"},{"nome":"SP VILA MATILDE","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Marcelo","obs":""},{"nome":"MG ALFENAS","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Bruno","obs":""},{"nome":"MG BELO HORIZONTE","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Bruno","obs":""},{"nome":"MG CORONEL FABRÍCIANO","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Bruno","obs":""},{"nome":"MG MONTES CLAROS","num":"2349","rede":"rj","status":"transicao","alerta":false,"responsavel":"Bruno","obs":"Contrato assinado"},{"nome":"MG MURIAÉ","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Bruno","obs":""},{"nome":"SP AMERICANA","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Bruno","obs":""},{"nome":"SP BARRETOS","num":"","rede":"ml","status":"antigo","alerta":false,"responsavel":"Bruno","obs":""},{"nome":"SP BOTUCATU","num":"","rede":"ml","status":"antigo","alerta":false,"responsavel":"Bruno","obs":""},{"nome":"SP CAMPINAS CAMBUÍ","num":"","rede":"both","status":"antigo","alerta":false,"responsavel":"Bruno","obs":""},{"nome":"SP CAMPINAS D. PEDRO","num":"","rede":"ml","status":"antigo","alerta":false,"responsavel":"Bruno","obs":"Já assinou contrato"},{"nome":"SP FRANCA","num":"","rede":"both","status":"antigo","alerta":false,"responsavel":"Bruno","obs":""},{"nome":"SP GUARULHOS","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Bruno","obs":""},{"nome":"SP IBIUNA","num":"2343","rede":"rj","status":"transicao","alerta":false,"responsavel":"Bruno","obs":"Contrato assinado"},{"nome":"SP INDAIATUBA","num":"","rede":"rj","status":"antigo","alerta":true,"responsavel":"Bruno","obs":"Dificuldade de comunicação"},{"nome":"SP INDAIATUBA","num":"","rede":"ml","status":"antigo","alerta":false,"responsavel":"Bruno","obs":""},{"nome":"SP LIMEIRA","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Bruno","obs":""},{"nome":"SP SÃO JOSÉ DOS CAMPOS JD SATÉLITE","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Bruno","obs":""},{"nome":"SP SOROCABA","num":"2300","rede":"rj","status":"ativo","alerta":false,"responsavel":"Bruno","obs":"Go-Live efetuado"},{"nome":"SP SOROCABA","num":"","rede":"ml","status":"ativo","alerta":false,"responsavel":"Bruno","obs":""},{"nome":"SP TAUBATÉ JD NAÇÕES","num":"2278","rede":"ml","status":"ativo","alerta":false,"responsavel":"Bruno","obs":"Go-Live efetuado"},{"nome":"SP TAUBATÉ","num":"","rede":"ml","status":"antigo","alerta":false,"responsavel":"Bruno","obs":""},{"nome":"SP VALINHOS","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Bruno","obs":""},{"nome":"SP ATIBAIA","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Bruno","obs":""},{"nome":"SC XANXERÊ","num":"","rede":"ml","status":"antigo","alerta":false,"responsavel":"Glávio","obs":""},{"nome":"SC VIDEIRA","num":"2313","rede":"both","status":"ativo","alerta":false,"responsavel":"Glávio","obs":"Go-Live efetuado"},{"nome":"SC SÃO JOSÉ","num":"2269","rede":"both","status":"transicao","alerta":false,"responsavel":"Glávio","obs":"Contrato assinado"},{"nome":"SC PORTO UNIÃO","num":"","rede":"both","status":"antigo","alerta":false,"responsavel":"Glávio","obs":""},{"nome":"SC PALHOÇA","num":"2275","rede":"ml","status":"ativo","alerta":false,"responsavel":"Glávio","obs":"Go-Live efetuado"},{"nome":"SC NAVEGANTES","num":"2287","rede":"rj","status":"ativo","alerta":false,"responsavel":"Glávio","obs":"Go-Live efetuado - Inauguração"},{"nome":"SC LAGUNA","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Glávio","obs":"Já assinou contrato"},{"nome":"SC LAGES","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Glávio","obs":""},{"nome":"SC JOINVILLE","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Glávio","obs":""},{"nome":"SC JOAÇABA","num":"","rede":"ml","status":"antigo","alerta":false,"responsavel":"Glávio","obs":""},{"nome":"SC ITAPEMA","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Glávio","obs":""},{"nome":"SC ITAJAÍ","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Glávio","obs":""},{"nome":"SC IMBITUBA","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Glávio","obs":""},{"nome":"SC GAROPABA","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Glávio","obs":""},{"nome":"SC FRAIBURGO","num":"","rede":"both","status":"antigo","alerta":false,"responsavel":"Glávio","obs":""},{"nome":"SC FLORIANÓPOLIS","num":"","rede":"ml","status":"antigo","alerta":false,"responsavel":"Glávio","obs":""},{"nome":"SC FLORIANÓPOLIS","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Glávio","obs":""},{"nome":"SC CRICIÚMA","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Glávio","obs":""},{"nome":"SC CONCÓRDIA","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Glávio","obs":""},{"nome":"SC CHAPECÓ","num":"","rede":"rj","status":"antigo","alerta":true,"responsavel":"Glávio","obs":"Dificuldade de comunicação"},{"nome":"SC CAÇADOR","num":"2350","rede":"both","status":"transicao","alerta":false,"responsavel":"Glávio","obs":"Contrato assinado"},{"nome":"SC BLUMENAU","num":"","rede":"ml","status":"antigo","alerta":false,"responsavel":"Glávio","obs":""},{"nome":"SC BALNEÁRIO CAMBORIÚ","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Glávio","obs":""},{"nome":"PR TOLEDO","num":"","rede":"rj","status":"ativo","alerta":false,"responsavel":"Glávio","obs":"Go-Live efetuado"},{"nome":"PR PINHAIS","num":"2348","rede":"rj","status":"transicao","alerta":false,"responsavel":"Glávio","obs":"Contrato assinado"},{"nome":"PR LONDRINA VITÓRIA","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Glávio","obs":""},{"nome":"PR LONDRINA AURORA","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Glávio","obs":""},{"nome":"PR LONDRINA ALPHAVILLE","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Glávio","obs":""},{"nome":"PR LONDRINA","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Glávio","obs":""},{"nome":"PR GUARAPUAVA","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Glávio","obs":""},{"nome":"PR GUAÍRA","num":"","rede":"ml","status":"antigo","alerta":false,"responsavel":"Glávio","obs":""},{"nome":"PR CURITIBA","num":"","rede":"ml","status":"antigo","alerta":false,"responsavel":"Glávio","obs":""},{"nome":"PR CURITIBA PORTÃO","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Glávio","obs":""},{"nome":"PR CASCAVEL","num":"2260","rede":"rj","status":"ativo","alerta":false,"responsavel":"Glávio","obs":"Go-Live efetuado"},{"nome":"PR CAMPO LARGO","num":"","rede":"rj","status":"antigo","alerta":false,"responsavel":"Glávio","obs":""},{"nome":"PR ARAPONGAS","num":"2335","rede":"rj","status":"transicao","alerta":false,"responsavel":"Glávio","obs":"Contrato assinado"},{"nome":"SP BELENZINHO","num":"","rede":"rj","status":"antigo","alerta":true,"responsavel":"Marcelo","obs":"Dificuldade de comunicação"},{"nome":"SC BRUSQUE","num":"","rede":"ml","status":"antigo","alerta":false,"responsavel":"Glávio","obs":""},{"nome":"SP PIRACICABA","num":"2277","rede":"ml","status":"ativo","alerta":false,"responsavel":"Bruno","obs":"Go-Live efetuado"},{"nome":"SP JUNDIAÍ","num":"2305","rede":"rj","status":"ativo","alerta":false,"responsavel":"Maiara","obs":"Go-Live Finalizado — loja nova já veio com Presence"},{"nome":"PR FOZ DO IGUAÇU","num":"","rede":"rj","status":"antigo","alerta":true,"responsavel":"Glávio","obs":"Dificuldade de comunicação"},{"nome":"GO MINEIROS","num":"2342","rede":"ml","status":"transicao","alerta":false,"responsavel":"Maiara","obs":"Contrato assinado"},{"nome":"RS RIO GRANDE","num":"2341","rede":"rj","status":"transicao","alerta":false,"responsavel":"Marcelo","obs":"Contrato assinado"},{"nome":"SP CERQUILHO","num":"2331","rede":"rj","status":"transicao","alerta":false,"responsavel":"Bruno","obs":"Contrato assinado"}];
 
-const TODAY = new Date(); TODAY.setHours(0,0,0,0);
+let TODAY = new Date(); TODAY.setHours(0,0,0,0);
+function refreshToday(){const d=new Date();d.setHours(0,0,0,0);if(d.getTime()!==TODAY.getTime()){TODAY=d;return true;}return false;}
 const TEAM  = ['Marcelo','Maiara','Glávio','Bruno'];
-const FASES = [
-  {key:'instalacao', label:'Instalação do Sistema', checkOnly:true},
-  {key:'treinLoja',  label:'Treinamento de Loja',             dateOptional:true},
-  {key:'treinRetag', label:'Treinamento de Retaguarda',       dateOptional:true},
-  {key:'preGoLive',  label:'Pré go-live',                     dateOptional:true},
-  {key:'goLive',     label:'Go-live'},
-];
-const FASE_DEFAULTS = ['','','','17:30','09:00'];
 const CHECKLIST_ITENS = [
   {key:'precosFranquia',label:'Revisar e confirmar os Preços da Franquia'},
   {key:'produtosIndispensaveis',label:'Verificar produtos ou serviços indispensáveis para a operação da loja'},
@@ -1104,7 +1106,7 @@ function buildStubs(){
       grupo:l.rede==='ml'?'Minha Lavanderia':l.rede==='both'?'Franquias MEGA':'Franquias Restaura Jeans',
       responsavel:l.responsavel||'',
       status:l.status==='ativo'?'concluido':'aberto',
-      instalacao:'',treinLoja:'',treinRetag:'',preGoLive:'',goLive:'',log:l.obs||'',
+      goLive:'',log:l.obs||'',
       _stub:true,_dbIdx:dbExtra.indexOf(l)
     }));
 }
@@ -1209,15 +1211,6 @@ function crmSignBar(l){
     <div class="sign-tip"><b>${dias} dia${dias===1?'':'s'} desde o contrato assinado.</b><small>Contrato assinado dia ${esc(c.assinatura.slice(0,5))}</small></div>
   </div>`;
 }
-function stepsDone(l){
-  let done=[];
-  for(let i=0;i<FASES.length;i++){
-    const prev=i===0||done[i-1];
-    done.push(prev&&!!l[FASES[i].key]);
-  }
-  return done;
-}
-function countDone(l){return stepsDone(l).filter(Boolean).length;}
 function badgeHtml(s){const m={aberto:'Aguardando',agendado:'Cronograma',concluido:'Presence Ativo'};return `<span class="badge ${s}">${m[s]||s}</span>`;}
 function lojaNumPill(l,pos='before'){return l&&l.num?`<span class="store-num-pill ${pos}">${esc(l.num)}</span>`:'';}
 function redeTagHtml(l){
@@ -1227,11 +1220,6 @@ function redeTagHtml(l){
 }
 function nextStepInfo(l){
   if(l.status==='concluido') return {key:'ok',label:'Presence ativo',rank:80};
-  const done=stepsDone(l);
-  const firstMissing=done.findIndex(v=>!v);
-  if(firstMissing>=0&&firstMissing<FASES.length-1){
-    return {key:'pending',label:FASES[firstMissing].label+' pendente',rank:20+firstMissing};
-  }
   if(isOverdue(l)) return {key:'risk',label:'Go-live atrasado',rank:5};
   if(l.goLive){
     const d=daysDiff(l.goLive);
@@ -1611,7 +1599,6 @@ function tvWhen(diff){
 }
 function tvHidden(l){
   const crm=crmFor(l);
-  if(l&&/rio grande/i.test(l.loja||''))return true;
   return l&&l.status==='aberto'&&crm&&/agendado/i.test(crm.status||'')&&daysDiff(crm.golive)<=0;
 }
 function tvRecord(l){
@@ -1640,14 +1627,6 @@ function tvCard(l){
     </div>
     <div class="tv-when"><b>${w.big}</b><span>${w.small}</span></div>
   </div>`;
-}
-function tvBusinessDays(){
-  const out=[],d=new Date(TODAY);
-  while(out.length<5){
-    if(d.getDay()!==0&&d.getDay()!==6)out.push(new Date(d));
-    d.setDate(d.getDate()+1);
-  }
-  return out;
 }
 function tvSameDay(a,b){return a&&b&&a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();}
 function tvAgendaDays(items){
@@ -1686,7 +1665,7 @@ function tvSlideWeek(items){
         <div class="tv-dayname">${esc(name)}</div>
         <div class="tv-week-items">${dayItems.length?dayItems.map(l=>`<div class="tv-week-item"><div class="tv-week-store">${esc(l.loja)}</div><div class="tv-consultor"><span>Consultor:</span> ${esc(l.responsavel||'Sem responsável')}</div><div class="tv-week-meta">${redeTagHtml(l)}${l._tvCrm?'<span class="tv-pill crm">ZOHO</span>':''}</div></div>`).join(''):'<div class="tv-week-meta">Sem go-live marcado.</div>'}</div>
       </div>`;
-    }).join(''):'<div class="tv-empty">Nenhum go-live marcado nos prÃ³ximos 7 dias.</div>'}</div>
+    }).join(''):'<div class="tv-empty">Nenhum go-live marcado nos próximos 7 dias.</div>'}</div>
   </section>`;
 }
 function tvSignAge(l){
@@ -1744,7 +1723,14 @@ function startTV(){
   tvRestartProgress();
   tvClockTimer=setInterval(updateTVClock,30000);
   tvTimer=setInterval(()=>showTVSlide(tvSlide+1),TV_SLIDE_MS);
-  tvRefreshTimer=setInterval(async()=>{if(currentPage==='tv'&&supabaseEnabled){await loadFromSupabase();renderTV();}},TV_REFRESH_MS);
+  tvRefreshTimer=setInterval(async()=>{
+    if(currentPage!=='tv')return;
+    const before=lastStateUpdatedAt;
+    if(supabaseEnabled)await loadFromSupabase();
+    const dayChanged=refreshToday();
+    // só re-renderiza se os dados (ou o dia) mudaram, mantendo o slide atual
+    if(dayChanged||lastStateUpdatedAt!==before){const keep=tvSlide;renderTV();showTVSlide(keep);}
+  },TV_REFRESH_MS);
 }
 function renderTV(){
   const items=tvUpcoming();
@@ -1830,7 +1816,7 @@ function renderGL(){
   const proxGL=all.filter(l=>{const g=effGoLive(l);return g&&daysDiff(g)>=0&&daysDiff(g)<=6;}).sort((a,b)=>parseDate(effGoLive(a))-parseDate(effGoLive(b)));
   const proxPGL=all.filter(l=>l.goLive&&parseDate(l.goLive)).map(l=>({l,pgl:prevBusinessDay(parseDate(l.goLive))})).filter(x=>Math.round((x.pgl-TODAY)/86400000)>=0).sort((a,b)=>a.pgl-b.pgl).slice(0,2);
   const missingSchedule=all.filter(l=>l.status!=='concluido'&&!l.goLive).slice(0,3);
-  const blocked=all.filter(l=>l.status!=='concluido'&&countDone(l)<3).slice(0,4);
+  const checkPend=all.filter(l=>l.status!=='concluido'&&checklistProgress(l).pct<100).sort((a,b)=>checklistProgress(a).pct-checklistProgress(b).pct).slice(0,4);
 
   const glSpot=proxGL.length?proxGL.map(l=>{
     const g=effGoLive(l);
@@ -1840,7 +1826,7 @@ function renderGL(){
   }).join(''):'<div class="spot-empty">Nenhum agendado.</div>';
   const pglSpot=proxPGL.length?proxPGL.map(({l,pgl})=>`<div class="spot-item"><div class="spot-name">${lojaNumPill(l)}${l.loja}<small>${l.responsavel||l.grupo}</small></div><span class="spot-date" style="color:var(--indigo)">${fmtDateObj(pgl)}</span></div>`).join(''):'<div class="spot-empty">Nenhum agendado.</div>';
   const scheduleRows=missingSchedule.length?missingSchedule.map(l=>`<div class="action-item" onclick="openModal(${lojaIdx(l)})"><div class="action-name">${lojaNumPill(l)}${l.loja}<small>${l.responsavel||l.grupo}</small></div><span class="action-tag" style="color:var(--indigo)">sem data</span></div>`).join(''):'<div class="action-empty">Nenhuma loja sem data de go-live.</div>';
-  const blockedRows=blocked.length?blocked.map(l=>`<div class="action-item" onclick="openModal(${lojaIdx(l)})"><div class="action-name">${lojaNumPill(l)}${l.loja}${l.alerta?'<span style="color:#c0392b;font-size:11px;margin-left:4px"> ⚠</span>':''}<small>${countDone(l)}/5 etapas concluídas</small></div><span class="action-tag" style="color:var(--text3)">fluxo</span></div>`).join(''):'<div class="action-empty">Nenhuma pendência crítica no momento.</div>';
+  const blockedRows=checkPend.length?checkPend.map(l=>{const p=checklistProgress(l);return `<div class="action-item" onclick="openModal(${lojaIdx(l)})"><div class="action-name">${lojaNumPill(l)}${l.loja}${l.alerta?'<span style="color:#c0392b;font-size:11px;margin-left:4px"> ⚠</span>':''}<small>${p.done}/${p.total} itens do checklist</small></div><span class="action-tag" style="color:var(--text3)">${p.pct}%</span></div>`;}).join(''):'<div class="action-empty">Nenhum checklist pendente.</div>';
 
   document.getElementById('content').innerHTML=`
     <div class="home-intro">
@@ -1867,16 +1853,14 @@ function renderGL(){
     </div>
     <div class="action-row">
       <div class="action-card"><div class="action-hdr"><div class="spot-dot" style="background:var(--indigo)"></div><span class="action-title">Aguardando agendamento</span></div>${scheduleRows}</div>
-      <div class="action-card"><div class="action-hdr"><div class="spot-dot" style="background:#c0392b"></div><span class="action-title">Pendências de implantação</span></div>${blockedRows}</div>
+      <div class="action-card"><div class="action-hdr"><div class="spot-dot" style="background:#c0392b"></div><span class="action-title">Checklists de cadastro pendentes</span></div>${blockedRows}</div>
     </div>
     <div class="toolbar">
       <div class="tb-row">
         <div class="view-tabs">
           <button class="vtab${glView==='dash'?' on':''}" onclick="setGLView('dash')">Dashboard</button>
-          <button class="vtab${glView==='kanban'?' on':''}" onclick="setGLView('kanban')">Kanban</button>
           <button class="vtab${glView==='consult'?' on':''}" onclick="setGLView('consult')">Por consultor</button>
           <button class="vtab${glView==='lista'?' on':''}" onclick="setGLView('lista')">Lista</button>
-          <button class="vtab${glView==='fase'?' on':''}" onclick="setGLView('fase')">Por fase</button>
           <button class="vtab${glView==='tl'?' on':''}" onclick="setGLView('tl')">Timeline</button>
         </div>
         <input class="tb" id="gl-q" placeholder="Buscar loja..." oninput="renderGLContent()">
@@ -1938,67 +1922,13 @@ function renderGLContent(){
   if(glView==='dash'){
     html=renderDashboard(list);
   } else if(st==='concluido'){
-    html=glView==='lista'?renderLista(concluded):glView==='fase'?renderFase(concluded):renderTL(concluded);
+    html=glView==='lista'?renderLista(concluded):renderTL(concluded);
   } else {
-    if(glView==='kanban') html=renderKanban(active,concluded);
-    else if(glView==='consult') html=renderConsultores(list);
+    if(glView==='consult') html=renderConsultores(list);
     else if(glView==='lista') html=renderLista(active)+(concluded.length?renderConcluded(concluded):'');
-    else if(glView==='fase') html=renderFase(active)+(concluded.length?renderConcluded(concluded):'');
     else html=renderTL(list);
   }
   el.innerHTML=html;
-}
-
-function renderKanban(active,concluded){
-  const cols=[
-    {key:'aberto',label:'Aguardando'},
-    {key:'agendado',label:'Cronograma'},
-  ];
-  return `<div class="kanban">${cols.map(col=>{
-    const items=active.filter(l=>l.status===col.key).sort((a,b)=>{
-      const da=parseDate(a.goLive),db=parseDate(b.goLive);
-      if(!da&&!db)return 0;if(!da)return 1;if(!db)return -1;return da-db;
-    });
-    return `<div class="kb-col">
-      <div class="kb-col-hdr"><span class="kb-col-name">${col.label}</span><span class="kb-col-cnt">${items.length}</span></div>
-      ${items.length?items.map(l=>{
-        const idx=lojaIdx(l);
-        const pct=Math.round(countDone(l)/FASES.length*100);
-        const od=isOverdue(l);
-        const crm=crmFor(l);
-        const diff=daysDiff(l.goLive);
-        const dateLabel=!l.goLive?(crm&&crm.golive?`<span class="kb-date crm" title="Data marcada no CRM (Zoho)">CRM ${fmtDate(crm.golive)}</span>`:'<span class="kb-date">sem data</span>'):diff===0?'<span class="kb-date today">HOJE</span>':diff!==null&&diff<0?`<span class="kb-date" style="color:#c0392b">atrasado ${Math.abs(diff)}d</span>`:`<span class="kb-date">${fmtDate(l.goLive)}</span>`;
-        const rede=l.grupo&&l.grupo.toLowerCase().includes('minha lavanderia')?'<span class="tag-ml">ML</span>':'<span class="tag-rj">RJ</span>';
-        return `<div class="kb-card${od?' overdue':''}${l._stub?' stub-card':''}" onclick="openModal(${idx})">
-          <div class="kb-name">${lojaNumPill(l)}${l.loja}${l.alerta?'<span style="color:#c0392b;font-size:11px"> ⚠</span>':''}</div>
-          <div class="kb-meta">${rede}${l.responsavel?`<span class="tag-resp">${l.responsavel}</span>`:''}${l._stub?'<span class="tag-db">Lojas</span>':''}${dateLabel}</div>
-          <div class="kb-prog"><div class="kb-prog-f" style="width:${pct}%"></div></div>
-          ${crmSignBar(l)}
-        </div>`;
-      }).join(''):'<div class="kb-empty">Nenhuma loja</div>'}
-    </div>`;
-  }).join('')}
-  <div class="kb-col">
-    <div class="kb-col-hdr"><span class="kb-col-name">Sistema Presence Ativo</span><span class="kb-col-cnt">${concluded.length}</span></div>
-    ${concluded.length?concluded.map(l=>{
-      const idx=lojaIdx(l);
-      const rede=l.grupo&&l.grupo.toLowerCase().includes('minha lavanderia')?'<span class="tag-ml">ML</span>':'<span class="tag-rj">RJ</span>';
-      return `<div class="kb-card${l._stub?' stub-card':''}" onclick="openModal(${idx})">
-        <div class="kb-name">${lojaNumPill(l)}${l.loja}</div>
-        <div class="kb-meta">${rede}${l.responsavel?`<span class="tag-resp">${l.responsavel}</span>`:''}${l._stub?'<span class="tag-db">Lojas</span>':''}${l.goLive?`<span class="kb-date today">✓ ${fmtDate(l.goLive)}</span>`:'<span class="kb-date today">—</span>'}</div>
-        <div class="kb-prog"><div class="kb-prog-f" style="width:100%"></div></div>
-      </div>`;
-    }).join(''):'<div class="kb-empty">Nenhuma loja</div>'}
-  </div>
-  </div>`;
-}
-
-function flowDotsHtml(l){
-  const done=stepsDone(l);
-  return `<div class="flow-dots">${FASES.map((f,i)=>{
-    const isDone=done[i],isNext=!isDone&&(i===0||done[i-1]);
-    return `<div class="fd${isDone?' done':isNext?' next':''}"></div>`;
-  }).join('')}</div>`;
 }
 
 function daysCell(s){
@@ -2024,7 +1954,7 @@ function renderLista(list){
       const pa=da===null?9999:da,pb=db===null?9999:db;
       return sortAsc?pa-pb:pb-pa;
     }
-    if(['goLive','treinLoja','treinRetag','preGoLive','instalacao'].includes(sortCol)){
+    if(sortCol==='goLive'){
       const da=parseDate(va),db=parseDate(vb);
       if(!da&&!db)return 0;if(!da)return 1;if(!db)return -1;
       return sortAsc?da-db:db-da;
@@ -2049,22 +1979,11 @@ function renderLista(list){
     </tr>`;
   }).join('');
   return `<div class="table-wrap"><table>
-    <thead><tr>${th('num','Nº')}${th('loja','Loja')}<th>Rede</th><th>Consultor</th>${th('status','Status')}${th('nextStep','Próxima etapa')}${th('goLive','Go-live')}${th('prazo','Prazo')}<th>Última nota</th></tr></thead>
+    <thead><tr>${th('num','Nº')}${th('loja','Loja')}<th>Rede</th><th>Consultor</th>${th('status','Status')}${th('nextStep','Situação')}${th('goLive','Go-live')}${th('prazo','Prazo')}<th>Última nota</th></tr></thead>
     <tbody>${rows}</tbody>
   </table></div>`;
 }
 function sortBy(col){sortAsc=sortCol===col?!sortAsc:true;sortCol=col;renderGLContent();}
-
-function renderFase(list){
-  return `<div class="fase-grid">${FASES.map((f,fi)=>{
-    const com=list.filter(l=>stepsDone(l)[fi]).sort((a,b)=>(parseDate(a[f.key])||0)-(parseDate(b[f.key])||0));
-    const sem=list.filter(l=>!stepsDone(l)[fi]);
-    return `<div class="fase-card"><div class="fase-hdr"><span class="ft">Etapa ${fi+1} — ${f.label}</span><span class="fc">${com.length} ok · ${sem.length} pend.</span></div>
-      ${com.map(l=>`<div class="fase-row"><span class="fn">${lojaNumPill(l)}${l.loja}</span><span style="font-size:11px;color:var(--teal)">✓ ${fmtDate(l[f.key])||''}</span></div>`).join('')}
-      ${sem.length?`<div class="fase-sem">Pendentes: ${sem.map(l=>l.num?`#${l.num} ${l.loja}`:l.loja).join(', ')}</div>`:''}
-    </div>`;
-  }).join('')}</div>`;
-}
 
 function renderTL(list){
   const withDate=list.filter(l=>l.goLive).sort((a,b)=>parseDate(a.goLive)-parseDate(b.goLive));
@@ -2083,8 +2002,8 @@ function renderTL(list){
 }
 
 function renderConcluded(list){
-  const rows=list.map(l=>{const idx=lojaIdx(l);return `<tr onclick="openModal(${idx})"><td class="lc">${lojaNumPill(l)}${l.loja}</td><td class="nc">${l.num}</td><td>${badgeHtml(l.status)}</td><td>${l.responsavel?`<span class="tag-resp">${l.responsavel}</span>`:'—'}</td><td>${flowDotsHtml(l)}</td><td class="nc">${fmtDate(l.goLive)||'—'}</td><td class="oc">—</td></tr>`;}).join('');
-  return `<div class="conc-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')"><span class="conc-label">Sistema Presence Ativo</span><span class="conc-cnt">${list.length}</span><span class="conc-arrow">▼</span></div><div class="conc-body"><div class="table-wrap conc-table"><table><thead><tr><th>Loja</th><th>Nº</th><th>Status</th><th>Consultor</th><th>Fluxo</th><th>Go-live</th><th>—</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+  const rows=list.map(l=>{const idx=lojaIdx(l);return `<tr onclick="openModal(${idx})"><td class="lc">${lojaNumPill(l)}${l.loja}</td><td class="nc">${l.num}</td><td>${badgeHtml(l.status)}</td><td>${l.responsavel?`<span class="tag-resp">${l.responsavel}</span>`:'—'}</td><td class="nc">${fmtDate(l.goLive)||'—'}</td><td class="oc">—</td></tr>`;}).join('');
+  return `<div class="conc-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')"><span class="conc-label">Sistema Presence Ativo</span><span class="conc-cnt">${list.length}</span><span class="conc-arrow">▼</span></div><div class="conc-body"><div class="table-wrap conc-table"><table><thead><tr><th>Loja</th><th>Nº</th><th>Status</th><th>Consultor</th><th>Go-live</th><th>—</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
 }
 
 function renderConsultores(list){
@@ -2117,8 +2036,25 @@ function renderConsultores(list){
     const badges=(ag?`<span class="cc-b ag">${ag} cron.</span>`:'')+
                  (ab?`<span class="cc-b ab">${ab} ag.</span>`:'')+
                  (ok?`<span class="cc-b ok">${ok} ativo</span>`:'');
+    const andamento=ls.filter(l=>l.status!=='concluido');
+    const checkPct=andamento.length?Math.round(andamento.reduce((s,l)=>s+checklistProgress(l).pct,0)/andamento.length):null;
+    const checkStarted=andamento.filter(l=>checklistFor(l).updatedAt).length;
+    const glMarcado=andamento.filter(l=>l.goLive).length;
+    const glPct=andamento.length?Math.round(glMarcado/andamento.length*100):0;
+    let lastTs=0;
+    ls.forEach(l=>{parseLogEntries(l.log||'').forEach(e=>{const m=(e.ts||'').match(/(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}))?/);if(m){const ts=new Date(+m[3],+m[2]-1,+m[1],+(m[4]||0),+(m[5]||0)).getTime();if(ts>lastTs)lastTs=ts;}});});
+    Object.values(checklistCadastros||{}).forEach(c=>{if(c&&c.updatedBy===t){const ts=Date.parse(c.updatedAt||'')||0;if(ts>lastTs)lastTs=ts;}});
+    let lastTxt='sem registro';
+    if(lastTs){const dias=Math.floor((Date.now()-lastTs)/86400000);lastTxt=dias<=0?'hoje':dias===1?'ontem':'há '+dias+'d';}
+    const usage=canEdit()&&andamento.length?`<div class="cc-usage">
+      <div class="cc-use-line"><span>Checklist de cadastros (${andamento.length} em andamento)</span><b>${checkPct}%</b></div>
+      <div class="cc-usebar teal"><span style="width:${checkPct}%"></span></div>
+      <div class="cc-use-line"><span>Go-live marcado com franqueado</span><b>${glMarcado}/${andamento.length}</b></div>
+      <div class="cc-usebar"><span style="width:${glPct}%"></span></div>
+      <div class="cc-use-meta">${checkStarted}/${andamento.length} checklists iniciados · última atividade ${lastTxt}</div>
+    </div>`:'';
     const rows=ls.map(l=>`<div class="cc-row">${redeTag(l)}<span class="cc-loja">${lojaNumPill(l)}${l.loja}</span>${pillHtml(l)}</div>`).join('');
-    return `<div class="cc-card"><div class="cc-hdr"><div class="cc-av" style="background:${color}">${initials}</div><div><div class="cc-name">${t}</div><div class="cc-sub">${ls.length} loja${ls.length>1?'s':''}</div></div><div class="cc-badges">${badges}</div></div>${rows}</div>`;
+    return `<div class="cc-card"><div class="cc-hdr"><div class="cc-av" style="background:${color}">${initials}</div><div><div class="cc-name">${t}</div><div class="cc-sub">${ls.length} loja${ls.length>1?'s':''}</div></div><div class="cc-badges">${badges}</div></div>${usage}${rows}</div>`;
   }).join('');
   return `<div class="cc-grid">${cards}</div>`;
 }
@@ -2137,8 +2073,8 @@ function renderDashboard(list){
 window.toggleDashSec=function(id){const b=document.getElementById('sec-'+id);const a=document.getElementById('arr-'+id);if(b)b.classList.toggle('open');if(a)a.classList.toggle('open');};
 
 function exportCSV(){
-  const hdr=['Loja','Grupo','Nº','Consultor','Status','Instalação','Trein. Loja','Trein. Retag.','Pré go-live','Go-live','Log'];
-  const rows=lojas.map(l=>[l.loja,l.grupo,l.num,l.responsavel||'',l.status,l.instalacao||'',l.treinLoja||'',l.treinRetag||'',l.preGoLive||'',l.goLive||'',(l.log||'').replace(/\n/g,' | ')].map(v=>`"${(v||'').replace(/"/g,'""')}"`).join(';'));
+  const hdr=['Loja','Grupo','Nº','Consultor','Status','Go-live','Log'];
+  const rows=lojas.map(l=>[l.loja,l.grupo,l.num,l.responsavel||'',l.status,l.goLive||'',(l.log||'').replace(/\n/g,' | ')].map(v=>`"${(v||'').replace(/"/g,'""')}"`).join(';'));
   const csv=[hdr.join(';'),...rows].join('\n');
   const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);a.download='golive_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
 }
@@ -2590,82 +2526,16 @@ function mkPicker(el,withTime,defTime){
   if(withTime){cfg.enableTime=true;cfg.time_24hr=true;if(defTime){const p=defTime.split(':');cfg.defaultHour=+p[0];cfg.defaultMinute=+p[1];}}
   flatpickr(el,cfg);
 }
-function initFlowPickers(){
-  FASES.forEach((f,i)=>{
-    if(f.checkOnly)return;
-    const el=document.getElementById('fd-'+i);
-    if(!el)return;
-    // não anexa em valores-sentinela como "1" (fase concluída sem data) — só em vazio ou data
-    if(el.value&&!/^\d{1,2}\/\d{1,2}\/\d{4}/.test(el.value))return;
-    mkPicker(el,true,FASE_DEFAULTS[i]||'');
-  });
+function initGoLivePicker(){
+  const el=document.getElementById('f-golive');
+  if(!el)return;
+  // não anexa em valores-sentinela como "1" — só em vazio ou data
+  if(el.value&&!/^\d{1,2}\/\d{1,2}\/\d{4}/.test(el.value))return;
+  mkPicker(el,true,'09:00');
 }
 
 // ── GL MODAL ──
 let modalIdx=-1;
-function buildFlowSteps(l){
-  const done=stepsDone(l);let html='';
-  for(let i=0;i<FASES.length;i++){
-    const f=FASES[i],isDone=done[i],canEdit=i===0||done[i-1];
-    const cls=isDone?'done':canEdit?'next':'locked';
-    const lockMsg=!canEdit?`(aguardando: ${FASES[i-1].label})`:'';
-    const curVal=l[f.key]||'';
-    const ph=FASE_DEFAULTS[i]?`DD/MM/AAAA ${FASE_DEFAULTS[i]}`:'DD/MM/AAAA HH:MM';
-    const dateField=f.checkOnly?`<div class="fstep-date" style="font-size:11px;color:var(--text3);font-style:italic">${isDone?'✓ Concluída':'Marque quando instalado'}</div>`:`<div class="fstep-date"><input type="text" id="fd-${i}" value="${curVal}" placeholder="${ph}" ${!canEdit?'disabled':''} oninput="onDateInput(${i})"></div>`;
-    html+=`<div class="fstep ${cls}" id="fs-${i}"><div class="fstep-chk"><input type="checkbox" id="fc-${i}" ${isDone?'checked':''} ${!canEdit?'disabled':''} onchange="onStepCheck(${i})"></div><div class="fstep-info"><div class="fstep-label"><span class="step-num">${i+1}</span>${f.label}${lockMsg?`<span class="lock-msg">${lockMsg}</span>`:''}</div>${dateField}</div></div>`;
-  }
-  return html;
-}
-function onStepCheck(i){
-  const f=FASES[i],chk=document.getElementById('fc-'+i);
-  if(f.checkOnly||f.dateOptional){
-    // no date required — toggle freely
-    if(!chk.checked) cascadeLock(i+1);
-    else unlockNext(i);
-    refreshStepStyles();return;
-  }
-  // goLive: date required
-  const di=document.getElementById('fd-'+i);
-  if(chk.checked){
-    if(!di.value.trim()){chk.checked=false;di.focus();di.style.borderColor='#c0392b';setTimeout(()=>di.style.borderColor='',1800);showToast('Insira a data antes de marcar.',true);return;}
-    unlockNext(i);
-  } else {di.value='';cascadeLock(i+1);}
-  refreshStepStyles();
-}
-function onDateInput(i){
-  const v=document.getElementById('fd-'+i).value.trim();
-  const c=document.getElementById('fc-'+i);
-  const f=FASES[i];
-  if(v.length>=8){
-    if(v.length===10&&FASE_DEFAULTS[i]&&!v.includes(' '))document.getElementById('fd-'+i).value=v+' '+FASE_DEFAULTS[i];
-    if(!c.checked){c.checked=true;unlockNext(i);refreshStepStyles();}
-  } else {
-    // only uncheck if date is required (goLive only)
-    if(!f.dateOptional&&!f.checkOnly&&c.checked){c.checked=false;cascadeLock(i+1);refreshStepStyles();}
-  }
-}
-function cascadeLock(from){
-  for(let j=from;j<FASES.length;j++){
-    const nc=document.getElementById('fc-'+j),nd=document.getElementById('fd-'+j);
-    if(nc){nc.checked=false;nc.disabled=true;}
-    if(nd){nd.value='';nd.disabled=true;}
-    document.getElementById('fs-'+j).className='fstep locked';
-  }
-}
-function unlockNext(i){
-  if(i+1<FASES.length){
-    const nc=document.getElementById('fc-'+(i+1)),nd=document.getElementById('fd-'+(i+1));
-    if(nc)nc.disabled=false;if(nd)nd.disabled=false;
-    document.getElementById('fs-'+(i+1)).className='fstep next';
-  }
-}
-function refreshStepStyles(){
-  for(let i=0;i<FASES.length;i++){
-    const c=document.getElementById('fc-'+i),el=document.getElementById('fs-'+i);
-    if(!el||!c)continue;
-    el.className='fstep '+(c.checked?'done':c.disabled?'locked':'next');
-  }
-}
 
 // log
 function parseLogEntries(log){if(!log)return[];return log.split('\n').filter(Boolean).map(e=>{const m=e.match(/^\[(.+?)\] (.+)$/s);return m?{ts:m[1],text:m[2]}:{ts:'',text:e};});}
@@ -2761,10 +2631,10 @@ function openModal(idx=-1){
   let l,isStub=false;
   if(idx<=-2){
     const db=dbExtra[-(idx+2)];
-    l={loja:db.nome,num:db.num||'',grupo:db.rede==='ml'?'Minha Lavanderia':db.rede==='both'?'Franquias MEGA':'Franquias Restaura Jeans',responsavel:db.responsavel||'',status:db.status==='ativo'?'concluido':'aberto',instalacao:'',treinLoja:'',treinRetag:'',preGoLive:'',goLive:'',log:db.obs||''};
+    l={loja:db.nome,num:db.num||'',grupo:db.rede==='ml'?'Minha Lavanderia':db.rede==='both'?'Franquias MEGA':'Franquias Restaura Jeans',responsavel:db.responsavel||'',status:db.status==='ativo'?'concluido':'aberto',goLive:'',log:db.obs||''};
     idx=-1;isStub=true;
   } else {
-    l=idx===-1?{loja:'',num:'',grupo:'Franquias Restaura Jeans',responsavel:'',status:'aberto',instalacao:'',treinLoja:'',treinRetag:'',preGoLive:'',goLive:'',log:''}:lojas[idx];
+    l=idx===-1?{loja:'',num:'',grupo:'Franquias Restaura Jeans',responsavel:'',status:'aberto',goLive:'',log:''}:lojas[idx];
   }
   modalIdx=idx;
   document.getElementById('gl-mtitle').textContent=isStub?'Registrar no Go-Live — '+l.loja:idx===-1?'Nova loja':'Editar — '+l.loja;
@@ -2774,8 +2644,8 @@ function openModal(idx=-1){
   document.getElementById('f-grupo').value=l.grupo;
   document.getElementById('f-resp').value=l.responsavel||'';
   document.getElementById('f-status').value=l.status;
-  document.getElementById('flow-steps').innerHTML=buildFlowSteps(l);
-  initFlowPickers();
+  document.getElementById('f-golive').value=(l.goLive&&l.goLive!=='1')?l.goLive:'';
+  initGoLivePicker();
   const lv=document.getElementById('log-view');
   lv.dataset.log=l.log||'';lv.innerHTML=buildLogView(l.log||'');
   document.getElementById('f-note').value='';
@@ -2788,18 +2658,10 @@ function closeModal(){document.getElementById('ov-gl').classList.remove('open');
 function saveLoja(){
   if(!canEdit()){showToast("Somente leitura.",true);return;}
   if(!document.getElementById('f-loja').value.trim()){alert('Informe o nome da loja.');return;}
-  const dates={};
-  for(let i=0;i<FASES.length;i++){
-    const f=FASES[i],c=document.getElementById('fc-'+i);
-    if(f.checkOnly){dates[f.key]=c.checked?'1':'';}
-    else if(f.dateOptional){
-      const v=(document.getElementById('fd-'+i)||{value:''}).value.trim();
-      dates[f.key]=c.checked?(v||'1'):'';
-    }
-    else{const v=(document.getElementById('fd-'+i)||{value:''}).value.trim();dates[f.key]=c.checked?v:'';}
-  }
-  const obj={loja:document.getElementById('f-loja').value.trim().toUpperCase(),num:document.getElementById('f-num').value.trim(),grupo:document.getElementById('f-grupo').value.trim(),responsavel:document.getElementById('f-resp').value,status:document.getElementById('f-status').value,log:document.getElementById('log-view').dataset.log||'',...dates};
   const idx=parseInt(document.getElementById('f-idx').value);
+  const prev=idx===-1?{}:lojas[idx];
+  // preserva campos históricos (etapas antigas) já gravados na loja
+  const obj={...prev,loja:document.getElementById('f-loja').value.trim().toUpperCase(),num:document.getElementById('f-num').value.trim(),grupo:document.getElementById('f-grupo').value.trim(),responsavel:document.getElementById('f-resp').value,status:document.getElementById('f-status').value,log:document.getElementById('log-view').dataset.log||'',goLive:document.getElementById('f-golive').value.trim()};
   if(idx===-1)lojas.push(obj);else lojas[idx]=obj;
   save();closeModal();renderGLContent();
 }
