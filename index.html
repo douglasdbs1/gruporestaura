@@ -1067,22 +1067,22 @@ const CHECKLIST_ITENS = [
 ];
 const ACTIVE_DEFAULT_UPDATED = '15/06/2026';
 const EMBEDDED_ACTIVE_HEALTH = [
-  {loja:"SC S\u00c3O JOS\u00c9",num:"2269",rede:"both",status:"ok",since:"",responsavel:"Gl\u00e1vio",obs:"Funcionando"},
-  {loja:"SC VIDEIRA",num:"2313",rede:"both",status:"ok",since:"",responsavel:"Gl\u00e1vio",obs:"Funcionando"},
+  {loja:"SC S\u00c3O JOS\u00c9",num:"2269",rede:"both",status:"ok",since:"",responsavel:"Gl\u00e1vio",obs:"Operando"},
+  {loja:"SC VIDEIRA",num:"2313",rede:"both",status:"ok",since:"",responsavel:"Gl\u00e1vio",obs:"Operando"},
   {loja:"SC PALHO\u00c7A",num:"2275",rede:"ml",status:"pending",since:"15/06/2026",responsavel:"Gl\u00e1vio",obs:"Nota fiscal | WhatsApp | Emiss\u00e3o de Rofgfdgl"},
-  {loja:"SP PIRACICABA",num:"2277",rede:"ml",status:"ok",since:"",responsavel:"Bruno",obs:"Funcionando"},
-  {loja:"BA BARREIRAS",num:"2274",rede:"ml",status:"ok",since:"",responsavel:"Marcelo",obs:"Funcionando"},
-  {loja:"SP TAUBAT\u00c9 JD NA\u00c7\u00d5ES",num:"2278",rede:"ml",status:"ok",since:"",responsavel:"Bruno",obs:"Funcionando"},
+  {loja:"SP PIRACICABA",num:"2277",rede:"ml",status:"ok",since:"",responsavel:"Bruno",obs:"Operando"},
+  {loja:"BA BARREIRAS",num:"2274",rede:"ml",status:"ok",since:"",responsavel:"Marcelo",obs:"Operando"},
+  {loja:"SP TAUBAT\u00c9 JD NA\u00c7\u00d5ES",num:"2278",rede:"ml",status:"ok",since:"",responsavel:"Bruno",obs:"Operando"},
   {loja:"GO CRISTALINA",num:"2272",rede:"ml",status:"pending",since:"15/06/2026",responsavel:"Maiara",obs:"Estoque"},
-  {loja:"PR CASCAVEL",num:"2260",rede:"rj",status:"ok",since:"",responsavel:"Gl\u00e1vio",obs:"Funcionando"},
+  {loja:"PR CASCAVEL",num:"2260",rede:"rj",status:"ok",since:"",responsavel:"Gl\u00e1vio",obs:"Operando"},
   {loja:"PR TOLEDO",num:"",rede:"rj",status:"pending",since:"15/06/2026",responsavel:"Gl\u00e1vio",obs:"NF | Aguardando contador"},
   {loja:"SP SOROCABA",num:"2300",rede:"rj",status:"pending",since:"15/06/2026",responsavel:"Bruno",obs:"Motivo da pend\u00eancia..."},
-  {loja:"SP JUNDIA\u00cd",num:"2305",rede:"rj",status:"ok",since:"",responsavel:"Maiara",obs:"Funcionando"},
-  {loja:"RJ MARIC\u00c1",num:"2304",rede:"rj",status:"ok",since:"",responsavel:"Maiara",obs:"Funcionando"},
+  {loja:"SP JUNDIA\u00cd",num:"2305",rede:"rj",status:"ok",since:"",responsavel:"Maiara",obs:"Operando"},
+  {loja:"RJ MARIC\u00c1",num:"2304",rede:"rj",status:"ok",since:"",responsavel:"Maiara",obs:"Operando"},
   {loja:"RS PORTO ALEGRE PETR\u00d3POLIS",num:"2317",rede:"rj",status:"pending",since:"08/06/2026",responsavel:"Maiara",obs:"Go-Live 08/06 - Configurando NF"},
   {loja:"RS PORTO ALEGRE BOM FIM",num:"2321",rede:"rj",status:"pending",since:"09/06/2026",responsavel:"Maiara",obs:"Go-Live 09/06 - Configurando NF / Relat\u00f3rios"},
   {loja:"SC JARAGU\u00c1 DO SUL",num:"2330",rede:"rj",status:"pending",since:"11/06/2026",responsavel:"Gl\u00e1vio",obs:"Go-Live 11/06 - Finalizando configura\u00e7\u00e3o NF"},
-  {loja:"SC NAVEGANTES",num:"2287",rede:"rj",status:"ok",since:"",responsavel:"Gl\u00e1vio",obs:"Funcionando"}
+  {loja:"SC NAVEGANTES",num:"2287",rede:"rj",status:"ok",since:"",responsavel:"Gl\u00e1vio",obs:"Operando"}
 ];
 
 let lojas   = [];
@@ -1305,8 +1305,8 @@ function activeStatusInfo(l){
   const staleAge=l.status==='ok'?activeUpdatedAgeDays(l.updatedAt):null;
   if(l.status==='down') return {cls:'red pulse',label:'Alerta',icon:'!',age};
   if(l.status==='pending'){
-    if(age!==null&&age>=3) return {cls:'red pulse',label:'Pendente',icon:'!',age};
-    if(age!==null&&age>=2) return {cls:'orange',label:'Pendente',icon:'!',age};
+    if(age!==null&&age>=5) return {cls:'red pulse',label:'Pendente',icon:'!',age};
+    if(age!==null&&age>=3) return {cls:'orange',label:'Pendente',icon:'!',age};
     return {cls:'yellow',label:'Pendente',icon:'!',age};
   }
   if(staleAge!==null&&staleAge>7) return {cls:'blue',label:'Contato preventivo',icon:'',age:staleAge,stale:true};
@@ -1316,7 +1316,7 @@ function activeSimpleState(l){
   const info=activeStatusInfo(l);
   if(info.cls.includes('red')) return {key:'prob',label:'Com problema',icon:'!'};
   if(info.cls==='orange'||info.cls==='yellow') return {key:'att',label:'Precisa de atenção',icon:'•'};
-  return {key:'ok',label:'Funcionando',icon:'✓'};
+  return {key:'ok',label:'Operando',icon:'✓'};
 }
 function isHQActive(l){return (l.num||'').toString().trim()===HQ_STORE.num;}
 function getActiveRecords(){
@@ -1324,11 +1324,12 @@ function getActiveRecords(){
   const manualStoreKeys=new Set();
   activeHealth.forEach((l,i)=>{
     const rec={...l,updatedAt:l.updatedAt||ACTIVE_DEFAULT_UPDATED,_idx:i,_source:'manual'};
+    if(rec.obs==='Funcionando')rec.obs='Operando';
     map.set(activeKey(rec),rec);
     manualStoreKeys.add(activeStoreKey(rec));
   });
   getDatabase().filter(l=>l.status==='ativo').forEach(l=>{
-    const rec={loja:l.nome,num:l.num||'',rede:l.rede,status:'ok',since:'',responsavel:l.responsavel||'',obs:l.obs||'Funcionando',updatedAt:l.updatedAt||ACTIVE_DEFAULT_UPDATED,_source:'auto'};
+    const rec={loja:l.nome,num:l.num||'',rede:l.rede,status:'ok',since:'',responsavel:l.responsavel||'',obs:(l.obs==='Funcionando'?'Operando':l.obs)||'Operando',updatedAt:l.updatedAt||ACTIVE_DEFAULT_UPDATED,_source:'auto'};
     if(manualStoreKeys.has(activeStoreKey(rec)))return;
     const key=activeKey(rec);
     if(!map.has(key))map.set(key,rec);
@@ -1392,7 +1393,7 @@ function renderActive(){
           <button class="qtab${activeQuick==='all'?' on':''}" onclick="setActiveQuick('all')">Todas</button>
           <button class="qtab${activeQuick==='prob'?' on':''}" onclick="setActiveQuick('prob')">Com problema</button>
           <button class="qtab${activeQuick==='att'?' on':''}" onclick="setActiveQuick('att')">Precisam de aten&ccedil;&atilde;o</button>
-          <button class="qtab${activeQuick==='ok'?' on':''}" onclick="setActiveQuick('ok')">Funcionando</button>
+          <button class="qtab${activeQuick==='ok'?' on':''}" onclick="setActiveQuick('ok')">Operando</button>
         </div>
         <div class="quick-tabs consultor-tabs" style="margin-left:auto">
           <span class="qt-label">Consultor</span>
@@ -1439,7 +1440,7 @@ function renderActiveContent(){
   const GROUPS=[
     ['prob','#cf3030','&#128308; Com problema'],
     ['att','#d99b00','&#128993; Precisam de atenção'],
-    ['ok','#10a66f','&#128994; Funcionando'],
+    ['ok','#10a66f','&#128994; Operando'],
   ];
   let html='';
   GROUPS.forEach(([k,color,label])=>{
@@ -2455,7 +2456,7 @@ function saveActiveStore(){
   if(!loja){alert('Informe a loja.');return;}
   const status=document.getElementById('active-status').value;
   const since=document.getElementById('active-since').value.trim();
-  const obj={loja,num:document.getElementById('active-num').value.trim(),rede:document.getElementById('active-rede').value,status,since:status==='ok'?'':since,responsavel:document.getElementById('active-resp').value,obs:document.getElementById('active-obs').value.trim()||'Funcionando',updatedAt:nowStamp()};
+  const obj={loja,num:document.getElementById('active-num').value.trim(),rede:document.getElementById('active-rede').value,status,since:status==='ok'?'':since,responsavel:document.getElementById('active-resp').value,obs:document.getElementById('active-obs').value.trim()||'Operando',updatedAt:nowStamp()};
   if(obj.status!=='ok'&&!obj.since)obj.since=nowStamp().split(' ')[0];
   const idx=parseInt(document.getElementById('active-idx').value);
   if(idx>=0)activeHealth[idx]=obj;
