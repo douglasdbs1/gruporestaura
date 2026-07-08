@@ -555,7 +555,25 @@ body.tv-mode .content{max-width:none;padding:0;background:#0f1417;}
 .consultor-login p{font-size:12px;color:var(--text2);line-height:1.45;margin-bottom:16px;}
 .consultor-login input,.consultor-login select{width:100%;font-family:var(--font);font-size:13px;padding:10px 11px;border:1px solid var(--border2);border-radius:6px;margin-bottom:10px;}
 .consultor-login button{width:100%;font-family:var(--font);font-size:13px;font-weight:800;padding:10px 14px;border:1px solid var(--teal-mid);border-radius:6px;background:var(--teal-bg);color:var(--teal);cursor:pointer;}
-.check-modal{width:760px;max-height:96vh;}
+.check-modal{width:880px;max-height:96vh;}
+.inst-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;padding:2px 8px;border-radius:999px;white-space:nowrap;}
+.inst-badge.ok{background:#e2f6ec;color:#0b7a50;}
+.inst-badge.wait{background:#fdf3d9;color:#8a6400;}
+.inst-badge.none{background:#eef1f3;color:#77828c;}
+.stage-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+.stage-box{border:1px solid var(--border);border-radius:8px;padding:9px 12px;background:#fafbfc;}
+.stage-hdr{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:800;color:var(--text);margin-bottom:5px;}
+.stage-n{width:17px;height:17px;border-radius:50%;background:var(--indigo);color:#fff;font-size:10px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;flex:none;}
+.stage-count{margin-left:auto;font-size:11px;font-weight:800;color:var(--text2);}
+.stage-line{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:var(--text2);padding:2px 0;}
+.stage-badge{font-size:10px;font-weight:800;padding:2px 8px;border-radius:999px;white-space:nowrap;}
+.stage-badge.ok{background:#e2f6ec;color:#0b7a50;}
+.stage-badge.wait{background:#fdf3d9;color:#8a6400;}
+.stage-badge.none{background:#eef1f3;color:#77828c;}
+.check-modal .check-list{grid-template-columns:1fr 1fr;gap:5px;margin-bottom:0;}
+.check-modal .check-item{padding:6px 9px;}
+#check-obs{height:46px;min-height:46px;}
+@media(max-width:820px){.stage-row{grid-template-columns:1fr;}.check-modal .check-list{grid-template-columns:1fr;}}
 .check-modal .mhdr{padding:12px 16px;}
 .check-modal .mbody{padding:14px 16px 10px;}
 .check-modal .mfooter{padding:10px 16px;align-items:center;flex-wrap:wrap;}
@@ -904,9 +922,15 @@ td.oc{max-width:260px;}
   <div class="mhdr"><h2 id="check-mtitle">Checklist de cadastros</h2><button class="xbtn" onclick="closeChecklistModal()">&times;</button></div>
   <div class="mbody">
     <input type="hidden" id="check-key" value="">
-    <div class="check-list" id="check-list"></div>
-    <div class="fg full"><label>Observa&ccedil;&otilde;es</label><textarea id="check-obs" placeholder="Pend&ecirc;ncias, retorno do franqueado ou pontos para o suporte..."></textarea></div>
-    <div id="check-meta" style="font-size:10px;color:var(--text3);margin-top:6px;"></div>
+    <div class="stage-row">
+      <div class="stage-box"><div class="stage-hdr"><span class="stage-n">1</span><span>Instala&ccedil;&atilde;o do sistema</span></div><div id="check-stage1"></div></div>
+      <div class="stage-box"><div class="stage-hdr"><span class="stage-n">2</span><span>Participar dos treinamentos</span></div><div id="check-stage2"></div></div>
+    </div>
+    <div class="stage-box"><div class="stage-hdr"><span class="stage-n">3</span><span>Checklist de cadastros iniciais</span><span class="stage-count" id="check-stage3-count"></span></div>
+      <div class="check-list" id="check-list"></div>
+    </div>
+    <div class="fg full" style="margin-top:8px"><label>Observa&ccedil;&otilde;es</label><textarea id="check-obs" placeholder="Pend&ecirc;ncias, retorno do franqueado ou pontos para o suporte..."></textarea></div>
+    <div id="check-meta" style="font-size:10px;color:var(--text3);margin-top:4px;"></div>
   </div>
   <div class="mfooter">
     <div class="check-note">Lembrete: cadastros iniciais ficam com o franqueado; o consultor acompanha, orienta e valida.</div>
@@ -1476,6 +1500,23 @@ function renderConsultorLogin(){
 function checklistKey(l){return (l.num&&l.num.trim())?'num:'+l.num.trim():'loja:'+normLojaName(l.loja)+'|'+redeFromGrupo(l.grupo,l.rede);}
 function checklistFor(l){return checklistCadastros[checklistKey(l)]||{itens:{},obs:'',updatedAt:'',updatedBy:''};}
 function checklistProgress(l){const c=checklistFor(l),done=CHECKLIST_ITENS.filter(i=>c.itens&&c.itens[i.key]).length,total=CHECKLIST_ITENS.length;return {done,total,pct:Math.round(done/total*100)};}
+function stageDateInfo(flag,em){
+  const d=parseDate(em||'');
+  if(flag==='1'||(d&&d<=TODAY))return {state:'done',txt:em||''};
+  if(d)return {state:'sched',txt:em};
+  return {state:'none',txt:''};
+}
+function instalacaoInfo(l){return stageDateInfo(l.instalacao,l.instalacaoEm);}
+function instBadgeHtml(l){
+  const i=instalacaoInfo(l);
+  if(i.state==='done')return '<span class="inst-badge ok">&#10003; Sistema instalado</span>';
+  if(i.state==='sched')return '<span class="inst-badge wait">Instala&ccedil;&atilde;o '+esc((i.txt||'').split(' ')[0])+'</span>';
+  return '<span class="inst-badge none">Instala&ccedil;&atilde;o sem data</span>';
+}
+function stageLineHtml(label,info,noneTxt){
+  const badge=info.state==='done'?'<span class="stage-badge ok">&#10003; Conclu&iacute;do</span>':info.state==='sched'?`<span class="stage-badge wait">${esc(info.txt)}</span>`:`<span class="stage-badge none">${noneTxt}</span>`;
+  return `<div class="stage-line"><span>${label}</span>${badge}</div>`;
+}
 function contractSignedText(l){
   const crm=crmFor(l);
   if(crm&&crm.assinatura)return crm.assinatura;
@@ -1514,14 +1555,23 @@ function renderMine(){
   currentMineStores=mineStores();
   const who=canEdit()?'Admin':consultorUser.nome;
   const doneCount=currentMineStores.filter(l=>checklistProgress(l).done===CHECKLIST_ITENS.length).length;
-  const cards=currentMineStores.map((l,i)=>{const p=checklistProgress(l),c=checklistFor(l),cls=p.done===p.total?' ready':p.done?' warn':'';const updated=c.updatedAt?`Atualizado ${new Date(c.updatedAt).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}`:'Sem atualização';return `<div class="mine-card${cls}" onclick="openChecklistModal(${i})"><div><div class="mine-card-title">${esc(l.loja)}</div><div class="mine-card-meta">${redeTagHtml(l)}${l.num?`<span class="store-num-pill after">${esc(l.num)}</span>`:''}<span class="tag-resp">${esc(l.responsavel||'Sem consultor')}</span>${badgeHtml(l.status)}</div></div><div class="mine-progress"><div class="mine-progress-top"><span>${p.done}/${p.total} itens concluídos</span><span>${p.pct}%</span></div><div class="mine-track"><div class="mine-fill" style="width:${p.pct}%"></div></div><div class="mine-sub" style="margin-top:8px">${esc(updated)}</div>${contractAgeBar(l)}</div></div>`;}).join('');
+  const cards=currentMineStores.map((l,i)=>{const p=checklistProgress(l),c=checklistFor(l),cls=p.done===p.total?' ready':p.done?' warn':'';const updated=c.updatedAt?`Atualizado ${new Date(c.updatedAt).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}`:'Sem atualização';return `<div class="mine-card${cls}" onclick="openChecklistModal(${i})"><div><div class="mine-card-title">${esc(l.loja)}</div><div class="mine-card-meta">${redeTagHtml(l)}${l.num?`<span class="store-num-pill after">${esc(l.num)}</span>`:''}<span class="tag-resp">${esc(l.responsavel||'Sem consultor')}</span>${badgeHtml(l.status)}${instBadgeHtml(l)}</div></div><div class="mine-progress"><div class="mine-progress-top"><span>${p.done}/${p.total} itens concluídos</span><span>${p.pct}%</span></div><div class="mine-track"><div class="mine-fill" style="width:${p.pct}%"></div></div><div class="mine-sub" style="margin-top:8px">${esc(updated)}</div>${contractAgeBar(l)}</div></div>`;}).join('');
   document.getElementById('content').innerHTML=`<div class="mine-head"><div><div class="mine-title">Minhas lojas</div><div class="mine-sub">${currentMineStores.length} loja(s) em acompanhamento. ${doneCount} com checklist completo.</div></div><div class="mine-user"><span class="tag-resp">${esc(who)}</span>${consultorUser?'<button class="btn-sm" onclick="consultorLogout()">Sair</button>':''}</div></div>${cards?`<div class="mine-grid">${cards}</div>`:'<div class="mine-empty">Nenhuma loja em implantação para este consultor.</div>'}`;
 }
 function openChecklistModal(idx){
   const l=currentMineStores[idx];if(!l)return;currentChecklistKey=checklistKey(l);
   const c=checklistFor(l),p=checklistProgress(l);
   document.getElementById('check-key').value=currentChecklistKey;
-  document.getElementById('check-mtitle').textContent='Checklist - '+l.loja;
+  document.getElementById('check-mtitle').textContent='Implantação - '+l.loja;
+  const inst=instalacaoInfo(l);
+  document.getElementById('check-stage1').innerHTML=
+    inst.state==='done'?`<div class="stage-line"><span>${inst.txt?'Instalado em '+esc(inst.txt):'Etapa concluída'}</span><span class="stage-badge ok">&#10003; Instalado</span></div>`
+    :inst.state==='sched'?`<div class="stage-line"><span>Agendada com a Presence</span><span class="stage-badge wait">${esc(inst.txt)}</span></div>`
+    :`<div class="stage-line"><span>Aguardando cronograma da Presence</span><span class="stage-badge none">Sem data</span></div>`;
+  document.getElementById('check-stage2').innerHTML=
+    stageLineHtml('Retaguarda',stageDateInfo(l.treinRetag,l.treinRetagEm),'Agendar via link')+
+    stageLineHtml('Balcão / loja',stageDateInfo(l.treinLoja,l.treinLojaEm),'Agendar via link');
+  document.getElementById('check-stage3-count').textContent=p.done+'/'+p.total;
   document.getElementById('check-list').innerHTML=CHECKLIST_ITENS.map(i=>`<label class="check-item ${c.itens&&c.itens[i.key]?'checked':''}"><input type="checkbox" data-check="${i.key}" ${c.itens&&c.itens[i.key]?'checked':''} onchange="this.closest('.check-item').classList.toggle('checked',this.checked)"><span>${esc(i.label)}</span></label>`).join('');
   document.getElementById('check-obs').value=c.obs||'';
   document.getElementById('check-meta').textContent=c.updatedAt?`Última atualização: ${new Date(c.updatedAt).toLocaleString('pt-BR')} por ${c.updatedBy||'-'} | ${p.done}/${p.total} concluídos`:'Ainda sem atualização.';
