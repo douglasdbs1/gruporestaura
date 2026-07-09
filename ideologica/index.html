@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Faturamento — Ideologica</title>
+<link rel="canonical" href="https://douglasdbs1.github.io/presence-control/ideologica/">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="topbar">
+  <span class="sys-title">Faturamento</span>
+  <span class="sys-sub">Ideologica / Allegro.Net</span>
+  <div class="spacer"></div>
+  <a class="topbar-link" href="../index.html">Presence Control ↗</a>
+</div>
+
+<div class="content">
+
+  <div class="filters">
+    <div class="fg">
+      <label>Loja</label>
+      <select id="f-loja"><option value="">Todas</option></select>
+    </div>
+    <div class="fg">
+      <label>Consultor</label>
+      <select id="f-consultor"><option value="">Todos</option></select>
+    </div>
+    <div class="fg">
+      <label>Período de</label>
+      <input type="date" id="f-data-ini">
+    </div>
+    <div class="fg">
+      <label>até</label>
+      <input type="date" id="f-data-fim">
+    </div>
+    <button class="btn-clear" id="btn-clear">Limpar filtros</button>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi">
+      <div class="kpi-label">Faturamento total</div>
+      <div class="kpi-value teal" id="kpi-faturamento">—</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Total de tickets</div>
+      <div class="kpi-value" id="kpi-tickets">—</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Ticket médio</div>
+      <div class="kpi-value" id="kpi-ticket-medio">—</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Lojas reportadas</div>
+      <div class="kpi-value" id="kpi-lojas">—</div>
+    </div>
+  </div>
+
+  <div class="panels">
+    <div class="panel">
+      <h3>Faturamento por Consultor</h3>
+      <div id="rank-consultor"></div>
+    </div>
+    <div class="panel">
+      <h3>Faturamento por Loja (top 10)</h3>
+      <div id="rank-loja"></div>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th data-sort="loja">Loja</th>
+          <th data-sort="consultor">Consultor</th>
+          <th>Período</th>
+          <th data-sort="total_faturado">Faturamento</th>
+          <th data-sort="total_tickets">Tickets</th>
+          <th>Ticket médio</th>
+          <th data-sort="valor_anulado">Anulado</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        <tr><td colspan="7" class="state-msg">Carregando...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/dashboard.js"></script>
+</body>
+</html>
