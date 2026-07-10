@@ -102,6 +102,18 @@ function getFilteredRelatorios(ini, fim){
   });
 }
 
+// soma total_faturado (valor oficial do relatório) por grupo — não usar soma de itens aqui:
+// Serviço e Produto são duas categorizações paralelas da MESMA receita (cross-tab do
+// relatório Allegro.Net), então somar faturamento de itens dos dois tipos duplicaria o total.
+function sumTotalFaturado(relatorios, groupField){
+  const map = new Map();
+  for(const r of relatorios){
+    const groupName = r[groupField] || "(sem "+groupField+")";
+    map.set(groupName, (map.get(groupName)||0) + Number(r.total_faturado||0));
+  }
+  return map;
+}
+
 // agrupa itens (de uma lista de relatórios já filtrada) por groupKey (loja|consultor) + categoria
 function aggregate(relatorios, groupField){
   const servicoFiltro = document.getElementById("f-servico").value;
@@ -146,6 +158,8 @@ function render(){
 
   const refMap = aggregate(refRelatorios, groupField);
   const cmpMap = aggregate(cmpRelatorios, groupField);
+  const refTotais = sumTotalFaturado(refRelatorios, groupField);
+  const cmpTotais = sumTotalFaturado(cmpRelatorios, groupField);
 
   // junta as chaves das duas visões pra não perder categoria que só existe num dos períodos
   const groups = new Map(); // groupName -> Map(categoria -> {ref, cmp})
@@ -171,12 +185,10 @@ function render(){
     const cats = groups.get(name);
     const catNames = [...cats.keys()].sort();
 
-    let totalRef = 0, totalCmp = 0;
     const rowsHtml = catNames.map(cat=>{
       const {ref, cmp} = cats.get(cat);
       const fatRef = ref ? ref.faturamento : 0;
       const fatCmp = cmp ? cmp.faturamento : 0;
-      totalRef += fatRef; totalCmp += fatCmp;
       const dif = fatCmp - fatRef;
       const pct = fatRef ? dif/fatRef : (fatCmp ? null : 0);
       const ticketMedio = cmp && cmp.tickets ? cmp.faturamento/cmp.tickets : null;
@@ -193,6 +205,10 @@ function render(){
         </tr>`;
     }).join("");
 
+    // total oficial do relatório (não soma de itens — servico e produto são
+    // categorizações paralelas da mesma receita, ver sumTotalFaturado).
+    const totalRef = refTotais.get(name) || 0;
+    const totalCmp = cmpTotais.get(name) || 0;
     const totalDif = totalCmp - totalRef;
     const totalPct = totalRef ? totalDif/totalRef : null;
 

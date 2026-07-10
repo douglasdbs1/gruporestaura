@@ -1,3 +1,4 @@
 sync/
 supabase_history.sql
 .claude/
+ideologica/.env
