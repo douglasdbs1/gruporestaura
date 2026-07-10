@@ -13,6 +13,16 @@ function fmtPct(v){
 function fmtNum(v){
   return (v==null?0:v).toLocaleString("pt-BR");
 }
+function fmtDate(d){
+  if(!d) return "";
+  const [y,m,day] = d.split("-");
+  return `${day}/${m}/${y}`;
+}
+const MESES = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+function mesLabel(ym){
+  const [y,m] = ym.split("-").map(Number);
+  return `${MESES[m-1]}/${y}`;
+}
 function showToast(msg){
   const t=document.createElement("div");
   t.className="toast";
@@ -155,7 +165,102 @@ function aggregate(relatorios, groupField){
   return map;
 }
 
+// Visão de progressão: em vez de comparar só 2 datas, mostra a curva
+// completa de checkpoints acumulados de cada loja dentro do mesmo mês
+// (ex.: 01-10, 01-20, 01-30), com a diferença entre cada checkpoint
+// consecutivo e uma projeção simples (ritmo diário atual) pro fim do mês
+// quando o último corte disponível ainda não é o mês inteiro.
+function renderProgressao(){
+  const bandeira = document.getElementById("f-bandeira").value;
+  const loja = document.getElementById("f-loja").value;
+  const consultor = document.getElementById("f-consultor").value;
+  const el = document.getElementById("groups");
+
+  const filtered = allRelatorios.filter(r=>{
+    if(bandeira && brandOf(r.loja)!==bandeira) return false;
+    if(loja && r.loja!==loja) return false;
+    if(consultor && r.consultor!==consultor) return false;
+    return true;
+  });
+
+  if(!filtered.length){
+    el.innerHTML = `<div class="state-msg">Nenhum relatório encontrado para esse filtro.</div>`;
+    return;
+  }
+
+  // agrupa por loja + mês (periodo_inicio é sempre o dia 1, então YYYY-MM identifica o ciclo)
+  const groups = new Map(); // "loja|||YYYY-MM" -> [relatorios]
+  for(const r of filtered){
+    const mes = (r.periodo_inicio||"").slice(0,7);
+    if(!mes) continue;
+    const key = r.loja+"|||"+mes;
+    if(!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(r);
+  }
+
+  const keys = [...groups.keys()].sort();
+  if(!keys.length){
+    el.innerHTML = `<div class="state-msg">Nenhum dado no filtro selecionado.</div>`;
+    return;
+  }
+
+  el.innerHTML = keys.map(key=>{
+    const [lojaName, mes] = key.split("|||");
+    const pontos = [...groups.get(key)].sort((a,b)=> a.periodo_fim<b.periodo_fim?-1:1);
+
+    const rowsHtml = pontos.map((r,i)=>{
+      const prev = i>0 ? pontos[i-1] : null;
+      const dif = prev ? r.total_faturado - prev.total_faturado : null;
+      const pct = prev && prev.total_faturado ? dif/prev.total_faturado : null;
+      return `
+        <tr>
+          <td>${fmtDate(r.periodo_fim)}</td>
+          <td class="num">${fmtMoney(r.total_faturado)}</td>
+          <td class="num ${deltaClass(dif)}">${dif==null?"—":fmtMoney(dif)}</td>
+          <td class="num ${deltaClass(pct)}">${fmtPct(pct)}</td>
+          <td class="num">${fmtNum(r.total_tickets)}</td>
+        </tr>`;
+    }).join("");
+
+    // projeção simples: ritmo diário do último checkpoint, extrapolado até
+    // o fim do mês — só faz sentido se o último corte ainda não é o mês inteiro.
+    const last = pontos[pontos.length-1];
+    const [y,m] = mes.split("-").map(Number);
+    const diasNoMes = new Date(y, m, 0).getDate();
+    const diaCorte = Number((last.periodo_fim||"").slice(8,10));
+    let projecaoHtml = "";
+    if(diaCorte>0 && diaCorte<diasNoMes){
+      const projetado = last.total_faturado/diaCorte*diasNoMes;
+      projecaoHtml = ` · Projeção fim do mês: <b>${fmtMoney(projetado)}</b> <span class="muted">(ritmo diário atual)</span>`;
+    }
+
+    return `
+    <div class="group-block">
+      <div class="group-head">
+        <span class="name">${brandTag(lojaName)}${lojaName}</span>
+        <span class="sub">${mesLabel(mes)}${projecaoHtml}</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Até</th>
+            <th>Faturamento acumulado</th>
+            <th>Diferença</th>
+            <th>%</th>
+            <th>Tickets</th>
+          </tr>
+        </thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+    </div>`;
+  }).join("");
+}
+
 function render(){
+  document.getElementById("fg-ref-data").style.display = currentView==="progressao" ? "none" : "";
+  document.getElementById("fg-cmp-data").style.display = currentView==="progressao" ? "none" : "";
+  if(currentView === "progressao"){ renderProgressao(); return; }
+
   const groupField = currentView === "loja" ? "loja" : "consultor";
 
   const refData = document.getElementById("ref-data").value;
