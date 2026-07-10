@@ -72,35 +72,36 @@ function populateFilterOptions(){
   }
 }
 
-// Sem datas escolhidas ainda: usa os dois períodos mais recentes já importados
-// como referência x comparação, só pra já mostrar algo funcionando.
+// Sem datas escolhidas ainda: usa os dois checkpoints mais recentes já
+// importados como referência x comparação, só pra já mostrar algo funcionando.
 function defaultPeriods(){
-  const periodos = [...new Set(allRelatorios.map(r=>`${r.periodo_inicio}|${r.periodo_fim}`))]
-    .map(p=>p.split("|"))
-    .sort((a,b)=> a[0]<b[0]?-1:1);
-  if(periodos.length>=2){
-    const [refP, cmpP] = periodos.slice(-2);
-    document.getElementById("ref-ini").value = refP[0];
-    document.getElementById("ref-fim").value = refP[1];
-    document.getElementById("cmp-ini").value = cmpP[0];
-    document.getElementById("cmp-fim").value = cmpP[1];
+  const datas = [...new Set(allRelatorios.map(r=>r.periodo_fim))].sort();
+  if(datas.length>=2){
+    document.getElementById("ref-data").value = datas[datas.length-2];
+    document.getElementById("cmp-data").value = datas[datas.length-1];
+  } else if(datas.length===1){
+    document.getElementById("cmp-data").value = datas[0];
   }
 }
 
-function overlaps(rel, ini, fim){
-  if(!ini || !fim) return false;
-  return rel.periodo_inicio <= fim && rel.periodo_fim >= ini;
-}
-
-function getFilteredRelatorios(ini, fim){
+// Cada relatório é uma LEITURA ACUMULADA do mês até periodo_fim (ex.: corte do
+// dia 15 = faturamento de 01 a 15; corte do dia 30 = faturamento de 01 a 30 —
+// não são fatias que se somam, o corte do dia 30 já inclui o do dia 15).
+// Por isso, pra uma data escolhida, pega só a leitura mais recente até aquela
+// data — uma por grupo — em vez de somar todo relatório que "cai" no intervalo.
+function pickSnapshots(targetDate, groupField){
   const loja = document.getElementById("f-loja").value;
   const consultor = document.getElementById("f-consultor").value;
-  return allRelatorios.filter(r=>{
-    if(!overlaps(r, ini, fim)) return false;
-    if(loja && r.loja!==loja) return false;
-    if(consultor && r.consultor!==consultor) return false;
-    return true;
-  });
+  const best = new Map(); // groupName -> relatorio mais recente <= targetDate
+  for(const r of allRelatorios){
+    if(!targetDate || r.periodo_fim > targetDate) continue;
+    if(loja && r.loja!==loja) continue;
+    if(consultor && r.consultor!==consultor) continue;
+    const groupName = r[groupField] || "(sem "+groupField+")";
+    const cur = best.get(groupName);
+    if(!cur || r.periodo_fim > cur.periodo_fim) best.set(groupName, r);
+  }
+  return [...best.values()];
 }
 
 // soma total_faturado (valor oficial do relatório) por grupo — não usar soma de itens aqui:
@@ -137,20 +138,18 @@ function aggregate(relatorios, groupField){
 function render(){
   const groupField = currentView === "loja" ? "loja" : "consultor";
 
-  const refIni = document.getElementById("ref-ini").value;
-  const refFim = document.getElementById("ref-fim").value;
-  const cmpIni = document.getElementById("cmp-ini").value;
-  const cmpFim = document.getElementById("cmp-fim").value;
+  const refData = document.getElementById("ref-data").value;
+  const cmpData = document.getElementById("cmp-data").value;
 
   const el = document.getElementById("groups");
 
-  if(!refIni || !refFim || !cmpIni || !cmpFim){
-    el.innerHTML = `<div class="state-msg">Escolha os dois períodos (referência e comparação) nos filtros acima.</div>`;
+  if(!refData || !cmpData){
+    el.innerHTML = `<div class="state-msg">Escolha as duas datas (referência e comparação) nos filtros acima.</div>`;
     return;
   }
 
-  const refRelatorios = getFilteredRelatorios(refIni, refFim);
-  const cmpRelatorios = getFilteredRelatorios(cmpIni, cmpFim);
+  const refRelatorios = pickSnapshots(refData, groupField);
+  const cmpRelatorios = pickSnapshots(cmpData, groupField);
 
   if(!refRelatorios.length && !cmpRelatorios.length){
     el.innerHTML = `<div class="state-msg">Nenhum relatório encontrado para os períodos/filtros selecionados.</div>`;
@@ -251,7 +250,7 @@ function initTabHandlers(){
 }
 
 function initFilterHandlers(){
-  ["f-loja","f-servico","f-consultor","ref-ini","ref-fim","cmp-ini","cmp-fim"].forEach(id=>{
+  ["f-loja","f-servico","f-consultor","ref-data","cmp-data"].forEach(id=>{
     document.getElementById(id).addEventListener("change",render);
   });
   document.getElementById("btn-clear").addEventListener("click",()=>{
