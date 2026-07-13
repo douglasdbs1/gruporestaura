@@ -1680,7 +1680,7 @@ function refreshTVFromLocalIfOpen(){
   renderTV();
 }
 function stopTV(){
-  if(tvTimer){clearInterval(tvTimer);tvTimer=null;}
+  if(tvTimer){clearTimeout(tvTimer);tvTimer=null;}
   if(tvClockTimer){clearInterval(tvClockTimer);tvClockTimer=null;}
   if(tvRefreshTimer){clearInterval(tvRefreshTimer);tvRefreshTimer=null;}
 }
@@ -1785,7 +1785,7 @@ function tvSlideRisks(){
     .sort((a,b)=>b.age-a.age)
     .slice(0,8);
   const visible=3,rowH=120,extra=Math.max(0,list.length-visible);
-  const rollStyle=extra?` style="--risk-offset:-${extra*rowH}px;--risk-duration:${TV_SLIDE_MS}ms"`:'';
+  const rollStyle=extra?` style="--risk-offset:-${extra*rowH}px;--risk-duration:${tvSlideMs(2)}ms"`:'';
   return `<section class="tv-slide" data-tv-slide="2">
     <div class="tv-section-title">Lojas com contrato assinado há mais tempo</div>
     <div class="tv-risk-viewport${extra?' roll':''}"${rollStyle}><div class="tv-risk-list">${list.length?list.map(r=>`<div class="tv-risk-card ${r.age>=60?'':'warn'}">
@@ -1804,13 +1804,21 @@ function updateTVClock(){
   if(time)time.textContent=now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
   if(date)date.textContent=now.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});
 }
-const TV_SLIDE_MS=18000;
+// Duração por slide (ms) — índice bate com data-tv-slide de cada <section>.
+// "Próximos go-lives" fica mais tempo na tela por ser a info mais importante;
+// as demais giram mais rápido.
+const TV_SLIDE_DURATIONS=[20000,10000,10000]; // 0=Próximos go-lives, 1=Agenda da semana, 2=Contratos aguardando
+function tvSlideMs(n){return TV_SLIDE_DURATIONS[n]??TV_SLIDE_DURATIONS[0];}
 function tvRestartProgress(){
   const bar=document.getElementById('tv-progress-fill');
   if(!bar)return;
   bar.style.animation='none';
   void bar.offsetWidth; // força reflow para reiniciar a animação
-  bar.style.animation=`tvprog ${TV_SLIDE_MS}ms linear forwards`;
+  bar.style.animation=`tvprog ${tvSlideMs(tvSlide)}ms linear forwards`;
+}
+function scheduleTVAdvance(){
+  if(tvTimer){clearTimeout(tvTimer);tvTimer=null;}
+  tvTimer=setTimeout(()=>showTVSlide(tvSlide+1),tvSlideMs(tvSlide));
 }
 function showTVSlide(n){
   const slides=[...document.querySelectorAll('.tv-slide')],dots=[...document.querySelectorAll('.tv-dot')];
@@ -1819,13 +1827,14 @@ function showTVSlide(n){
   slides.forEach((s,i)=>s.classList.toggle('on',i===tvSlide));
   dots.forEach((d,i)=>d.classList.toggle('on',i===tvSlide));
   tvRestartProgress();
+  scheduleTVAdvance();
 }
 function startTV(){
   stopTV();
   updateTVClock();
   tvRestartProgress();
   tvClockTimer=setInterval(updateTVClock,30000);
-  tvTimer=setInterval(()=>showTVSlide(tvSlide+1),TV_SLIDE_MS);
+  scheduleTVAdvance();
   tvRefreshTimer=setInterval(async()=>{
     if(currentPage!=='tv')return;
     const before=lastStateUpdatedAt;
