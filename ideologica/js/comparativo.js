@@ -244,10 +244,10 @@ function renderProgressao(){
         <thead>
           <tr>
             <th>Até</th>
-            <th>Faturamento acumulado</th>
-            <th>Diferença</th>
-            <th>%</th>
-            <th>Tickets</th>
+            <th class="num">Faturamento acumulado</th>
+            <th class="num">Diferença</th>
+            <th class="num">%</th>
+            <th class="num">Tickets</th>
           </tr>
         </thead>
         <tbody>${rowsHtml}</tbody>
@@ -349,12 +349,12 @@ function render(){
         <thead>
           <tr>
             <th>Serviço/Produto</th>
-            <th>Referência</th>
-            <th class="col-sep">Comparação</th>
-            <th>Diferença</th>
-            <th>%</th>
-            <th class="col-sep">Ticket médio</th>
-            <th>Ticket serviço</th>
+            <th class="num">Referência</th>
+            <th class="num col-sep">Comparação</th>
+            <th class="num">Diferença</th>
+            <th class="num">%</th>
+            <th class="num col-sep">Ticket médio</th>
+            <th class="num">Ticket serviço</th>
           </tr>
         </thead>
         <tbody>${rowsHtml}</tbody>
