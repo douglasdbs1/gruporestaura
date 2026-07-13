@@ -197,8 +197,14 @@ let lastTableRows = [];
 function groupKey(r){
   return r.loja+"|||"+(r.periodo_inicio||"");
 }
+// O dia do corte real varia +-1/2 dias (fim de semana, feriado) mas
+// representa sempre a mesma "janela" de corte — agrupa no múltiplo de 5
+// mais próximo pra pill ficar estável (9/10/11→10, 14/15/16→15, 29/30/31→30...).
+// A data exata continua na coluna Período, isso é só o rótulo da pill.
 function cutDay(periodoFim){
-  return Number((periodoFim||"").slice(8,10)) || "?";
+  const day = Number((periodoFim||"").slice(8,10));
+  if(!day) return "?";
+  return Math.min(30, Math.round(day/5)*5) || day;
 }
 
 function renderTable(rows){
