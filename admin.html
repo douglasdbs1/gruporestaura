@@ -468,6 +468,8 @@ body.tv-mode .content{max-width:none;padding:0;background:#0f1417;}
 .tv-risk-viewport{height:348px;overflow:hidden;}
 .tv-risk-viewport.roll .tv-risk-list{animation:tvRiskRoll var(--risk-duration,18s) linear infinite alternate;}
 @keyframes tvRiskRoll{from{transform:translateY(0)}to{transform:translateY(var(--risk-offset,0))}}
+.tv-main-viewport{height:364px;overflow:hidden;}
+.tv-main-viewport.roll .tv-main-list{animation:tvRiskRoll var(--main-duration,18s) linear infinite alternate;}
 .tv-risk-card{background:#182026;border:1px solid #2b363c;border-left:8px solid #ff7777;border-radius:8px;padding:18px 22px;min-height:108px;display:flex;align-items:center;justify-content:space-between;gap:18px;}
 .tv-risk-card.warn{border-left-color:#ffcf5a;}
 .tv-risk-main{min-width:0;}
@@ -1742,12 +1744,19 @@ function tvAgendaDays(items){
     .slice(0,5);
 }
 function tvSlideUpcoming(items,stats){
-  const list=items.slice(0,3).map(tvCard).join('');
+  // mostra todos os go-lives de hoje+amanha (minimo 3 — completa com os
+  // proximos mais proximos se hoje+amanha tiver menos que isso); acima de 3
+  // linhas, rola automaticamente (mesmo mecanismo da tela de contratos aguardando)
+  const todayTomorrow=items.filter(l=>l._tvDiff===0||l._tvDiff===1).length;
+  const rows=items.slice(0,Math.max(3,todayTomorrow));
+  const visible=3,rowH=126,extra=Math.max(0,rows.length-visible);
+  const rollStyle=extra?` style="--main-offset:-${extra*rowH}px;--main-duration:${tvSlideMs(0)}ms"`:'';
+  const list=rows.map(tvCard).join('');
   return `<section class="tv-slide on" data-tv-slide="0">
     <div class="tv-grid">
       <div>
         <div class="tv-section-title">Próximos go-lives</div>
-        <div class="tv-main-list">${list||'<div class="tv-empty">Nenhum go-live marcado nos próximos 30 dias.</div>'}</div>
+        <div class="tv-main-viewport${extra?' roll':''}"${rollStyle}><div class="tv-main-list">${list||'<div class="tv-empty">Nenhum go-live marcado nos próximos 30 dias.</div>'}</div></div>
       </div>
       <div class="tv-side">
         <div class="tv-stat"><div class="n">${stats.today}</div><div class="l">Hoje</div></div>
