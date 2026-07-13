@@ -19,6 +19,7 @@ function fmtDate(d){
 // Lojas cujo nome no relatório não denuncia a bandeira entram aqui manualmente.
 const BRAND_OVERRIDES = {
   "RS - PORTO ALEGRE": "rj",
+  "RESTAURA JEANS RS - SANTA ROSA": "mega",
 };
 function brandOf(loja){
   if(BRAND_OVERRIDES[loja]) return BRAND_OVERRIDES[loja];
