@@ -163,9 +163,11 @@ function renderRanking(elId, entries, isLoja){
   const max = entries[0][1] || 1;
   el.innerHTML = entries.slice(0,10).map(([name,val])=>`
     <div class="bar-row">
-      <div class="bar-name" title="${isLoja?displayLoja(name):name}">${isLoja?brandTag(name)+displayLoja(name):name}</div>
-      <div class="bar-track"><div class="bar-fill" style="width:${Math.max(2,(val/max)*100)}%"></div></div>
-      <div class="bar-value">${fmtMoney(val)}</div>
+      <div class="bar-name">${isLoja?brandTag(name)+displayLoja(name):name}</div>
+      <div class="bar-track-row">
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.max(2,(val/max)*100)}%"></div></div>
+        <div class="bar-value">${fmtMoney(val)}</div>
+      </div>
     </div>
   `).join("");
 }
