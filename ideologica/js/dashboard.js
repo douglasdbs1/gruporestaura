@@ -1,5 +1,6 @@
 let supabaseClient = null;
 let allRelatorios = [];
+let tingimentoPorRelatorio = new Map(); // relatorio_id -> peças (volume) captadas p/ tingimento
 let sortKey = "total_faturado";
 let sortDir = -1;
 
@@ -72,14 +73,26 @@ async function loadRelatorios(){
   const tbody = document.getElementById("tbody");
   tbody.innerHTML = `<tr><td colspan="7" class="state-msg">Carregando...</td></tr>`;
   try{
-    const {data, error} = await supabaseClient
-      .from("faturamento_relatorios")
-      .select("*")
-      .order("periodo_fim",{ascending:false});
+    const [{data, error}, {data: itensData, error: itensError}] = await Promise.all([
+      supabaseClient
+        .from("faturamento_relatorios")
+        .select("*")
+        .order("periodo_fim",{ascending:false}),
+      supabaseClient
+        .from("faturamento_itens")
+        .select("relatorio_id,volume")
+        .eq("tipo","servico")
+        .ilike("categoria","%tingimento%"),
+    ]);
     if(error) throw error;
+    if(itensError) throw itensError;
     // ignora relatorios de amostra/teste (nunca sao dados reais de loja)
     allRelatorios = (data || []).filter(r => !(r.arquivo_origem||"").startsWith("AMOSTRA_"));
     lojaBandeiraMap = buildLojaBandeiraMap(allRelatorios);
+    tingimentoPorRelatorio = new Map();
+    for(const it of (itensData||[])){
+      tingimentoPorRelatorio.set(it.relatorio_id, (tingimentoPorRelatorio.get(it.relatorio_id)||0) + Number(it.volume||0));
+    }
     populateFilterOptions();
     render();
   }catch(err){
@@ -154,9 +167,11 @@ function renderKpis(rows){
   const totalTickets = rows.reduce((s,r)=>s+Number(r.total_tickets||0),0);
   const ticketMedio = totalTickets ? totalFaturado/totalTickets : 0;
   const lojas = new Set(rows.map(r=>r.loja)).size;
+  const pecasTingimento = rows.reduce((s,r)=>s+(tingimentoPorRelatorio.get(r.id)||0),0);
   document.getElementById("kpi-faturamento").textContent = fmtMoney(totalFaturado);
   document.getElementById("kpi-tickets").textContent = fmtNum(totalTickets);
   document.getElementById("kpi-ticket-medio").textContent = fmtMoney(ticketMedio);
+  document.getElementById("kpi-tingimento").textContent = fmtNum(pecasTingimento);
   document.getElementById("kpi-lojas").textContent = fmtNum(lojas);
 }
 

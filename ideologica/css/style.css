@@ -41,11 +41,13 @@ body{font-family:var(--font);font-weight:600;background:var(--bg);color:var(--te
 .btn-clear:hover{background:var(--surface2);}
 
 /* KPI CARDS */
-.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
+.kpis{display:grid;grid-template-columns:1.15fr 1fr 1fr 1.15fr .65fr;gap:12px;margin-bottom:18px;}
 .kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
 .kpi-label{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;}
 .kpi-value{font-size:22px;font-weight:800;color:var(--text);}
 .kpi-value.teal{color:var(--teal);}
+.kpi.sm{padding:10px 12px;}
+.kpi.sm .kpi-value{font-size:17px;}
 
 /* PANELS */
 .panels{display:grid;grid-template-columns:7fr 3fr;gap:14px;margin-bottom:18px;}
@@ -74,6 +76,7 @@ tr:hover td{background:var(--surface2);}
 
 @media(max-width:900px){
   .kpis{grid-template-columns:repeat(2,1fr);}
+  .kpi.sm{grid-column:span 2;}
   .panels{grid-template-columns:1fr;}
 }
 
