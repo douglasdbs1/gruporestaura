@@ -30,6 +30,12 @@ body{font-family:var(--font);font-weight:600;background:var(--bg);color:var(--te
 .topbar-link{font-size:11px;color:var(--text3);text-decoration:none;}
 .topbar-link:hover{color:var(--teal-mid);}
 
+.app-switch{display:flex;align-items:stretch;height:26px;border:1px solid var(--border2);border-radius:999px;overflow:hidden;font-size:11px;font-weight:700;}
+.app-switch a,.app-switch span{display:flex;align-items:center;padding:0 14px;text-decoration:none;color:var(--text3);}
+.app-switch a:hover{color:var(--teal-mid);}
+.app-switch span.on{background:var(--teal-mid);color:#fff;}
+.app-switch-div{width:1px;background:var(--border2);}
+
 .content{max-width:1360px;margin:0 auto;padding:20px 24px 60px;}
 
 /* FILTERS */
