@@ -6,10 +6,16 @@ O projeto é uma aplicação web estática, feita em HTML, CSS e JavaScript puro
 
 ## Como Usar
 
-- `index.html`: visão de acompanhamento, pensada para consultores e diretoria.
-- `admin.html`: visão administrativa, usada pelo Douglas para editar lojas, cronogramas, observações e status.
+O sistema mora na pasta `presence/`:
 
-Na prática, o link principal pode apontar para `index.html`. Para editar, acesse o mesmo endereço usando `/admin.html`.
+- `presence/index.html`: visão de acompanhamento, pensada para consultores e diretoria.
+- `presence/admin.html`: visão administrativa, usada pelo Douglas para editar lojas, cronogramas, observações e status.
+
+A raiz do site (`index.html`) é só um redirect automático para `presence/`, mantido pra não quebrar links antigos que apontavam direto pra raiz.
+
+Na prática, o link principal pode apontar para `presence/index.html`. Para editar, acesse o mesmo endereço usando `presence/admin.html`.
+
+O outro sistema do repositório, `ideologica/` (faturamento/comparativo), tem um botão de transição no topo de cada tela pra ir e voltar entre os dois.
 
 Ao abrir, o sistema mostra primeiro a página **Sistema Presence Ativo**, onde cada loja aparece como um card com a saúde da operação e um indicador (🎧) dos chamados vinculados.
 
@@ -40,17 +46,19 @@ Ao abrir, o sistema tenta carregar os dados do Supabase. Se não conseguir, usa 
 
 ## Modos De Acesso
 
-O modo leitura fica em `index.html` e não permite edição.
+O modo leitura fica em `presence/index.html` e não permite edição.
 
-O modo administrativo fica em `admin.html`. Ele libera edição depois da senha local da sessão. Como é um projeto interno, esse modelo é simples e prático, mas não deve ser tratado como autenticação forte para ambiente público.
+O modo administrativo fica em `presence/admin.html`. Ele libera edição depois da senha local da sessão. Como é um projeto interno, esse modelo é simples e prático, mas não deve ser tratado como autenticação forte para ambiente público.
 
 ## Arquivos Principais
 
-- `index.html`: versão somente leitura.
-- `admin.html`: versão administrativa.
+- `index.html` (raiz): redirect automático para `presence/`.
+- `presence/index.html`: versão somente leitura.
+- `presence/admin.html`: versão administrativa.
+- `ideologica/`: dashboard de faturamento (sistema separado, com botão de transição pro Presence Control).
 - `README.md`: documentação básica do projeto.
 
-Atualmente, `index.html` e `admin.html` são quase iguais. A principal diferença é o modo configurado no JavaScript.
+Atualmente, `presence/index.html` e `presence/admin.html` são quase iguais. A principal diferença é o modo configurado no JavaScript.
 
 ## Importação De Chamados (Claude Desktop)
 

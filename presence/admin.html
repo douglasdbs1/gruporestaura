@@ -5,15 +5,15 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Presence Control</title>
 <meta name="description" content="Painel interno da franqueadora para acompanhamento de go-lives, implantações e operação Presence.">
-<link rel="canonical" href="https://douglasdbs1.github.io/presence-control/">
+<link rel="canonical" href="https://douglasdbs1.github.io/presence-control/presence/">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="pt_BR">
 <meta property="og:site_name" content="Presence Control">
 <meta property="og:title" content="Presence Control">
 <meta property="og:description" content="Painel interno da franqueadora para acompanhamento de go-lives, implantações e operação Presence.">
-<meta property="og:url" content="https://douglasdbs1.github.io/presence-control/">
-<meta property="og:image" content="https://douglasdbs1.github.io/presence-control/og-image.png">
-<meta property="og:image:secure_url" content="https://douglasdbs1.github.io/presence-control/og-image.png">
+<meta property="og:url" content="https://douglasdbs1.github.io/presence-control/presence/">
+<meta property="og:image" content="https://douglasdbs1.github.io/presence-control/presence/og-image.png">
+<meta property="og:image:secure_url" content="https://douglasdbs1.github.io/presence-control/presence/og-image.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -21,7 +21,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Presence Control">
 <meta name="twitter:description" content="Painel interno da franqueadora para acompanhamento de go-lives, implantações e operação Presence.">
-<meta name="twitter:image" content="https://douglasdbs1.github.io/presence-control/og-image.png">
+<meta name="twitter:image" content="https://douglasdbs1.github.io/presence-control/presence/og-image.png">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
@@ -53,6 +53,8 @@ body{font-family:var(--font);font-weight:600;background:var(--bg);color:var(--te
 .topbar-date{font-size:11px;color:var(--text3);margin-right:4px;}
 .btn-save-all{display:flex;align-items:center;gap:5px;font-family:var(--font);font-size:11px;font-weight:600;padding:5px 12px;border:1px solid var(--teal-mid);background:var(--teal-bg);color:var(--teal);border-radius:6px;cursor:pointer;}
 .btn-save-all:hover{background:var(--teal-mid);color:#fff;}
+.topbar-link{font-size:11px;color:var(--text3);text-decoration:none;margin-right:10px;}
+.topbar-link:hover{color:var(--teal-mid);}
 
 /* PAGE NAV */
 .page-nav{background:#fff;border-bottom:1px solid var(--border);position:sticky;top:52px;z-index:99;display:flex;padding:0 24px;}
@@ -724,7 +726,7 @@ td.oc{max-width:260px;}
 <body>
 
 <div class="logo-bar" style="background:#fff;text-align:center;padding:14px 16px;border-bottom:1px solid #e6e6e6;">
-  <img src="logo.png" alt="Grupo Restaura Franchising" style="height:64px;width:auto;max-width:90%;display:inline-block;vertical-align:middle;">
+  <img src="../logo.png" alt="Grupo Restaura Franchising" style="height:64px;width:auto;max-width:90%;display:inline-block;vertical-align:middle;">
 </div>
 
 <div class="topbar">
@@ -734,6 +736,7 @@ td.oc{max-width:260px;}
   <span class="sys-title">Presence Control</span>
   <span class="sys-sub" id="sys-sub">Implantações em andamento</span>
   <div class="spacer"></div>
+  <a class="topbar-link" href="../ideologica/index.html">Ideológica ↗</a>
   <span class="topbar-date" id="hdate"></span>
   <span id="mode-pill" class="readonly-pill"></span><button class="btn-save-all edit-only" onclick="saveAll()">↓ Salvar tudo</button>
 </div>
