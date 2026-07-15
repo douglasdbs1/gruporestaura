@@ -267,6 +267,7 @@ function renderRanking(elId, entries, isLoja){
 // com pills clicáveis pro corte ativo — a escolha fica lembrada em
 // activeCutByGroup até o usuário trocar de novo.
 const activeCutByGroup = new Map(); // groupKey -> periodo_fim escolhido
+const openLojaGroups = new Set(); // groupKeys com o detalhe aberto no momento
 let lastTableRows = [];
 
 function groupKey(r){
@@ -314,8 +315,9 @@ function renderTable(rows){
     const pills = list.length>1 ? `<span class="cut-pills">${list.map(r=>
       `<button type="button" class="cut-pill${r.periodo_fim===chosen.periodo_fim?" active":""}" data-group="${encodeURIComponent(key)}" data-periodo="${r.periodo_fim}">${cutDay(r.periodo_fim)}</button>`
     ).join("")}</span>` : "";
+    const isOpen = openLojaGroups.has(key);
     return `
-    <tr class="loja-row" data-loja="${encodeURIComponent(chosen.loja)}" data-periodo="${chosen.periodo_fim}">
+    <tr class="loja-row${isOpen?" open":""}" data-loja="${encodeURIComponent(chosen.loja)}" data-periodo="${chosen.periodo_fim}" data-key="${encodeURIComponent(key)}">
       <td><span class="expand-caret">▸</span>${brandTag(chosen.loja)}${displayLoja(chosen.loja)}${pills}</td>
       <td class="muted">${chosen.consultor||"—"}</td>
       <td>${fmtDate(chosen.periodo_inicio)} – ${fmtDate(chosen.periodo_fim)}</td>
@@ -324,7 +326,7 @@ function renderTable(rows){
       <td class="num">${fmtMoney(ticketMedio)}</td>
       <td class="num muted">${fmtMoney(chosen.valor_anulado)}</td>
     </tr>
-    <tr class="loja-detail-row" style="display:none"><td colspan="7"></td></tr>`;
+    <tr class="loja-detail-row"${isOpen?"":' style="display:none"'}><td colspan="7">${isOpen?lojaDetailHtml(chosen.loja, chosen.periodo_fim):""}</td></tr>`;
   }).join("");
 }
 
@@ -332,6 +334,8 @@ function initCutPillHandler(){
   document.getElementById("tbody").addEventListener("click",(e)=>{
     const pill = e.target.closest(".cut-pill");
     if(pill){
+      // troca o corte sem fechar o detalhe se ele já estiver aberto — só
+      // re-renderiza os dados, sem colapsar e reabrir (evita o "pulo" da tabela).
       activeCutByGroup.set(decodeURIComponent(pill.dataset.group), pill.dataset.periodo);
       renderTable(lastTableRows);
       return;
@@ -340,12 +344,15 @@ function initCutPillHandler(){
     if(!row) return;
     const detailRow = row.nextElementSibling;
     if(!detailRow || !detailRow.classList.contains("loja-detail-row")) return;
+    const key = decodeURIComponent(row.dataset.key);
     const opening = detailRow.style.display === "none";
     if(opening){
+      openLojaGroups.add(key);
       detailRow.querySelector("td").innerHTML = lojaDetailHtml(decodeURIComponent(row.dataset.loja), row.dataset.periodo);
       detailRow.style.display = "";
       row.classList.add("open");
     }else{
+      openLojaGroups.delete(key);
       detailRow.style.display = "none";
       row.classList.remove("open");
     }
