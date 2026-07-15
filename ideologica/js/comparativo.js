@@ -76,6 +76,7 @@ function brandTag(loja){
 // Não afeta o valor gravado (usado pra agrupar/filtrar) — só a exibição.
 const LOJA_DISPLAY_OVERRIDES = {
   "MINHA LAVANDERIA - TEUT": "MINHA LAVANDERIA - TEUTÔNIA",
+  "RESTAURA JEANS - PO": "RESTAURA JEANS - PONTE RASA",
 };
 function displayLoja(loja){
   return LOJA_DISPLAY_OVERRIDES[loja] || loja;

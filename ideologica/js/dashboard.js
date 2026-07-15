@@ -73,6 +73,7 @@ function brandTag(loja){
 // Não afeta o valor gravado (usado pra agrupar/filtrar) — só a exibição.
 const LOJA_DISPLAY_OVERRIDES = {
   "MINHA LAVANDERIA - TEUT": "MINHA LAVANDERIA - TEUTÔNIA",
+  "RESTAURA JEANS - PO": "RESTAURA JEANS - PONTE RASA",
 };
 function displayLoja(loja){
   return LOJA_DISPLAY_OVERRIDES[loja] || loja;
@@ -155,14 +156,19 @@ function getFiltered(){
 
 // Cada relatório é uma leitura ACUMULADA do mês até periodo_fim (corte do dia
 // 15 = faturamento de 01 a 15; corte do dia 30 já inclui o do dia 15) — não são
-// fatias que se somam. Pra KPIs e rankings, usa só a leitura mais recente por
-// loja dentro do filtro; a tabela abaixo continua mostrando todo relatório
-// importado (histórico de cada corte).
+// fatias que se somam DENTRO do mesmo mês. Mas mês a mês o ciclo reinicia (o
+// corte de julho não inclui o faturamento de junho), então a chave tem que
+// ser loja+mês (periodo_inicio, sempre dia 1, identifica o mês) — só assim
+// "Todos" soma cada mês corretamente em vez de descartar os meses anteriores
+// de uma loja que já tem corte no mês mais recente. Pra KPIs e rankings, usa
+// só a leitura mais recente por loja+mês dentro do filtro; a tabela abaixo
+// continua mostrando todo relatório importado (histórico de cada corte).
 function latestPerLoja(rows){
   const best = new Map();
   for(const r of rows){
-    const cur = best.get(r.loja);
-    if(!cur || r.periodo_fim > cur.periodo_fim) best.set(r.loja, r);
+    const key = r.loja+"|"+r.periodo_inicio.slice(0,7);
+    const cur = best.get(key);
+    if(!cur || r.periodo_fim > cur.periodo_fim) best.set(key, r);
   }
   return [...best.values()];
 }
