@@ -146,8 +146,8 @@ function lojaDisplayText(loja){
 }
 function lojaLineHtml(loja){
   const loc=lojaLocation(loja);
-  if(!loc)return `<span class="loja-line">${brandTag(loja)}<span class="loja-city">${esc(displayLoja(loja))}</span></span>`;
-  return `<span class="loja-line" title="${esc(displayLoja(loja))}">${brandTag(loja)}<span class="loja-uf">${esc(loc[0])}</span><span class="loja-sep">·</span><span class="loja-city">${esc(loc[1])}</span>${loc[2]?`<span class="loja-sep">·</span><span class="loja-unit">${esc(loc[2])}</span>`:""}</span>`;
+  if(!loc)return `<span class="loja-line"><span class="loja-brand-slot">${brandTag(loja).trim()}</span><span class="loja-city">${esc(displayLoja(loja))}</span></span>`;
+  return `<span class="loja-line" title="${esc(displayLoja(loja))}"><span class="loja-brand-slot">${brandTag(loja).trim()}</span><span class="loja-uf">${esc(loc[0])}</span><span class="loja-sep">·</span><span class="loja-city">${esc(loc[1])}</span>${loc[2]?`<span class="loja-sep">·</span><span class="loja-unit">${esc(loc[2])}</span>`:""}</span>`;
 }
 function lojaFromArquivo(arquivoOrigem){
   const base = (arquivoOrigem||"")
