@@ -115,6 +115,28 @@ function dedupeRelatorios(rows){
     return true;
   });
 }
+// Duas leituras da mesma loja em meses diferentes podem vir com grafia
+// diferente no nome do arquivo (acento, maiúscula — ex. "RJ Ijuí" x "RJ Ijui",
+// já que o nome vem de quem digitou o arquivo naquele mês, não de um cadastro
+// fixo). Sem isso a loja aparece duplicada em todo agrupamento por `loja`
+// (pickSnapshots/aggregate/progressão). Escolhe uma grafia única por chave
+// sem acento/caixa e força todos os relatórios daquela loja pra ela,
+// preferindo a versão acentuada (mais completa) e, empatando, a mais longa.
+function foldKey(s){ return (s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().trim(); }
+function preferLojaName(a,b){
+  const accentsA = /[À-ÖØ-öø-ÿ]/.test(a), accentsB = /[À-ÖØ-öø-ÿ]/.test(b);
+  if(accentsA !== accentsB) return accentsA;
+  return a.length > b.length;
+}
+function canonicalizeLojaNames(rows){
+  const byKey = new Map();
+  for(const r of rows){
+    const key = foldKey(r.loja);
+    const cur = byKey.get(key);
+    if(!cur || preferLojaName(r.loja, cur)) byKey.set(key, r.loja);
+  }
+  for(const r of rows) r.loja = byKey.get(foldKey(r.loja));
+}
 // Pré-seleciona o filtro de consultor pela identidade logada no hall (auth.js),
 // sem travar a tela pra quem chegar aqui direto sem login (fica em "Todos").
 function normHallName(s){return (s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().trim();}
@@ -170,6 +192,7 @@ async function loadData(){
       .filter(r => !(r.arquivo_origem||"").startsWith("AMOSTRA_"))
       .map(normalizeRelatorio);
     allRelatorios = dedupeRelatorios(allRelatorios);
+    canonicalizeLojaNames(allRelatorios);
     lojaBandeiraMap = buildLojaBandeiraMap(allRelatorios);
     populateFilterOptions();
     defaultPeriods();

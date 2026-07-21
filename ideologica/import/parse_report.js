@@ -163,6 +163,39 @@ const plain = s => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').to
 // Em vez de arriscar publicar numeros errados, zera os campos secundarios
 // quando a consistencia interna falha (%, %volume fora de 0-100, ou
 // media != faturamento/quantidade) — o faturamento nunca e afetado.
+// Quando falta exatamente 1 valor na linha (célula em branco no meio, não só
+// no fim — ver "pegadinha 2" no README), a leitura posicional embaralha todos
+// os campos depois do buraco. Antes de desistir e zerar tudo, tenta achar EM
+// QUAL das 7 posições (Faturamento, %, Volume, %Volume, Méd.Serv., Tickets,
+// Méd.Tck.) a célula sumiu: insere um null em cada posição candidata e aceita
+// a reconstrução se, e só se, ela for a ÚNICA que bate nas contas que dá pra
+// conferir (Méd.Serv. = Faturamento/Volume, Méd.Tck. = Faturamento/Tickets) —
+// candidatos que só "passam" porque o campo caiu em null não contam como
+// verificados, senão qualquer posição errada pareceria válida.
+function reconstructSingleGap(vals) {
+  if (vals.length !== 6) return null;
+  const candidates = [];
+  for (let p = 0; p < 7; p++) {
+    const candidate = [...vals.slice(0, p), null, ...vals.slice(p)];
+    const [fat, pct, vol, pctvol, mserv, tix, mtck] = candidate;
+    if (pct != null && !(pct >= 0 && pct <= 100)) continue;
+    if (pctvol != null && !(pctvol >= 0 && pctvol <= 100)) continue;
+    let verified = 0;
+    if (mserv != null && vol) {
+      if (Math.abs(mserv - fat / vol) > 0.5) continue;
+      verified++;
+    }
+    if (mtck != null && tix) {
+      if (Math.abs(mtck - fat / tix) > 0.5) continue;
+      verified++;
+    }
+    candidates.push({ candidate, verified });
+  }
+  const maxVerified = Math.max(0, ...candidates.map(c => c.verified));
+  const best = candidates.filter(c => c.verified === maxVerified);
+  return (maxVerified > 0 && best.length === 1) ? best[0].candidate : null;
+}
+
 function sanitizeItem(it) {
   let bad = false;
   if (it.percentual != null && !(it.percentual >= 0 && it.percentual <= 100)) bad = true;
@@ -292,7 +325,8 @@ function parseReport(buf, consultor, arquivoOrigem) {
 
   function buildItems(names, tipo, rowList) {
     return rowList.map((r, i) => {
-      const vals = rowVals(r).slice();
+      let vals = rowVals(r).slice();
+      if (vals.length === 6) vals = reconstructSingleGap(vals) || vals;
       while (vals.length < 7) vals.push(null);
       const [fat, pct, vol, pctvol, mserv, tix, mtck] = vals;
       return sanitizeItem({

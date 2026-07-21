@@ -81,13 +81,19 @@ só da assinatura de 4 bytes e dos 14 bytes seguintes.
    relativa** dos valores dentro da linha, que segue sempre: Faturamento,
    %, Volume, %Volume, Méd.Serv., Tickets, Méd.Tck.
 
-2. **Célula em branco desalinha a leitura.** Se uma célula no meio da
-   linha vier em branco (sem registro BIFF), os valores seguintes daquela
-   linha entram na posição errada. Mitigado validando consistência interna
-   (% entre 0-100, média ≈ faturamento÷quantidade) — se não bate, zera só
-   os campos secundários daquela linha (o faturamento nunca é afetado,
-   porque é sempre o primeiro valor da linha). O `import.js` avisa no
-   console quando isso acontece.
+2. **Célula em branco desalinha a leitura (recuperado 21/07/2026).** Se uma
+   célula no meio da linha vier em branco (sem registro BIFF), os valores
+   seguintes daquela linha entram na posição errada. Quando falta
+   exatamente 1 valor, `reconstructSingleGap` testa em qual das 7 posições
+   (Faturamento, %, Volume, %Volume, Méd.Serv., Tickets, Méd.Tck.) a célula
+   sumiu e aceita a reconstrução só se ela for a ÚNICA que bate nas contas
+   conferíveis (Méd.Serv. = Faturamento/Volume, Méd.Tck. = Faturamento/
+   Tickets) — foi assim que o Tingimento do "RJ Belo Horizonte 20.xls"
+   apareceu com volume zerado (tinha 65, virou null) até essa correção.
+   Se a reconstrução for ambígua (mais de uma posição bate) ou faltar mais
+   de 1 valor, cai no comportamento antigo: zera só os campos secundários
+   daquela linha (o faturamento nunca é afetado, porque é sempre o primeiro
+   valor da linha). O `import.js` avisa no console quando isso acontece.
 
 3. **Arquivo reaberto/resalvo no Excel usa codificação diferente
    (corrigido 20/07/2026).** O export direto do Allegro.Net grava texto em

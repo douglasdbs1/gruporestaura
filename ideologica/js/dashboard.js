@@ -194,6 +194,28 @@ function dedupeRelatorios(rows){
     return true;
   });
 }
+// Duas leituras da mesma loja em meses diferentes podem vir com grafia
+// diferente no nome do arquivo (acento, maiúscula — ex. "RJ Ijuí" x "RJ Ijui",
+// já que o nome vem de quem digitou o arquivo naquele mês, não de um cadastro
+// fixo). Sem isso a loja aparece duplicada (uma linha por grafia, em vez de
+// uma linha só com pills de corte) em toda tabela/ranking que agrupa por
+// `loja`. Escolhe uma grafia única por chave sem acento/caixa (locationKey) e
+// força todos os relatórios daquela loja pra ela, preferindo a versão
+// acentuada (mais completa) e, empatando, a mais longa.
+function preferLojaName(a,b){
+  const accentsA = /[À-ÖØ-öø-ÿ]/.test(a), accentsB = /[À-ÖØ-öø-ÿ]/.test(b);
+  if(accentsA !== accentsB) return accentsA;
+  return a.length > b.length;
+}
+function canonicalizeLojaNames(rows){
+  const byKey = new Map();
+  for(const r of rows){
+    const key = locationKey(r.loja);
+    const cur = byKey.get(key);
+    if(!cur || preferLojaName(r.loja, cur)) byKey.set(key, r.loja);
+  }
+  for(const r of rows) r.loja = byKey.get(locationKey(r.loja));
+}
 function showToast(msg){
   const t=document.createElement("div");
   t.className="toast";
@@ -230,6 +252,7 @@ async function loadRelatorios(){
     allRelatorios = dedupeRelatorios(allRelatorios);
     const duplicateCount=(window.ideologicaDuplicateReports||[]).length;
     if(duplicateCount)console.error("Relatórios duplicados bloqueados:",window.ideologicaDuplicateReports);
+    canonicalizeLojaNames(allRelatorios);
     lojaBandeiraMap = buildLojaBandeiraMap(allRelatorios);
     tingimentoPorRelatorio = new Map();
     for(const r of allRelatorios){
