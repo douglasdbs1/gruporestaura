@@ -1,9 +1,17 @@
 ﻿$ErrorActionPreference = "Continue"
+# node escreve stdout em UTF-8, mas o pipeline do PowerShell 5.1 decodifica a
+# saida de processos externos usando [Console]::OutputEncoding (o codepage do
+# console, normalmente OEM/ANSI, nao UTF-8) — sem isso, acento e a seta "→" do
+# import_all.js viram lixo (mojibake) no MessageBox.
+$prevOutputEncoding = [Console]::OutputEncoding
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 try {
     Set-Location "C:\laragon\www\presence-control"
     $output = & node "ideologica\import\import_all.js" "G:\Meu Drive\IDEOLÓGICA SISTEMA" --dry-run 2>&1 | Out-String
 } catch {
     $output = ""
+} finally {
+    [Console]::OutputEncoding = $prevOutputEncoding
 }
 
 $count = 0
