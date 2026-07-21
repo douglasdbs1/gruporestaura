@@ -13,6 +13,13 @@ function fmtPct(v){
 function fmtNum(v){
   return (v==null?0:v).toLocaleString("pt-BR");
 }
+// Relatórios importados direto do sistema Presence não trazem contagem de
+// ticket nenhuma (total_tickets fica 0) — mostrar "0" pareceria que a loja
+// não teve ticket, quando na verdade é "não temos esse dado". Ver
+// ideologica/import/PRESENCE_REPORT_CONTEXT.md.
+function fmtNumOrDash(v){
+  return v ? fmtNum(v) : "—";
+}
 function fmtDate(d){
   if(!d) return "";
   const [y,m,day] = d.split("-");
@@ -351,7 +358,7 @@ function renderProgressao(){
           <td class="num">${fmtMoney(r.total_faturado)}</td>
           <td class="num ${deltaClass(dif)}">${dif==null?"—":fmtMoney(dif)}</td>
           <td class="num ${deltaClass(pct)}">${fmtPct(pct)}</td>
-          <td class="num">${fmtNum(r.total_tickets)}</td>
+          <td class="num">${fmtNumOrDash(r.total_tickets)}</td>
         </tr>`;
     }).join("");
 
