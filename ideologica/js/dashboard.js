@@ -109,6 +109,7 @@ function displayLoja(loja){
 // começo é Restaura Jeans, não o estado). A chave é normalizada para aceitar
 // diferenças de caixa e acentuação entre arquivos.
 const LOJA_LOCATION_OVERRIDES = {
+  "mega campinas cambui": ["SP","Campinas","Cambuí"],
   "mega higienopolis": ["SP","São Paulo","Higienópolis"],
   "mega livramento": ["RS","Santana do Livramento",""],
   "mega santa maria": ["RS","Santa Maria",""],
