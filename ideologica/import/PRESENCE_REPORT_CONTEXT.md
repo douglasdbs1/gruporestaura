@@ -64,10 +64,18 @@ total) já está lá. Especificamente:
    coluna de verdade.
 4. **Dashboard**: quando abre o detalhe de uma loja cujo corte mais recente
    veio da Presence, aparece um selo "Presence" ao lado do título (ver
-   `isPresenceReport`/`lojaDetailHtml` em `dashboard.js`). Qualquer
-   ticket/ticket médio que ficaria "R$ 0,00" (porque não tem dado, não
-   porque é zero de verdade) mostra "—" — `fmtMoneyOrDash`/`fmtNumOrDash`
-   em `dashboard.js` e `fmtNumOrDash` em `comparativo.js`.
+   `isPresenceReport`/`lojaDetailHtml` em `dashboard.js`). A contagem de
+   ticket em si mostra "—" (`fmtNumOrDash`, em `dashboard.js` e
+   `comparativo.js`) — não dá pra aproximar isso.
+5. **Ticket médio aproximado (decidido 21/07/2026)**: em vez de "—", o
+   "Ticket médio" desses relatórios usa **faturamento ÷ quantidade de
+   serviços** (`ticketMedioHtml` em `dashboard.js`) — não é o mesmo dado (um
+   ticket pode ter vários serviços), por isso vem com um ⓘ ao lado que
+   explica no hover. Ex.: ML Teutônia, corte 20/07 → R$20.250,30 ÷ 416 =
+   ~R$48,68 (aproximado). Em `comparativo.js` não precisou desse tratamento
+   porque a tela já tem uma coluna separada "Ticket serviço" que é
+   literalmente essa mesma conta (faturamento ÷ volume) — duplicar com ícone
+   ali ficaria redundante.
 
 ## Limitação que fica (não resolvida agora)
 

@@ -29,11 +29,17 @@ function fmtNum(v){
 // Relatórios importados direto do sistema Presence (ver isPresenceReport) não
 // trazem contagem de ticket nenhuma — 0 aqui não é "zero tickets de verdade",
 // é "não temos esse dado". Mostrar R$0,00 pareceria erro; mostra "—".
-function fmtMoneyOrDash(v){
-  return v ? fmtMoney(v) : "—";
-}
 function fmtNumOrDash(v){
   return v ? fmtNum(v) : "—";
+}
+// Ticket médio de verdade é faturamento/tickets. Sem contagem de ticket (ver
+// PRESENCE_REPORT_CONTEXT.md), aproxima por faturamento/quantidade de
+// serviços — não é a mesma coisa (um ticket pode ter vários serviços), por
+// isso marca com o ⓘ em vez de mostrar igual a um ticket médio real.
+function ticketMedioHtml(faturamento, tickets, volume){
+  if(tickets) return fmtMoney(faturamento/tickets);
+  if(volume) return `${fmtMoney(faturamento/volume)} <span class="info-approx" title="Aproximado: faturamento ÷ quantidade de serviços — esse relatório não tem contagem de ticket real (veio do sistema Presence, ver ideologica/import/PRESENCE_REPORT_CONTEXT.md).">ⓘ</span>`;
+  return "—";
 }
 // .xlsx é o sinal real: todo relatório do Allegro.Net/Ideologica sai em .xls
 // legado (BIFF/OLE2) — só o resumo exportado direto do sistema Presence vem
@@ -375,11 +381,11 @@ function lojaDetailHtml(lojaName, periodoFim){
   const sumField = (list,f) => list.reduce((s,it)=>s+Number(it[f]||0),0);
   const totalRow = (list) => {
     const fat = sumField(list,"faturamento"), vol = sumField(list,"volume"), tix = sumField(list,"tickets");
-    return `<tr class="total-row"><td>Total</td><td class="num">${fmtNum(vol)}</td><td class="num">${fmtMoneyOrDash(tix?fat/tix:null)}</td><td class="num">${fmtMoney(fat)}</td></tr>`;
+    return `<tr class="total-row"><td>Total</td><td class="num">${fmtNum(vol)}</td><td class="num">${ticketMedioHtml(fat,tix,vol)}</td><td class="num">${fmtMoney(fat)}</td></tr>`;
   };
   const catTable = (titulo, list) => !list.length ? "" : `
     <table class="mini-table"><thead><tr><th>${titulo}</th><th class="num">Volume</th><th class="num">Ticket médio</th><th class="num">Faturamento</th></tr></thead>
-    <tbody>${list.map(it=>`<tr><td>${it.categoria}</td><td class="num">${fmtNum(it.volume)}</td><td class="num">${fmtMoneyOrDash(it.media_ticket)}</td><td class="num">${fmtMoney(it.faturamento)}</td></tr>`).join("")}${totalRow(list)}</tbody></table>`;
+    <tbody>${list.map(it=>`<tr><td>${it.categoria}</td><td class="num">${fmtNum(it.volume)}</td><td class="num">${it.media_ticket?fmtMoney(it.media_ticket):ticketMedioHtml(it.faturamento,it.tickets,it.volume)}</td><td class="num">${fmtMoney(it.faturamento)}</td></tr>`).join("")}${totalRow(list)}</tbody></table>`;
   const totalGeral = sumField(servicos,"faturamento") + sumField(produtos,"faturamento");
   return `
     <div class="loja-detail">
@@ -471,7 +477,6 @@ function renderTable(rows){
     return sortDir*((va||0)-(vb||0));
   });
   tbody.innerHTML = groupRows.map(({key, list, chosen})=>{
-    const ticketMedio = chosen.total_tickets ? chosen.total_faturado/chosen.total_tickets : null;
     const pills = list.length>1 ? `<span class="cut-pills">${list.map(r=>
       `<button type="button" class="cut-pill${r.periodo_fim===chosen.periodo_fim?" active":""}" data-group="${encodeURIComponent(key)}" data-periodo="${r.periodo_fim}">${cutDay(r.periodo_fim)}</button>`
     ).join("")}</span>` : "";
@@ -483,7 +488,7 @@ function renderTable(rows){
       <td>${fmtDate(chosen.periodo_inicio)} – ${fmtDate(chosen.periodo_fim)}</td>
       <td class="num">${fmtMoney(chosen.total_faturado)}</td>
       <td class="num">${fmtNumOrDash(chosen.total_tickets)}</td>
-      <td class="num">${fmtMoneyOrDash(ticketMedio)}</td>
+      <td class="num">${ticketMedioHtml(chosen.total_faturado, chosen.total_tickets, chosen.total_volume)}</td>
     </tr>
     <tr class="loja-detail-row"${isOpen?"":' style="display:none"'}><td colspan="6">${isOpen?lojaDetailHtml(chosen.loja, chosen.periodo_fim):""}</td></tr>`;
   }).join("");
