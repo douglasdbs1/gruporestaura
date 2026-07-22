@@ -297,8 +297,18 @@ function parseReport(buf, consultor, arquivoOrigem) {
       const r = rowList[i];
       const vals = rowVals(r);
       if (vals.length <= 3) {
-        if (currentData.length && Math.abs(vals[0] - runningSum) < 0.02) {
-          blocks.push({ dataRows: currentData, totalRow: r });
+        // Visto num relatório real ("RJ São José dos Campos 21.xls"): o
+        // primeiro valor dessa linha (devia ser a soma do bloco) veio
+        // corrompido num float denormalizado praticamente zero (ex.
+        // 2.2e-308), quase certamente 1 bit lido errado na retranscrição —
+        // isso batia com nenhuma soma possível e a linha inteira do bloco
+        // era descartada (bloco "não fechado"). Um total de verdade nunca
+        // vem tão perto de zero quando o bloco tem faturamento real, então
+        // trata esse valor especificamente como corrompido (não como "não
+        // é essa a linha de total") e fecha o bloco mesmo assim.
+        const corrupted = runningSum > 0.02 && Math.abs(vals[0]) < 1e-6;
+        if (currentData.length && (corrupted || Math.abs(vals[0] - runningSum) < 0.02)) {
+          blocks.push({ dataRows: currentData, totalRow: r, totalCorrupted: corrupted });
           currentData = [];
           runningSum = 0;
           continue;
@@ -316,6 +326,12 @@ function parseReport(buf, consultor, arquivoOrigem) {
   const servicoRows = (blocks[0] || {}).dataRows || [];
   const produtoRows = (blocks[1] || {}).dataRows || [];
   const warnings = [];
+  if (blocks[0] && blocks[0].totalCorrupted) {
+    warnings.push('Total do bloco de Serviço veio corrompido (valor praticamente zero) — usei a soma das linhas de categoria no lugar dele.');
+  }
+  if (blocks[1] && blocks[1].totalCorrupted) {
+    warnings.push('Total do bloco de Produto veio corrompido (valor praticamente zero) — usei a soma das linhas de categoria no lugar dele.');
+  }
   if (servicoNames.length !== servicoRows.length) {
     warnings.push(`Serviço: ${servicoNames.length} nome(s) extraído(s) mas ${servicoRows.length} linha(s) de dado encontrada(s) — categorias sem nome vão aparecer como "(categoria N)".`);
   }
