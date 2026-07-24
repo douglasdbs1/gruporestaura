@@ -2308,6 +2308,29 @@ function supportStoreOptions(selected=''){
 function ticketStore(t){return t.loja||'Sem loja vinculada';}
 function ticketLastEvent(t){const ev=(t.eventos||[]).slice(-1)[0];return ev?ev.texto:(t.descricao||'');}
 function ticketDateValue(s){const d=parseDate(s||'');return d?d.getTime():0;}
+function ticketThemeLabel(t){
+  const s=(t.assunto||t.descricao||'').trim();
+  if(!s)return '';
+  return s.split(/\s*[-–:]\s+/)[0].trim()||s;
+}
+function topRecurringIssues(n){
+  const groups={};
+  supportTickets.forEach(t=>{
+    const label=ticketThemeLabel(t);
+    if(!label)return;
+    const key=label.toLowerCase().normalize('NFD').replace(new RegExp('[\\u0300-\\u036f]','g'),'');
+    if(!groups[key])groups[key]={label,count:0};
+    groups[key].count++;
+  });
+  return Object.values(groups).filter(g=>g.count>=2).sort((a,b)=>b.count-a.count).slice(0,n);
+}
+function renderTopIssues(){
+  const top=topRecurringIssues(3);
+  if(!top.length)return '';
+  return `<div class="stats-row" style="grid-template-columns:repeat(${top.length},1fr);margin-bottom:14px">
+    ${top.map((g,i)=>`<div class="stat"><div class="lbl">Mais recorrente #${i+1}</div><div class="val">${g.count}</div><div class="sub">${esc(g.label)}</div></div>`).join('')}
+  </div>`;
+}
 function getFilteredSupport(){
   const q=(document.getElementById('sup-q')||{value:''}).value.toLowerCase();
   const st=(document.getElementById('sup-fs')||{value:''}).value;
@@ -2334,6 +2357,7 @@ function renderSupport(){
       <div class="stat"><div class="lbl">Em andamento</div><div class="val i">${andamento}</div><div class="sub">em tratativa</div></div>
       <div class="stat"><div class="lbl">Fechados</div><div class="val b">${fechado}</div><div class="sub">resolvidos</div></div>
     </div>
+    ${renderTopIssues()}
     <div class="toolbar">
       <div class="tb-row">
         <input class="tb" id="sup-q" placeholder="Buscar chamado, loja..." oninput="renderSupportContent()">
