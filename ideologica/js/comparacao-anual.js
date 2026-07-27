@@ -382,7 +382,7 @@ function renderTabela(dados){
     const barClass = (l.pct||0) < 0 ? "neg" : "";
     return `
     <tr>
-      <td>${brandTag(l.loja)}${displayLoja(l.loja)}</td>
+      <td>${lojaLineHtml(l.loja)}</td>
       <td class="num muted">${l.meses}/12</td>
       <td class="num">${fmtMoney(l.totalAnt)}</td>
       <td class="num col-sep">${fmtMoney(l.totalAtu)}</td>
@@ -420,7 +420,7 @@ function renderLojaPills(linhasTodas){
   }
   el.innerHTML = nomes.map(nome=>{
     const on = lojasSelecionadas.has(nome);
-    return `<button type="button" class="ca-loja-pill${on?" on":""}" data-loja="${encodeURIComponent(nome)}">${brandTag(nome)}${displayLoja(nome)}</button>`;
+    return `<button type="button" class="ca-loja-pill${on?" on":""}" data-loja="${encodeURIComponent(nome)}">${lojaLineHtml(nome)}</button>`;
   }).join("");
 }
 

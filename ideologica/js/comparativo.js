@@ -25,6 +25,9 @@ function fmtDate(d){
   const [y,m,day] = d.split("-");
   return `${day}/${m}/${y}`;
 }
+function esc(v){
+  return String(v||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+}
 const MESES = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
 function mesLabel(ym){
   const [y,m] = ym.split("-").map(Number);
@@ -234,7 +237,7 @@ function populateFilterOptions(){
   const lojas = [...new Set(allRelatorios.map(r=>r.loja))].sort();
   for(const l of lojas){
     const opt=document.createElement("option");
-    opt.value=l; opt.textContent=displayLoja(l);
+    opt.value=l; opt.textContent=lojaDisplayText(l);
     lojaSel.appendChild(opt);
   }
   const consultores = [...new Set(allRelatorios.map(r=>r.consultor).filter(Boolean))].sort();
@@ -457,7 +460,7 @@ function renderProgressao(){
     return `
     <div class="group-block">
       <div class="group-head">
-        <span class="name">${brandTag(lojaName)}${displayLoja(lojaName)}</span>
+        <span class="name">${lojaLineHtml(lojaName)}</span>
         <span class="sub">${mesLabel(mes)}${projecaoHtml}</span>
       </div>
       <table>
@@ -571,7 +574,7 @@ function render(){
     return `
     <div class="group-block">
       <div class="group-head">
-        <span class="name">${currentView==="loja"?brandTag(name)+displayLoja(name):name}</span>
+        <span class="name">${currentView==="loja"?lojaLineHtml(name):name}</span>
         <span class="sub">${refLabel} → ${cmpLabel} · Total: ${fmtMoney(totalRef)} → ${fmtMoney(totalCmp)}
           (<span class="${deltaClass(totalDif)}">${fmtMoney(totalDif)}</span>,
            <span class="${deltaClass(totalPct)}">${fmtPct(totalPct)}</span>)</span>
