@@ -118,6 +118,7 @@ function displayLoja(loja){
 // diferenças de caixa e acentuação entre arquivos.
 const LOJA_LOCATION_OVERRIDES = {
   "mega campinas cambui": ["SP","Campinas","Cambuí"],
+  "mega campinas jd aurelia": ["SP","Campinas","Jardim Aurélia"],
   "mega franscisco beltrao": ["PR","Francisco Beltrão",""],
   "mega higienopolis": ["SP","São Paulo","Higienópolis"],
   "mega livramento": ["RS","Santana do Livramento",""],
@@ -154,6 +155,7 @@ const LOJA_LOCATION_OVERRIDES = {
   "rj ijui": ["RS","Ijuí",""],
   "rj jacana": ["SP","São Paulo","Jaçanã"],
   "rj lajeado": ["RS","Lajeado",""],
+  "rj limeira": ["SP","Limeira",""],
   "rj lindoia": ["RS","Porto Alegre","Lindóia"],
   "rj linhares": ["ES","Linhares",""],
   "rj moinhos": ["RS","Porto Alegre","Moinhos de Vento"],
@@ -214,6 +216,11 @@ function lojaFromArquivo(arquivoOrigem){
   }).join(" ");
 }
 function normalizeRelatorio(r){
+  // HISTORICO_2025_* nao segue o padrao "<Loja> <corte>.xls" dos consultores —
+  // ja vem com o nome da loja ATUAL certo na coluna loja (mapeado na hora do
+  // import), reprocessar pelo nome do arquivo quebraria (viraria algo tipo
+  // "Historico 2025 Set Rj Limeira" em vez de "RJ Limeira").
+  if((r.arquivo_origem||"").startsWith("HISTORICO_")) return r;
   const lojaArquivo = lojaFromArquivo(r.arquivo_origem);
   return lojaArquivo ? {...r, loja_original: r.loja, loja: lojaArquivo} : r;
 }
@@ -290,9 +297,13 @@ async function loadRelatorios(){
       .order("periodo_fim",{ascending:false})
       .order("id",{ascending:true});
     if(error) throw error;
-    // ignora relatorios de amostra/teste (nunca sao dados reais de loja)
+    // ignora relatorios de amostra/teste (nunca sao dados reais de loja) e o
+    // historico de 2025 (HISTORICO_2025_*) — o filtro TODOS desta tela e' so
+    // pro periodo corrente (junho/2026 em diante); o historico so aparece no
+    // comparativo.html, que sempre pede 2 datas explicitas (nunca "TODOS").
     allRelatorios = (data || [])
       .filter(r => !(r.arquivo_origem||"").startsWith("AMOSTRA_"))
+      .filter(r => !(r.arquivo_origem||"").startsWith("HISTORICO_"))
       .map(normalizeRelatorio);
     allRelatorios = dedupeRelatorios(allRelatorios);
     const duplicateCount=(window.ideologicaDuplicateReports||[]).length;

@@ -118,6 +118,11 @@ function lojaFromArquivo(arquivoOrigem){
   }).join(" ");
 }
 function normalizeRelatorio(r){
+  // HISTORICO_2025_* nao segue o padrao "<Loja> <corte>.xls" dos consultores —
+  // ja vem com o nome da loja ATUAL certo na coluna loja (mapeado na hora do
+  // import), reprocessar pelo nome do arquivo quebraria (viraria algo tipo
+  // "Historico 2025 Set Rj Limeira" em vez de "RJ Limeira").
+  if((r.arquivo_origem||"").startsWith("HISTORICO_")) return r;
   const lojaArquivo = lojaFromArquivo(r.arquivo_origem);
   return lojaArquivo ? {...r, loja_original: r.loja, loja: lojaArquivo} : r;
 }
