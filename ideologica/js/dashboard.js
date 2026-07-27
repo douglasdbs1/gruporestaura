@@ -452,16 +452,19 @@ function renderRanking(elId, entries, isLoja){
   }).join("");
 }
 
-// A tabela agrupa por loja+mês (mesmo `periodo_inicio`) pra não repetir a
-// loja uma vez por corte (15/30 dias...). Cada grupo mostra uma linha só,
-// com pills clicáveis pro corte ativo — a escolha fica lembrada em
-// activeCutByGroup até o usuário trocar de novo.
+// A tabela agrupa só por LOJA (não mais por loja+mês) — uma linha por loja,
+// não importa quantos meses de histórico ela já tenha. Cada grupo mostra uma
+// linha só, com pills clicáveis pra qualquer corte já importado (de qualquer
+// mês) — a escolha fica lembrada em activeCutByGroup até o usuário trocar de
+// novo. Antes agrupava por loja+periodo_inicio e cada mês virava uma linha
+// própria; unificado a pedido do Douglas pra não fragmentar loja com >1 mês
+// importado (ex.: RJ Limeira aparecia 2x — junho e julho).
 const activeCutByGroup = new Map(); // groupKey -> periodo_fim escolhido
 const openLojaGroups = new Set(); // groupKeys com o detalhe aberto no momento
 let lastTableRows = [];
 
 function groupKey(r){
-  return r.loja+"|||"+(r.periodo_inicio||"");
+  return r.loja;
 }
 // O dia do corte real varia +-1/2 dias (fim de semana, feriado) mas
 // representa sempre a mesma "janela" de corte — agrupa no múltiplo de 5
@@ -471,6 +474,15 @@ function cutDay(periodoFim){
   const day = Number((periodoFim||"").slice(8,10));
   if(!day) return "?";
   return Math.min(30, Math.round(day/5)*5) || day;
+}
+// Rótulo da pill: só "DD" quando os cortes da loja são todos do mesmo mês
+// (caso comum, rótulo curto como sempre foi); "DD/MM" quando a loja já tem
+// corte de mais de um mês, pra não mostrar duas pills "15" sem dizer qual mês.
+function cutLabel(periodoFim, showMonth){
+  const day = cutDay(periodoFim);
+  if(!showMonth) return day;
+  const mm = (periodoFim||"").slice(5,7);
+  return `${day}/${mm}`;
 }
 
 function renderTable(rows){
@@ -501,8 +513,9 @@ function renderTable(rows){
     return sortDir*((va||0)-(vb||0));
   });
   tbody.innerHTML = groupRows.map(({key, list, chosen})=>{
+    const showMonth = new Set(list.map(r=>(r.periodo_inicio||"").slice(0,7))).size > 1;
     const pills = list.length>1 ? `<span class="cut-pills">${list.map(r=>
-      `<button type="button" class="cut-pill${r.periodo_fim===chosen.periodo_fim?" active":""}" data-group="${encodeURIComponent(key)}" data-periodo="${r.periodo_fim}">${cutDay(r.periodo_fim)}</button>`
+      `<button type="button" class="cut-pill${r.periodo_fim===chosen.periodo_fim?" active":""}" data-group="${encodeURIComponent(key)}" data-periodo="${r.periodo_fim}">${cutLabel(r.periodo_fim,showMonth)}</button>`
     ).join("")}</span>` : "";
     const isOpen = openLojaGroups.has(key);
     return `
