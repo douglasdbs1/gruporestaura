@@ -292,6 +292,7 @@ function parseReport(buf, consultor, arquivoOrigem) {
     const blocks = [];
     let currentData = [];
     let runningSum = 0;
+    let pendingCorrupted = []; // linhas de categoria com faturamento corrompido, ainda sem valor
     let i = 0;
     for (; i < rowList.length && blocks.length < expectedBlocks; i++) {
       const r = rowList[i];
@@ -307,13 +308,35 @@ function parseReport(buf, consultor, arquivoOrigem) {
         // trata esse valor especificamente como corrompido (não como "não
         // é essa a linha de total") e fecha o bloco mesmo assim.
         const corrupted = runningSum > 0.02 && Math.abs(vals[0]) < 1e-6;
-        if (currentData.length && (corrupted || Math.abs(vals[0] - runningSum) < 0.02)) {
-          blocks.push({ dataRows: currentData, totalRow: r, totalCorrupted: corrupted });
+        const matches = Math.abs(vals[0] - runningSum) < 0.02;
+        // Variante vista em "Mega Campinas JD Aurélia 23.xls": a corrupção
+        // caiu numa linha de CATEGORIA no meio do bloco (não na linha de
+        // total), então o total nunca bate com runningSum (falta a
+        // contribuição da categoria corrompida) — antes disso quebrava o
+        // bloco inteiro. Se sobrou exatamente 1 categoria pendente e a
+        // diferença é positiva, ela É o faturamento real dessa categoria.
+        let recovered = null;
+        if (!matches && !corrupted && pendingCorrupted.length === 1) {
+          const leftover = vals[0] - runningSum;
+          if (leftover > 0.02) recovered = round2(leftover);
+        }
+        if (currentData.length && (corrupted || matches || recovered != null)) {
+          const corrections = recovered != null ? new Map([[pendingCorrupted[0], recovered]]) : null;
+          blocks.push({ dataRows: currentData, totalRow: r, totalCorrupted: corrupted, corrections });
           currentData = [];
           runningSum = 0;
+          pendingCorrupted = [];
           continue;
         }
         break; // linha esparsa que não fecha o bloco atual -> começa o bloco de totais finais
+      }
+      if (vals[0] !== 0 && Math.abs(vals[0]) < 1e-6) {
+        // Mesma assinatura de corrupção acima, só que na própria linha de
+        // categoria — não dá pra saber o valor real ainda, só quando o bloco
+        // fechar (diferença contra o total). Não soma nada por ela agora.
+        pendingCorrupted.push(r);
+        currentData.push(r);
+        continue;
       }
       currentData.push(r);
       runningSum += vals[0];
@@ -338,10 +361,17 @@ function parseReport(buf, consultor, arquivoOrigem) {
   if (produtoNames.length !== produtoRows.length) {
     warnings.push(`Produto: ${produtoNames.length} nome(s) extraído(s) mas ${produtoRows.length} linha(s) de dado encontrada(s) — categorias sem nome vão aparecer como "(categoria N)".`);
   }
+  if (blocks[0] && blocks[0].corrections) {
+    warnings.push('Faturamento de 1 categoria do bloco de Serviço veio corrompido (valor quase-zero) — reconstruído pela diferença com o total do bloco.');
+  }
+  if (blocks[1] && blocks[1].corrections) {
+    warnings.push('Faturamento de 1 categoria do bloco de Produto veio corrompido (valor quase-zero) — reconstruído pela diferença com o total do bloco.');
+  }
 
-  function buildItems(names, tipo, rowList) {
+  function buildItems(names, tipo, rowList, corrections) {
     return rowList.map((r, i) => {
       let vals = rowVals(r).slice();
+      if (corrections && corrections.has(r)) vals[0] = corrections.get(r);
       if (vals.length === 6) vals = reconstructSingleGap(vals) || vals;
       while (vals.length < 7) vals.push(null);
       const [fat, pct, vol, pctvol, mserv, tix, mtck] = vals;
@@ -359,8 +389,8 @@ function parseReport(buf, consultor, arquivoOrigem) {
   }
 
   const itens = [
-    ...buildItems(servicoNames, 'servico', servicoRows),
-    ...buildItems(produtoNames, 'produto', produtoRows),
+    ...buildItems(servicoNames, 'servico', servicoRows, blocks[0] && blocks[0].corrections),
+    ...buildItems(produtoNames, 'produto', produtoRows, blocks[1] && blocks[1].corrections),
   ];
 
   const lojaArquivo = lojaFromArquivo(arquivoOrigem);

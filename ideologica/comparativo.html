@@ -38,6 +38,7 @@
         <option value="rj">Restaura Jeans</option>
         <option value="ml">Minha Lavanderia</option>
         <option value="mega">Mega</option>
+        <option value="ml_mega">Minha Lavanderia + Mega</option>
       </select>
     </div>
     <div class="fg">
@@ -53,14 +54,22 @@
       <select id="f-consultor"><option value="">Todos</option></select>
     </div>
     <div class="fg" id="fg-ref-data">
-      <label>Referência (até)</label>
+      <label>Referência</label>
       <div class="pill-toggle" id="ref-mes-pills"></div>
-      <input type="date" id="ref-data" style="display:none">
+      <div class="range-inputs">
+        <input type="date" id="ref-data-de" title="De (opcional — vazio usa o acumulado desde o início do mês)">
+        <span class="range-sep">até</span>
+        <input type="date" id="ref-data">
+      </div>
     </div>
     <div class="fg" id="fg-cmp-data">
-      <label>Comparação (até)</label>
+      <label>Comparação</label>
       <div class="pill-toggle" id="cmp-mes-pills"></div>
-      <input type="date" id="cmp-data" style="display:none">
+      <div class="range-inputs">
+        <input type="date" id="cmp-data-de" title="De (opcional — vazio usa o acumulado desde o início do mês)">
+        <span class="range-sep">até</span>
+        <input type="date" id="cmp-data">
+      </div>
     </div>
     <button class="btn-clear" id="btn-clear">Limpar filtros</button>
   </div>

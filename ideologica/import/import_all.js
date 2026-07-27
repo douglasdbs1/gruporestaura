@@ -21,6 +21,18 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { parseReport } = require('./parse_report');
+const knownIssues = require('./known_issues.json');
+
+// Lembretes de problemas já diagnosticados (ver known_issues.json) — evita
+// repetir a investigação toda vez que o arquivo continuar dando erro, e some
+// sozinho quando o arquivo for corrigido (o erro deixa de acontecer).
+function knownIssueNote(arquivoOrigem) {
+  const issue = knownIssues.find(k => k.arquivo.toLowerCase() === arquivoOrigem.toLowerCase());
+  if (!issue) return null;
+  const hoje = new Date().toISOString().slice(0, 10);
+  if (issue.mostrarApartirDe && hoje < issue.mostrarApartirDe) return null;
+  return issue.nota;
+}
 
 function loadEnv() {
   const envPath = path.join(__dirname, '..', '.env');
@@ -152,7 +164,8 @@ async function main() {
       ({ relatorio, itens, warnings } = parseReport(buf, consultor, arquivoOrigem));
     } catch (e) {
       failed++;
-      problems.push(`ERRO ao ler "${arquivoOrigem}" (${consultor}): ${e.message}`);
+      const nota = knownIssueNote(arquivoOrigem);
+      problems.push(`ERRO ao ler "${arquivoOrigem}" (${consultor}): ${e.message}` + (nota ? ` — LEMBRETE: ${nota}` : ''));
       continue;
     }
 

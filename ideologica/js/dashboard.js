@@ -85,6 +85,14 @@ function buildLojaBandeiraMap(rows){
 function brandOf(loja){
   return lojaBandeiraMap.get(loja) || BRAND_OVERRIDES[loja] || brandFromText(loja);
 }
+// "ml_mega" e um filtro combinado (nao uma bandeira de verdade): mostra Minha
+// Lavanderia standalone junto com as lojas Mega (que ja sao RJ+ML na mesma
+// unidade) — util pra ver o total do lado "lavanderia" do negocio de uma vez.
+function matchesBandeiraFilter(loja, filtro){
+  if(!filtro) return true;
+  if(filtro==="ml_mega"){ const b=brandOf(loja); return b==="ml"||b==="mega"; }
+  return brandOf(loja)===filtro;
+}
 function brandTag(loja){
   const b = brandOf(loja);
   if(b==="mega") return '<span class="tag-mega">MEGA</span> ';
@@ -333,7 +341,7 @@ function getFiltered(){
   const loja = document.getElementById("f-loja").value;
   const consultor = document.getElementById("f-consultor").value;
   return allRelatorios.filter(r=>{
-    if(bandeira && brandOf(r.loja)!==bandeira) return false;
+    if(!matchesBandeiraFilter(r.loja,bandeira)) return false;
     if(loja && r.loja!==loja) return false;
     if(consultor && r.consultor!==consultor) return false;
     if(mesFiltro && !r.periodo_inicio.startsWith(mesFiltro)) return false;

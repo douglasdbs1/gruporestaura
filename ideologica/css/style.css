@@ -54,6 +54,8 @@ body{font-family:var(--font);font-weight:600;background:linear-gradient(180deg,#
 .btn-clear{font-family:var(--font);font-size:11px;padding:7px 12px;border:1px solid var(--border2);background:#fff;color:var(--text2);border-radius:6px;cursor:pointer;height:fit-content;}
 .btn-clear:hover{background:var(--surface2);}
 
+.range-inputs{display:flex;align-items:center;gap:6px;margin-top:4px;}
+.range-sep{font-size:11px;color:var(--text3);}
 .pill-toggle{display:flex;flex-wrap:wrap;gap:6px;}
 .pill-btn{font-family:var(--font);font-size:11px;font-weight:700;padding:7px 12px;border:1px solid var(--border2);background:#fff;color:var(--text2);border-radius:999px;cursor:pointer;}
 .pill-btn:hover{border-color:var(--teal-mid);color:var(--teal-mid);}

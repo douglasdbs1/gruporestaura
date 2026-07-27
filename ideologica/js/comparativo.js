@@ -71,6 +71,14 @@ function buildLojaBandeiraMap(rows){
 function brandOf(loja){
   return lojaBandeiraMap.get(loja) || BRAND_OVERRIDES[loja] || brandFromText(loja);
 }
+// "ml_mega" e um filtro combinado (nao uma bandeira de verdade): mostra Minha
+// Lavanderia standalone junto com as lojas Mega (que ja sao RJ+ML na mesma
+// unidade) — util pra ver o total do lado "lavanderia" do negocio de uma vez.
+function matchesBandeiraFilter(loja, filtro){
+  if(!filtro) return true;
+  if(filtro==="ml_mega"){ const b=brandOf(loja); return b==="ml"||b==="mega"; }
+  return brandOf(loja)===filtro;
+}
 function brandTag(loja){
   const b = brandOf(loja);
   if(b==="mega") return '<span class="tag-mega">MEGA</span> ';
@@ -264,7 +272,7 @@ function pickSnapshots(targetDate, groupField){
   const best = new Map(); // groupName -> relatorio mais recente <= targetDate
   for(const r of allRelatorios){
     if(!targetDate || r.periodo_fim > targetDate) continue;
-    if(bandeira && brandOf(r.loja)!==bandeira) continue;
+    if(!matchesBandeiraFilter(r.loja,bandeira)) continue;
     if(loja && r.loja!==loja) continue;
     if(consultor && r.consultor!==consultor) continue;
     const groupName = r[groupField] || "(sem "+groupField+")";
@@ -272,6 +280,73 @@ function pickSnapshots(targetDate, groupField){
     if(!cur || r.periodo_fim > cur.periodo_fim) best.set(groupName, r);
   }
   return [...best.values()];
+}
+
+const round2 = n => Math.round(n*100)/100;
+
+// Cada relatório é um ACUMULADO do mês até periodo_fim, nunca uma fatia (ver
+// nota no topo do arquivo). Pra obter o valor de um intervalo [startDate,
+// endDate] que não começa no dia 1, subtrai do checkpoint em endDate o
+// checkpoint mais recente ANTES de startDate, desde que os dois sejam do
+// mesmo ciclo de acúmulo (mesmo periodo_inicio) — senão a subtração não faz
+// sentido (o acumulado zerou de novo no mês seguinte). Sem startDate, ou sem
+// um checkpoint anterior no mesmo ciclo, cai no comportamento de sempre
+// (acumulado inteiro até endDate, equivalente ao antigo "até").
+function pickRangeSnapshots(startDate, endDate, groupField){
+  const bandeira = document.getElementById("f-bandeira").value;
+  const loja = document.getElementById("f-loja").value;
+  const consultor = document.getElementById("f-consultor").value;
+  const passesFilters = r => matchesBandeiraFilter(r.loja,bandeira) && (!loja||r.loja===loja) && (!consultor||r.consultor===consultor);
+
+  const bestEnd = new Map(); // groupName -> relatorio mais recente <= endDate
+  for(const r of allRelatorios){
+    if(!endDate || r.periodo_fim > endDate) continue;
+    if(!passesFilters(r)) continue;
+    const groupName = r[groupField] || "(sem "+groupField+")";
+    const cur = bestEnd.get(groupName);
+    if(!cur || r.periodo_fim > cur.periodo_fim) bestEnd.set(groupName, r);
+  }
+
+  const result = [];
+  for(const [groupName, end] of bestEnd){
+    let start = null;
+    if(startDate && startDate > end.periodo_inicio){
+      for(const r of allRelatorios){
+        if((r[groupField]||"(sem "+groupField+")")!==groupName) continue;
+        if(r.periodo_inicio!==end.periodo_inicio) continue; // mesmo ciclo/mês só
+        if(r.periodo_fim>startDate) continue;
+        if(!passesFilters(r)) continue;
+        if(!start || r.periodo_fim>start.periodo_fim) start = r;
+      }
+    }
+    result.push(start ? subtractRelatorio(end,start) : end);
+  }
+  return result;
+}
+
+// Diferença item-a-item entre dois checkpoints do MESMO ciclo (start já
+// filtrado pra isso em pickRangeSnapshots) — categoria que só existe num dos
+// dois lados entra como 0 no que falta, pra não perder ela da tabela.
+function subtractRelatorio(end,start){
+  const itemKey = it => it.tipo+"|||"+it.categoria;
+  const startItens = new Map((start.itens||[]).map(it=>[itemKey(it),it]));
+  const itens = (end.itens||[]).map(it=>{
+    const s = startItens.get(itemKey(it));
+    return {
+      tipo: it.tipo, categoria: it.categoria,
+      faturamento: round2(it.faturamento-(s?s.faturamento:0)),
+      volume: (it.volume||0)-(s?(s.volume||0):0),
+      tickets: (it.tickets||0)-(s?(s.tickets||0):0),
+    };
+  });
+  return {
+    ...end,
+    total_faturado: round2((end.total_faturado||0)-(start.total_faturado||0)),
+    total_tickets: (end.total_tickets||0)-(start.total_tickets||0),
+    total_volume: (end.total_volume||0)-(start.total_volume||0),
+    itens,
+    _rangeStart: start.periodo_fim,
+  };
 }
 
 // soma total_faturado (valor oficial do relatório) por grupo — não usar soma de itens aqui:
@@ -317,7 +392,7 @@ function renderProgressao(){
   const el = document.getElementById("groups");
 
   const filtered = allRelatorios.filter(r=>{
-    if(bandeira && brandOf(r.loja)!==bandeira) return false;
+    if(!matchesBandeiraFilter(r.loja,bandeira)) return false;
     if(loja && r.loja!==loja) return false;
     if(consultor && r.consultor!==consultor) return false;
     return true;
@@ -403,7 +478,9 @@ function render(){
 
   const groupField = currentView === "loja" ? "loja" : "consultor";
 
+  const refDe = document.getElementById("ref-data-de").value;
   const refData = document.getElementById("ref-data").value;
+  const cmpDe = document.getElementById("cmp-data-de").value;
   const cmpData = document.getElementById("cmp-data").value;
 
   const el = document.getElementById("groups");
@@ -413,8 +490,8 @@ function render(){
     return;
   }
 
-  const refRelatorios = pickSnapshots(refData, groupField);
-  const cmpRelatorios = pickSnapshots(cmpData, groupField);
+  const refRelatorios = pickRangeSnapshots(refDe, refData, groupField);
+  const cmpRelatorios = pickRangeSnapshots(cmpDe, cmpData, groupField);
 
   if(!refRelatorios.length && !cmpRelatorios.length){
     el.innerHTML = `<div class="state-msg">Nenhum relatório encontrado para os períodos/filtros selecionados.</div>`;
@@ -425,6 +502,13 @@ function render(){
   const cmpMap = aggregate(cmpRelatorios, groupField);
   const refTotais = sumTotalFaturado(refRelatorios, groupField);
   const cmpTotais = sumTotalFaturado(cmpRelatorios, groupField);
+  const refByGroup = new Map(refRelatorios.map(r=>[r[groupField]||"(sem "+groupField+")", r]));
+  const cmpByGroup = new Map(cmpRelatorios.map(r=>[r[groupField]||"(sem "+groupField+")", r]));
+  const fmtDia = iso => iso ? iso.slice(8,10)+"/"+iso.slice(5,7) : "";
+  function periodoLabel(r){
+    if(!r) return "";
+    return r._rangeStart ? `${fmtDia(r._rangeStart)}→${fmtDia(r.periodo_fim)}` : `até ${fmtDia(r.periodo_fim)}`;
+  }
 
   // junta as chaves das duas visões pra não perder categoria que só existe num dos períodos
   const groups = new Map(); // groupName -> Map(categoria -> {ref, cmp})
@@ -477,11 +561,13 @@ function render(){
     const totalDif = totalCmp - totalRef;
     const totalPct = totalRef ? totalDif/totalRef : null;
 
+    const refLabel = periodoLabel(refByGroup.get(name));
+    const cmpLabel = periodoLabel(cmpByGroup.get(name));
     return `
     <div class="group-block">
       <div class="group-head">
         <span class="name">${currentView==="loja"?brandTag(name)+displayLoja(name):name}</span>
-        <span class="sub">Total: ${fmtMoney(totalRef)} → ${fmtMoney(totalCmp)}
+        <span class="sub">${refLabel} → ${cmpLabel} · Total: ${fmtMoney(totalRef)} → ${fmtMoney(totalCmp)}
           (<span class="${deltaClass(totalDif)}">${fmtMoney(totalDif)}</span>,
            <span class="${deltaClass(totalPct)}">${fmtPct(totalPct)}</span>)</span>
       </div>
@@ -515,7 +601,7 @@ function initTabHandlers(){
 }
 
 function initFilterHandlers(){
-  ["f-bandeira","f-loja","f-servico","f-consultor","ref-data","cmp-data"].forEach(id=>{
+  ["f-bandeira","f-loja","f-servico","f-consultor","ref-data-de","ref-data","cmp-data-de","cmp-data"].forEach(id=>{
     document.getElementById(id).addEventListener("change",render);
   });
   initMesPillHandler("ref-data","ref-mes-pills");
@@ -525,6 +611,8 @@ function initFilterHandlers(){
     document.getElementById("f-loja").value="";
     document.getElementById("f-servico").value="";
     document.getElementById("f-consultor").value="";
+    document.getElementById("ref-data-de").value="";
+    document.getElementById("cmp-data-de").value="";
     defaultPeriods();
     renderDateMesPills("ref-data","ref-mes-pills");
     renderDateMesPills("cmp-data","cmp-mes-pills");
