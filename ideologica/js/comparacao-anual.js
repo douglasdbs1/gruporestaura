@@ -1,5 +1,6 @@
 let supabaseClient = null;
 let allRelatorios = [];
+let lojasSelecionadas = new Set(); // vazio = todas as lojas comparáveis
 
 function fmtMoney(v){
   return (v==null?0:v).toLocaleString("pt-BR",{style:"currency",currency:"BRL",maximumFractionDigits:2});
@@ -189,14 +190,7 @@ async function loadData(){
   }
 }
 function populateFilterOptions(){
-  const lojaSel = document.getElementById("f-loja");
   const consultorSel = document.getElementById("f-consultor");
-  const lojas = [...new Set(allRelatorios.map(r=>r.loja))].sort();
-  for(const l of lojas){
-    const opt=document.createElement("option");
-    opt.value=l; opt.textContent=displayLoja(l);
-    lojaSel.appendChild(opt);
-  }
   const consultores = [...new Set(allRelatorios.map(r=>r.consultor).filter(Boolean))].sort();
   for(const c of consultores){
     const opt=document.createElement("option");
@@ -212,9 +206,8 @@ function populateFilterOptions(){
 // (não é queda de faturamento, é cobertura de dado incompleta ainda).
 function computeComparavel(){
   const bandeira = document.getElementById("f-bandeira").value;
-  const loja = document.getElementById("f-loja").value;
   const consultor = document.getElementById("f-consultor").value;
-  const passa = r => matchesBandeiraFilter(r.loja,bandeira) && (!loja||r.loja===loja) && (!consultor||r.consultor===consultor);
+  const passa = r => matchesBandeiraFilter(r.loja,bandeira) && (!consultor||r.consultor===consultor);
 
   const fechados = allRelatorios.filter(r=>passa(r) && mesFechado(r));
   const porLojaAnoMes = new Map();
@@ -237,7 +230,10 @@ function computeComparavel(){
     (ano===anoAnt ? porLoja.get(r.loja).ant : porLoja.get(r.loja).atu).set(mes, Number(r.total_faturado||0));
   }
 
-  const linhas = [...porLoja.entries()].map(([lj,{ant,atu}])=>{
+  // universo inteiro de lojas comparáveis (dentro do filtro bandeira/consultor,
+  // ANTES de aplicar a seleção manual de lojas) — usado pra montar as pills e
+  // pra decidir se uma loja pode aparecer na lista de seleção.
+  const linhasTodas = [...porLoja.entries()].map(([lj,{ant,atu}])=>{
     const mesesComuns = [...ant.keys()].filter(m=>atu.has(m));
     if(!mesesComuns.length) return null;
     const totalAnt = mesesComuns.reduce((s,m)=>s+ant.get(m),0);
@@ -245,6 +241,8 @@ function computeComparavel(){
     return {loja:lj, meses:mesesComuns.length, totalAnt, totalAtu, dif: totalAtu-totalAnt, pct: totalAnt?(totalAtu-totalAnt)/totalAnt:null};
   }).filter(Boolean).sort((a,b)=>b.totalAtu-a.totalAtu);
 
+  // seleção manual do usuário (pills) — vazio = todas
+  const linhas = lojasSelecionadas.size ? linhasTodas.filter(l=>lojasSelecionadas.has(l.loja)) : linhasTodas;
   const comparaveis = new Set(linhas.map(l=>l.loja));
 
   // séries mensais do grafico: soma SÓ das lojas comparáveis, nos 2 anos, em
@@ -265,12 +263,13 @@ function computeComparavel(){
   const totalComumAnt = linhas.reduce((s,l)=>s+l.totalAnt,0);
   const totalComumAtu = linhas.reduce((s,l)=>s+l.totalAtu,0);
 
-  return {anoAnt, anoAtu, linhas, series, totalComumAnt, totalComumAtu, comparaveis};
+  return {anoAnt, anoAtu, linhas, linhasTodas, series, totalComumAnt, totalComumAtu, comparaveis};
 }
 
 function render(){
   const root = document.getElementById("ca-root");
   const dados = computeComparavel();
+  renderLojaPills(dados ? dados.linhasTodas : []);
   if(!dados){
     root.innerHTML = renderResumo() + `<div class="ca-growth-empty">Ainda não há 2 anos com mês fechado suficiente pra comparar com esse filtro.</div>`;
     return;
@@ -374,6 +373,9 @@ function initHover(series){
 }
 
 function renderTabela(dados){
+  if(!dados.linhas.length){
+    return `<div class="ca-growth-empty">Nenhuma loja selecionada tem dado comparável com esse filtro.</div>`;
+  }
   const maxAbsPct = Math.max(0.01, ...dados.linhas.map(l=>Math.abs(l.pct||0)));
   const rows = dados.linhas.map(l=>{
     const pctAbs = Math.min(1, Math.abs(l.pct||0)/maxAbsPct);
@@ -408,14 +410,39 @@ function renderTabela(dados){
   </div>`;
 }
 
+function renderLojaPills(linhasTodas){
+  const el = document.getElementById("ca-loja-pills");
+  if(!el) return;
+  const nomes = linhasTodas.map(l=>l.loja).sort((a,b)=>a.localeCompare(b,"pt"));
+  if(!nomes.length){
+    el.innerHTML = `<span class="muted">Nenhuma loja comparável com esse filtro.</span>`;
+    return;
+  }
+  el.innerHTML = nomes.map(nome=>{
+    const on = lojasSelecionadas.has(nome);
+    return `<button type="button" class="ca-loja-pill${on?" on":""}" data-loja="${encodeURIComponent(nome)}">${brandTag(nome)}${displayLoja(nome)}</button>`;
+  }).join("");
+}
+
 function initFilterHandlers(){
-  ["f-bandeira","f-loja","f-consultor"].forEach(id=>{
+  ["f-bandeira","f-consultor"].forEach(id=>{
     document.getElementById(id).addEventListener("change", render);
   });
   document.getElementById("btn-clear").addEventListener("click",()=>{
     document.getElementById("f-bandeira").value="";
-    document.getElementById("f-loja").value="";
     document.getElementById("f-consultor").value="";
+    lojasSelecionadas.clear();
+    render();
+  });
+  document.getElementById("ca-loja-pills").addEventListener("click",(e)=>{
+    const btn = e.target.closest(".ca-loja-pill");
+    if(!btn) return;
+    const nome = decodeURIComponent(btn.dataset.loja);
+    if(lojasSelecionadas.has(nome)) lojasSelecionadas.delete(nome); else lojasSelecionadas.add(nome);
+    render();
+  });
+  document.getElementById("btn-todas-lojas").addEventListener("click",()=>{
+    lojasSelecionadas.clear();
     render();
   });
 }
