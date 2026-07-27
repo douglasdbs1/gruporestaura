@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Comparativo — Faturamento Ideologica</title>
-<link rel="canonical" href="https://douglasdbs1.github.io/gruporestaura/ideologica/comparativo.html">
+<title>Comparação Anual — Ideologica</title>
+<link rel="canonical" href="https://douglasdbs1.github.io/gruporestaura/ideologica/comparacao-anual.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
@@ -16,11 +16,11 @@
 </div>
 
 <div class="topbar">
-  <span class="sys-title">Comparativo</span>
-  <span class="sys-sub">Faturamento e serviços por loja</span>
+  <span class="sys-title">Comparação Anual</span>
+  <span class="sys-sub">Crescimento ano a ano, lojas com histórico comparável</span>
   <div class="spacer"></div>
   <a class="topbar-link" href="index.html">Visão geral ↗</a>
-  <a class="topbar-link" href="comparacao-anual.html">Comparação Anual ↗</a>
+  <a class="topbar-link" href="comparativo.html">Comparativo ↗</a>
   <div class="app-switch">
     <a href="../presence/index.html" id="switch-presence">Presence</a>
     <span class="app-switch-div"></span>
@@ -47,49 +47,21 @@
       <select id="f-loja"><option value="">Todas</option></select>
     </div>
     <div class="fg">
-      <label>Serviço/Produto</label>
-      <select id="f-servico"><option value="">Todos</option></select>
-    </div>
-    <div class="fg">
       <label>Consultor</label>
       <select id="f-consultor"><option value="">Todos</option></select>
-    </div>
-    <div class="fg" id="fg-ref-data">
-      <label>Referência</label>
-      <div class="pill-toggle" id="ref-mes-pills"></div>
-      <div class="range-inputs">
-        <input type="date" id="ref-data-de" title="De (opcional — vazio usa o acumulado desde o início do mês)">
-        <span class="range-sep">até</span>
-        <input type="date" id="ref-data">
-      </div>
-    </div>
-    <div class="fg" id="fg-cmp-data">
-      <label>Comparação</label>
-      <div class="pill-toggle" id="cmp-mes-pills"></div>
-      <div class="range-inputs">
-        <input type="date" id="cmp-data-de" title="De (opcional — vazio usa o acumulado desde o início do mês)">
-        <span class="range-sep">até</span>
-        <input type="date" id="cmp-data">
-      </div>
     </div>
     <button class="btn-clear" id="btn-clear">Limpar filtros</button>
   </div>
 
-  <div class="tabs">
-    <button class="tab-btn active" data-view="loja">Por Loja</button>
-    <button class="tab-btn" data-view="consultor">Por Consultor</button>
-    <button class="tab-btn" data-view="progressao">Progressão</button>
-  </div>
-
-  <div id="groups">
+  <div id="ca-root">
     <div class="state-msg">Carregando...</div>
   </div>
 
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../auth.js?v=20260715"></script>
-<script src="js/config.js?v=20260715"></script>
-<script src="js/comparativo.js?v=20260715-loja-arquivo"></script>
+<script src="../auth.js?v=20260727"></script>
+<script src="js/config.js?v=20260727"></script>
+<script src="js/comparacao-anual.js?v=20260727"></script>
 </body>
 </html>
