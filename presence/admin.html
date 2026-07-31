@@ -564,9 +564,11 @@ body.tv-mode .content{max-width:none;padding:0;background:#0a1330;}
 .mine-cons-card{background:#fff;border:1px solid var(--border);border-radius:8px;padding:16px 18px;margin-bottom:14px;}
 .mine-cons-title{font-size:13px;font-weight:800;color:var(--text);margin-bottom:12px;text-align:center;}
 .mine-cons-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,300px));gap:12px 18px;justify-content:center;}
-.mine-cons-top{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;font-weight:700;color:var(--text);margin-bottom:5px;}
+.mine-cons-name{font-size:12px;font-weight:800;color:var(--text);margin-bottom:7px;}
+.mine-cons-row+.mine-cons-row{margin-top:7px;}
+.mine-cons-top{display:flex;justify-content:space-between;align-items:baseline;font-size:11px;font-weight:700;color:var(--text2);margin-bottom:5px;}
 .mine-cons-pct{font-size:13px;font-weight:850;}
-.mine-cons-sub{font-size:11px;color:var(--text2);margin-top:5px;}
+.mine-cons-sub{font-size:11px;color:var(--text2);margin-top:8px;}
 .mine-cons-item{border:0;background:transparent;font-family:var(--font);text-align:left;padding:7px;border-radius:7px;cursor:pointer;color:inherit;}
 .mine-cons-item:hover{background:#f3f6f7;}.mine-cons-item.on{background:var(--teal-bg);box-shadow:inset 0 0 0 1px #9ed8c6;}
 .mine-deadline{margin-top:10px;}
@@ -1643,16 +1645,33 @@ function renderMine(){
   if(canEdit()&&getViewLojas().some(l=>l.status!=='concluido')){
     const groups={};
     getViewLojas().filter(l=>l.status!=='concluido').forEach(l=>{const r=l.responsavel||'Sem consultor';(groups[r]=groups[r]||[]).push(l);});
+    const color=p=>p>=80?'#10a66f':p>=40?'#d99b00':'#c0392b';
     const rows=Object.entries(groups).map(([r,ls])=>{
+      // Barra 1: as 5 lojas com go-live marcado mais proximo (atrasadas contam
+      // como as mais urgentes — sao as que mais precisam de atencao agora).
+      // Mesma definicao de "proximo" da TV (tvRecord): usa a data prevista do
+      // CRM mesmo pra loja "aguardando" quando o Zoho ja mostra agendado.
+      const near=ls.map(l=>({l,d:tvRecord(l)._tvDiff})).filter(x=>x.d!==null).sort((a,b)=>a.d-b.d).slice(0,5).map(x=>x.l);
+      const doneNear=near.reduce((s,l)=>s+checklistProgress(l).done,0);
+      const totalNear=near.length*CHECKLIST_ITENS.length;
+      const pctNear=totalNear?Math.round(doneNear/totalNear*100):null;
+      // Barra 2: todas as lojas em aberto do consultor (metrica original).
       const done=ls.reduce((s,l)=>s+checklistProgress(l).done,0);
       const total=ls.length*CHECKLIST_ITENS.length;
       const pct=total?Math.round(done/total*100):0;
       const full=ls.filter(l=>checklistProgress(l).done===CHECKLIST_ITENS.length).length;
       const stale=ls.filter(l=>{const u=checklistUpdateInfo(l);return u.days==null||u.days>7;}).length;
-      return {r,n:ls.length,done,total,pct,full,stale};
-    }).sort((a,b)=>b.pct-a.pct||a.r.localeCompare(b.r,'pt'));
-    const color=p=>p>=80?'#10a66f':p>=40?'#d99b00':'#c0392b';
-    consCard=`<div class="mine-cons-card"><div class="mine-cons-title">Preenchimento do checklist por consultor <span class="mine-sub">· clique para filtrar</span></div><div class="mine-cons-grid">${rows.map(g=>`<button class="mine-cons-item${mineConsultorFilter===g.r?' on':''}" onclick="setMineConsultorFilter('${esc(g.r)}')"><div class="mine-cons-top"><span>${esc(g.r)}</span><span class="mine-cons-pct" style="color:${color(g.pct)}">${g.pct}%</span></div><div class="mine-track"><div class="mine-fill" style="width:${g.pct}%;background:${color(g.pct)}"></div></div><div class="mine-cons-sub">${g.done}/${g.total} itens · ${g.n} loja${g.n===1?'':'s'} · ${g.full} completa${g.full===1?'':'s'} · <span style="color:${g.stale?'#c0392b':'#10a66f'}">${g.stale} loja${g.stale===1?'':'s'} há +7d ou nunca atualizada${g.stale===1?'':'s'}</span></div></button>`).join('')}</div></div>`;
+      return {r,n:ls.length,done,total,pct,full,stale,pctNear,nNear:near.length};
+    }).sort((a,b)=>{
+      // Pior preparado pros go-lives mais proximos primeiro; quem nao tem
+      // nenhum go-live marcado (nada urgente pra cobrar agora) vai pro final.
+      const av=a.pctNear==null?101:a.pctNear,bv=b.pctNear==null?101:b.pctNear;
+      return av-bv||a.r.localeCompare(b.r,'pt');
+    });
+    const barHtml=(label,pct)=>pct==null
+      ?`<div class="mine-cons-row"><div class="mine-cons-top"><span>${label}</span><span class="mine-cons-pct" style="color:var(--text3)">sem data</span></div><div class="mine-track"><div class="mine-fill" style="width:0%"></div></div></div>`
+      :`<div class="mine-cons-row"><div class="mine-cons-top"><span>${label}</span><span class="mine-cons-pct" style="color:${color(pct)}">${pct}%</span></div><div class="mine-track"><div class="mine-fill" style="width:${pct}%;background:${color(pct)}"></div></div></div>`;
+    consCard=`<div class="mine-cons-card"><div class="mine-cons-title">Preenchimento do checklist por consultor <span class="mine-sub">· clique para filtrar</span></div><div class="mine-cons-grid">${rows.map(g=>`<button class="mine-cons-item${mineConsultorFilter===g.r?' on':''}" onclick="setMineConsultorFilter('${esc(g.r)}')"><div class="mine-cons-name">${esc(g.r)}</div>${barHtml(g.nNear?`Próximos ${g.nNear} go-live${g.nNear===1?'':'s'}`:'Próximos go-lives',g.pctNear)}${barHtml('Todas as lojas',g.pct)}<div class="mine-cons-sub">${g.done}/${g.total} itens · ${g.n} loja${g.n===1?'':'s'} · ${g.full} completa${g.full===1?'':'s'} · <span style="color:${g.stale?'#c0392b':'#10a66f'}">${g.stale} loja${g.stale===1?'':'s'} há +7d ou nunca atualizada${g.stale===1?'':'s'}</span></div></button>`).join('')}</div></div>`;
   }
   const cards=currentMineStores.map((l,i)=>{const p=checklistProgress(l),u=checklistUpdateInfo(l),next=checklistNext(l),cls=p.done===p.total?' ready':` ${u.level}${p.done?' warn':''}`;return `<div class="mine-card${cls}" onclick="openChecklistModal(${i})">${mineGoliveBadgeHtml(l)}<div><div class="mine-card-title">${esc(l.loja)}</div><div class="mine-card-meta">${redeTagHtml(l)}${l.num?`<span class="store-num-pill after">${esc(l.num)}</span>`:''}<span class="tag-resp">${esc(l.responsavel||'Sem consultor')}</span>${badgeHtml(l.status)}${instBadgeHtml(l)}</div>${next?`<div class="mine-next"><b>Próximo:</b> ${esc(next.label)}</div>`:`<div class="mine-next"><b>Checklist concluído</b></div>`}</div><div class="mine-progress"><div class="mine-progress-top"><span>Checklist · ${p.done}/${p.total} itens</span><span>${p.pct}%</span></div><div class="mine-track"><div class="mine-fill" style="width:${p.pct}%"></div></div><div class="mine-update ${u.level}">${esc(u.text)}</div>${contractAgeBar(l)}</div></div>`;}).join('');
   const sortToggle=`<div class="mine-sort-toggle"><button class="mine-sort-opt${mineSortMode==='priority'?' on':''}" onclick="setMineSort('priority')">Prioridade</button><button class="mine-sort-opt${mineSortMode==='golive'?' on':''}" onclick="setMineSort('golive')">Próximos go-lives</button><button class="mine-sort-opt${mineSortMode==='contratos'?' on':''}" onclick="setMineSort('contratos')">Contratos</button><button class="mine-sort-opt${mineSortMode==='checklist'?' on':''}" onclick="setMineSort('checklist')">Checklist preenchido</button></div>`;
