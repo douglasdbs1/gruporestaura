@@ -1567,7 +1567,8 @@ function stageDateInfo(flag,em){
 function instalacaoInfo(l){
   const crm=crmInstalFor(l);
   if(crm&&/conclu/i.test(crm.status||''))return {state:'done',txt:crm.data||'',fonte:'crm'};
-  return stageDateInfo(l.instalacao,l.instalacaoEm);
+  const c=checklistFor(l);
+  return stageDateInfo(c.instalacao!==undefined?c.instalacao:l.instalacao,l.instalacaoEm);
 }
 function instBadgeHtml(l){
   const i=instalacaoInfo(l);
@@ -1689,13 +1690,21 @@ function openChecklistModal(idx){
     return `<label class="check-item stage-check ${checked?'checked':''}${locked?' locked':''}"><input type="checkbox" id="${id}" ${checked?'checked':''} ${locked?'disabled':''} onchange="this.dataset.touched='1';this.closest('.check-item').classList.toggle('checked',this.checked)"><span>${label}<span class="stage-when">${sub}</span></span></label>`;
   };
   const trainChecked=f=>f==='1'||(started&&f!=='0');
+  // Prefere o flag salvo em checklistCadastros (fonte durável pra qualquer
+  // loja) e só cai pro campo direto da loja como fallback — lojas "stub"
+  // (cadastro geral sem registro de go-live ainda, ex: contrato assinado mas
+  // sem numero) nao tem l.instalacao/treinRetag/treinLoja, entao antes essas
+  // marcacoes eram lidas da tela e descartadas silenciosamente ao salvar.
+  const instFlag=c.instalacao!==undefined?c.instalacao:l.instalacao;
+  const tretagFlag=c.treinRetag!==undefined?c.treinRetag:l.treinRetag;
+  const tlojaFlag=c.treinLoja!==undefined?c.treinLoja:l.treinLoja;
   const instCrm=crmInstalFor(l),instConfirmed=instCrm&&/conclu/i.test(instCrm.status||'');
   document.getElementById('check-stage1').innerHTML=
-    stageCheck('check-inst','Instalação local concluída',instConfirmed?'1':l.instalacao,instConfirmed?(instCrm.data+' · confirmado pela gestão'):l.instalacaoEm,'Sem data definida com a Presence',instConfirmed||l.instalacao==='1'||started,instConfirmed||started)+
+    stageCheck('check-inst','Instalação local concluída',instConfirmed?'1':instFlag,instConfirmed?(instCrm.data+' · confirmado pela gestão'):l.instalacaoEm,'Sem data definida com a Presence',instConfirmed||instFlag==='1'||started,instConfirmed||started)+
     (started&&!instConfirmed?'<div class="stage-when" style="padding:3px 2px 0">Checklist iniciado — o sistema precisa estar instalado.</div>':'');
   document.getElementById('check-stage2').innerHTML=
-    stageCheck('check-tretag','Treinamento retaguarda',l.treinRetag,l.treinRetagEm,'Agendar via link da Presence',trainChecked(l.treinRetag),false)+
-    stageCheck('check-tloja','Treinamento balcão / loja',l.treinLoja,l.treinLojaEm,'Agendar via link da Presence',trainChecked(l.treinLoja),false);
+    stageCheck('check-tretag','Treinamento retaguarda',tretagFlag,l.treinRetagEm,'Agendar via link da Presence',trainChecked(tretagFlag),false)+
+    stageCheck('check-tloja','Treinamento balcão / loja',tlojaFlag,l.treinLojaEm,'Agendar via link da Presence',trainChecked(tlojaFlag),false);
   document.getElementById('check-stage3-count').textContent=p.done+'/'+p.total;
   document.getElementById('check-list').innerHTML=CHECKLIST_ITENS.map(i=>`<label class="check-item ${c.itens&&c.itens[i.key]?'checked':''}"><input type="checkbox" data-check="${i.key}" ${c.itens&&c.itens[i.key]?'checked':''} onchange="this.closest('.check-item').classList.toggle('checked',this.checked);updateStageAuto()"><span>${esc(i.label)}</span></label>`).join('');
   document.getElementById('check-obs').value=c.obs||'';
@@ -1738,13 +1747,21 @@ async function saveChecklistModal(){
   if(!canSaveChecklist()){showToast('Faça login para salvar o checklist.',true);return;}
   const key=document.getElementById('check-key').value||currentChecklistKey;if(!key)return;
   const itens={};document.querySelectorAll('#check-list input[data-check]').forEach(i=>{itens[i.dataset.check]=i.checked;});
-  checklistCadastros[key]={itens,obs:document.getElementById('check-obs').value.trim(),updatedAt:new Date().toISOString(),updatedBy:canEdit()?'Douglas':(consultorUser?consultorUser.nome:'Admin')};
+  const anyItem=Object.values(itens).some(Boolean);
+  const gi=document.getElementById('check-inst'),tr=document.getElementById('check-tretag'),tl=document.getElementById('check-tloja');
+  const instalacao=gi?(gi.checked||anyItem?'1':''):undefined;
+  const treinRetag=tr?(tr.checked?'1':(anyItem?'0':'')):undefined;
+  const treinLoja=tl?(tl.checked?'1':(anyItem?'0':'')):undefined;
+  // instalacao/treinRetag/treinLoja vao sempre pro checklistCadastros (fonte
+  // durável mesmo pra lojas "stub", que nao tem esses campos no proprio
+  // registro) — antes so eram gravados quando a loja ja tinha um registro
+  // de go-live criado, entao marcar esses estagios numa loja ainda sem
+  // numero/go-live "salvava" mas nunca persistia de fato.
+  checklistCadastros[key]={itens,obs:document.getElementById('check-obs').value.trim(),instalacao,treinRetag,treinLoja,updatedAt:new Date().toISOString(),updatedBy:canEdit()?'Douglas':(consultorUser?consultorUser.nome:'Admin')};
   if(currentChecklistLoja&&!currentChecklistLoja._stub){
-    const anyItem=Object.values(itens).some(Boolean);
-    const gi=document.getElementById('check-inst'),tr=document.getElementById('check-tretag'),tl=document.getElementById('check-tloja');
-    if(gi)currentChecklistLoja.instalacao=(gi.checked||anyItem)?'1':'';
-    if(tr)currentChecklistLoja.treinRetag=tr.checked?'1':(anyItem?'0':'');
-    if(tl)currentChecklistLoja.treinLoja=tl.checked?'1':(anyItem?'0':'');
+    if(gi)currentChecklistLoja.instalacao=instalacao;
+    if(tr)currentChecklistLoja.treinRetag=treinRetag;
+    if(tl)currentChecklistLoja.treinLoja=treinLoja;
     saveLocal();
   }
   closeChecklistModal();await persistChecklist();
