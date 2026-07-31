@@ -970,6 +970,7 @@ td.oc{max-width:260px;}
   </div>
   <div class="mfooter">
     <div class="check-note">Lembrete: cadastros iniciais ficam com o franqueado; o consultor acompanha, orienta e valida.</div>
+    <button class="btn-sm" id="check-btn-golive" onclick="editGoliveFromChecklist()" style="display:none" title="Reagendar a data/hora do go-live desta loja.">Alterar go-live</button>
     <button class="btn-del" id="check-btn-done" onclick="markLojaConcluida()" style="display:none" title="Já está rodando na Presence (go-live feito) — sai de Minhas Lojas.">Retirar (já concluído)</button>
     <button class="btn-cancel" onclick="closeChecklistModal()">Cancelar</button>
     <button class="btn-save" onclick="saveChecklistModal()">Salvar</button>
@@ -1681,7 +1682,17 @@ function openChecklistModal(idx){
   document.getElementById('check-obs').value=c.obs||'';
   document.getElementById('check-meta').textContent=c.updatedAt?`Última atualização: ${new Date(c.updatedAt).toLocaleString('pt-BR')} por ${c.updatedBy||'-'} | ${p.done}/${p.total} concluídos`:'Ainda sem atualização.';
   document.getElementById('check-btn-done').style.display=adminUnlocked?'':'none';
+  document.getElementById('check-btn-golive').style.display=canEdit()?'':'none';
   document.getElementById('ov-check').classList.add('open');
+}
+// Atalho pra reagendar o go-live direto do card de "Minhas lojas", sem
+// precisar ir na aba Go-Live — abre o mesmo modal completo (data/hora,
+// log) já usado la, so que pre-carregado com a loja do card clicado.
+function editGoliveFromChecklist(){
+  if(!canEdit()||!currentChecklistLoja)return;
+  const idx=lojaIdx(currentChecklistLoja);
+  closeChecklistModal();
+  openModal(idx);
 }
 function updateStageAuto(){
   const any=[...document.querySelectorAll('#check-list input[data-check]')].some(i=>i.checked);
@@ -2793,13 +2804,13 @@ function saveLoja(){
   // preserva campos históricos (etapas antigas) já gravados na loja
   const obj={...prev,loja:document.getElementById('f-loja').value.trim().toUpperCase(),num:document.getElementById('f-num').value.trim(),grupo:document.getElementById('f-grupo').value.trim(),responsavel:document.getElementById('f-resp').value,status:document.getElementById('f-status').value,log:document.getElementById('log-view').dataset.log||'',goLive:document.getElementById('f-golive').value.trim()};
   if(idx===-1)lojas.push(obj);else lojas[idx]=obj;
-  save();closeModal();renderGLContent();
+  save();closeModal();renderPage();
 }
 function deleteLoja(){
   if(!canEdit()){showToast("Somente leitura.",true);return;}
   if(modalIdx<0)return;
   if(!confirm(`Excluir "${lojas[modalIdx].loja}"?`))return;
-  lojas.splice(modalIdx,1);save();closeModal();renderGLContent();
+  lojas.splice(modalIdx,1);save();closeModal();renderPage();
 }
 
 // ── INIT ──
