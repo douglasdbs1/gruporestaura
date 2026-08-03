@@ -52,6 +52,7 @@ function deltaClass(v){
 const BRAND_OVERRIDES = {
   "RS - PORTO ALEGRE": "rj",
   "RESTAURA JEANS RS - SANTA ROSA": "mega",
+  "SC CACADOR": "mega",
 };
 function brandFromText(loja){
   const l = (loja||"").toLowerCase();

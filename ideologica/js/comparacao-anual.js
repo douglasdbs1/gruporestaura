@@ -26,7 +26,7 @@ function esc(v){
 }
 
 // ── bandeira / nome de exibição (mesma lógica das outras páginas) ──
-const BRAND_OVERRIDES = { "RS - PORTO ALEGRE": "rj", "RESTAURA JEANS RS - SANTA ROSA": "mega" };
+const BRAND_OVERRIDES = { "RS - PORTO ALEGRE": "rj", "RESTAURA JEANS RS - SANTA ROSA": "mega", "SC CACADOR": "mega" };
 function brandFromText(loja){
   const l = (loja||"").toLowerCase();
   const isRJ = l.startsWith("rj ") || l.includes("restaura jeans") || l.includes("jeans");
