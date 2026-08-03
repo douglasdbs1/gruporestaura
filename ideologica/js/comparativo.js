@@ -151,14 +151,26 @@ function preferLojaName(a,b){
   if(accentsA !== accentsB) return accentsA;
   return a.length > b.length;
 }
+// foldKey() sozinho só remove acento/caixa — não basta quando a mesma loja
+// tem grafias mais diferentes entre arquivos, tipo abreviação ("RJ Caxias
+// S. Pelegrino" x "RJ CAXIAS SÃO PELEGRINO"): ficava sem bater e a loja
+// aparecia duas vezes no ranking. Quando já existe um UF/Cidade/Unidade
+// cadastrado em LOJA_LOCATION_OVERRIDES (loja-location.js) — que já lista
+// essas variantes como apelidos da mesma unidade — agrupa por esse trio em
+// vez do nome cru; só cai pro foldKey puro quando a loja ainda não tem
+// override.
+function canonicalGroupKey(loja){
+  const loc = lojaLocation(loja);
+  return loc ? 'loc:'+loc.join('|').toLowerCase() : 'key:'+foldKey(loja);
+}
 function canonicalizeLojaNames(rows){
   const byKey = new Map();
   for(const r of rows){
-    const key = foldKey(r.loja);
+    const key = canonicalGroupKey(r.loja);
     const cur = byKey.get(key);
     if(!cur || preferLojaName(r.loja, cur)) byKey.set(key, r.loja);
   }
-  for(const r of rows) r.loja = byKey.get(foldKey(r.loja));
+  for(const r of rows) r.loja = byKey.get(canonicalGroupKey(r.loja));
 }
 // Pré-seleciona o filtro de consultor pela identidade logada no hall (auth.js),
 // sem travar a tela pra quem chegar aqui direto sem login (fica em "Todos").
