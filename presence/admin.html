@@ -1745,11 +1745,29 @@ function updateStageAuto(){
   });
 }
 function closeChecklistModal(){document.getElementById('ov-check').classList.remove('open');currentChecklistKey='';currentChecklistLoja=null;}
-async function persistChecklist(){
+async function persistChecklist(key){
   saveChecklistLocal();
   if(!supabaseEnabled){showToast('Checklist salvo localmente.');renderMine();return;}
-  const {error}=await supabaseClient.rpc("save_presence_control_state",{p_token:ADMIN_RPC_TOKEN,p_payload:statePayload()});
+  // Le o estado mais recente do Supabase e só sobrepõe a ÚNICA entrada de
+  // checklist que mudou nessa tela, em vez de gravar statePayload() (o
+  // snapshot inteiro que está na memória desde que a página carregou) por
+  // cima de tudo. Checklist é editado por vários consultores em paralelo o
+  // tempo todo — gravar o payload inteiro apaga silenciosamente qualquer
+  // outra mudança (de outro consultor, de outra aba) feita depois que esta
+  // aba carregou, mesmo em lojas diferentes. Foi assim que o checklist da
+  // Manaus (Maiara) sumiu depois de salvo.
+  const {data,error:fetchError}=await supabaseClient.from(SUPABASE_TABLE).select("payload").eq("key",SUPABASE_STATE_KEY).maybeSingle();
+  if(fetchError||!data||!data.payload){
+    console.error("Supabase checklist fetch-before-save error:",fetchError);
+    showToast('Erro ao salvar checklist no Supabase.',true);
+    return;
+  }
+  const fresh=data.payload;
+  fresh.checklistCadastros={...(fresh.checklistCadastros||{}),[key]:checklistCadastros[key]};
+  fresh.updatedAt=new Date().toISOString();
+  const {error}=await supabaseClient.rpc("save_presence_control_state",{p_token:ADMIN_RPC_TOKEN,p_payload:fresh});
   if(error){console.error("Supabase checklist save error:",error);showToast('Erro ao salvar checklist no Supabase.',true);return;}
+  checklistCadastros=fresh.checklistCadastros;
   showToast('Checklist salvo.');renderMine();
 }
 async function saveChecklistModal(){
@@ -1773,7 +1791,7 @@ async function saveChecklistModal(){
     if(tl)currentChecklistLoja.treinLoja=treinLoja;
     saveLocal();
   }
-  closeChecklistModal();await persistChecklist();
+  closeChecklistModal();await persistChecklist(key);
 }
 // Único motivo de tirar uma loja de "Minhas lojas" sem ser pelo checklist:
 // o sistema já está rodando na Presence (go-live feito), então ao inves de
