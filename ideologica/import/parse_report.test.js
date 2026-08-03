@@ -113,3 +113,76 @@ test('parseReport recupera uma categoria com faturamento corrompido usando a dif
   assert.equal(relatorio.total_faturado, 1500);
   assert.ok(warnings.some(w => /corrompido/i.test(w)));
 });
+
+// Reproduz o bug real de "ML João Pessoa Manaira 31.xls": a célula de
+// Faturamento de uma categoria veio 100% em branco (nenhum registro BIFF,
+// nem sequer um valor corrompido) — mais grave que o caso acima, porque
+// rowVals(r) devolve só 6 valores e o que deveria ser Faturamento (posição
+// 0) na verdade é o %. Isso derrubava o bloco inteiro (R$154.775 real virava
+// R$0) porque a soma nunca batia com a linha de total.
+test('parseReport recupera uma categoria cujo Faturamento não tem nenhum registro BIFF (célula 100% em branco)', () => {
+  const sep = Buffer.from([0x00, 0x00]);
+  const strings = Buffer.concat([
+    wide('Loja: TESTE'), sep,
+    wide('Período de 01/07/2026 até 31/07/2026'), sep,
+    wide('Méd. Tck.'), sep,
+    wide('CAT_A'), sep,
+    wide('CAT_B'), sep,
+    wide('Total por Grupo de Serviço:'), sep,
+  ]);
+  const numbers = Buffer.concat([
+    numberRecord(1, 1, 1000), numberRecord(1, 2, 50), numberRecord(1, 3, 10),
+    numberRecord(1, 4, 50), numberRecord(1, 5, 100), numberRecord(1, 6, 5), numberRecord(1, 7, 200),
+    // CAT_B: col 1 (Faturamento) simplesmente não existe — só sobram 6 valores,
+    // e o que rowVals(r) lê na posição 0 é na real o %. O valor real é 500.
+    numberRecord(2, 2, 25), numberRecord(2, 3, 5),
+    numberRecord(2, 4, 25), numberRecord(2, 5, 100), numberRecord(2, 6, 2), numberRecord(2, 7, 250),
+    // total do bloco: 1000 (CAT_A) + 500 (CAT_B real) = 1500
+    numberRecord(3, 1, 1500), numberRecord(3, 2, 15), numberRecord(3, 3, 7),
+  ]);
+  const { relatorio, itens, warnings } = parseReport(Buffer.concat([strings, numbers]), 'Consultor Teste', 'Loja Teste 30.xls');
+
+  const catB = itens.find(item => item.categoria === 'CAT_B');
+  assert.ok(catB, 'CAT_B deveria aparecer como item, não ser descartada junto com o bloco');
+  assert.equal(catB.faturamento, 500);
+  assert.equal(catB.percentual, 25);
+  assert.equal(catB.volume, 5);
+  assert.equal(relatorio.total_faturado, 1500);
+  assert.ok(warnings.some(w => /corrompido|ausente/i.test(w)));
+});
+
+// Reproduz o bug real de "RJ Montes Claros 31.xls": a célula de Volume (3ª
+// posição) veio em branco (sem registro BIFF), sobrando só 6 dos 7 valores
+// da linha. O candidato certo ("faltou o Volume") empatava em verificações
+// com o candidato errado ("faltou a Méd.Serviço"), porque a checagem de
+// Méd.Tck. passa nos dois — sem o desempate por "Volume tem que ser
+// inteiro", a linha inteira era zerada por segurança (sanitizeItem).
+test('parseReport reconstrói e preenche o Volume que veio em branco no meio da linha', () => {
+  const sep = Buffer.from([0x00, 0x00]);
+  const strings = Buffer.concat([
+    wide('Loja: TESTE'), sep,
+    wide('Período de 01/07/2026 até 31/07/2026'), sep,
+    wide('Méd. Tck.'), sep,
+    wide('TINGIMENTO'), sep,
+    wide('Total por Grupo de Serviço:'), sep,
+  ]);
+  // Linha real: Faturamento=10430.7025, %=23.0318, Volume=165 (AUSENTE),
+  // %Volume=16.4835, Méd.Serv.=63.2164, Tickets=104, Méd.Tck.=100.2952
+  // — col 3 (Volume) simplesmente não gera registro NUMBER nenhum.
+  const numbers = Buffer.concat([
+    numberRecord(1, 1, 10430.7025), numberRecord(1, 2, 23.031848814994586),
+    numberRecord(1, 4, 16.483516483516485), numberRecord(1, 5, 63.2163787878788),
+    numberRecord(1, 6, 104), numberRecord(1, 7, 100.29521634615386),
+    numberRecord(2, 1, 10430.7025), numberRecord(2, 2, 165), numberRecord(2, 3, 104),
+  ]);
+  const { itens } = parseReport(Buffer.concat([strings, numbers]), 'Consultor Teste', 'Loja Teste 30.xls');
+
+  const ting = itens.find(item => item.categoria === 'TINGIMENTO');
+  assert.ok(ting, 'TINGIMENTO deveria aparecer como item');
+  assert.equal(ting.volume, 165);
+  assert.equal(ting.tickets, 104);
+  assert.equal(ting.percentual, 23.03);
+  assert.equal(ting.percentual_volume, 16.48);
+  assert.equal(ting.media_servico, 63.22);
+  assert.equal(ting.media_ticket, 100.3);
+});

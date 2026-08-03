@@ -192,8 +192,29 @@ function reconstructSingleGap(vals) {
     candidates.push({ candidate, verified });
   }
   const maxVerified = Math.max(0, ...candidates.map(c => c.verified));
-  const best = candidates.filter(c => c.verified === maxVerified);
-  return (maxVerified > 0 && best.length === 1) ? best[0].candidate : null;
+  let best = candidates.filter(c => c.verified === maxVerified);
+  // Visto em "RJ Montes Claros 31.xls": faltou só o Volume (posição 2), mas
+  // o candidato "faltou a Méd.Serviço" (posição 4) empata em verificações
+  // porque a checagem de Méd.Tck. (que não depende de onde o buraco caiu)
+  // passa nos dois. Volume e Tickets são sempre contagens inteiras — um
+  // candidato que resolve o buraco jogando um valor fracionário numa dessas
+  // duas posições está sempre errado, mesmo empatando no placar acima.
+  if (best.length > 1) {
+    const isCountish = v => v == null || Math.abs(v - Math.round(v)) < 1e-6;
+    const refined = best.filter(c => isCountish(c.candidate[2]) && isCountish(c.candidate[5]));
+    if (refined.length === 1) best = refined;
+  }
+  if (!(maxVerified > 0 && best.length === 1)) return null;
+  const winner = best[0].candidate;
+  // A célula que faltou (Volume ou Tickets) não precisa ficar null: dá pra
+  // recalcular pela média que sobreviveu na mesma linha (Méd.Serv. =
+  // Faturamento/Volume, Méd.Tck. = Faturamento/Tickets) — é assim que se
+  // confirma o candidato acima, então o valor já foi validado, só falta
+  // preencher.
+  const [fat, , vol, , mserv] = winner;
+  if (vol == null && mserv) winner[2] = Math.round(fat / mserv);
+  if (winner[5] == null && winner[6]) winner[5] = Math.round(fat / winner[6]);
+  return winner;
 }
 
 function sanitizeItem(it) {
@@ -293,6 +314,7 @@ function parseReport(buf, consultor, arquivoOrigem) {
     let currentData = [];
     let runningSum = 0;
     let pendingCorrupted = []; // linhas de categoria com faturamento corrompido, ainda sem valor
+    let fatCol = null; // coluna do Faturamento neste bloco (descoberta na 1ª linha de categoria)
     let i = 0;
     for (; i < rowList.length && blocks.length < expectedBlocks; i++) {
       const r = rowList[i];
@@ -326,14 +348,25 @@ function parseReport(buf, consultor, arquivoOrigem) {
           currentData = [];
           runningSum = 0;
           pendingCorrupted = [];
+          fatCol = null;
           continue;
         }
         break; // linha esparsa que não fecha o bloco atual -> começa o bloco de totais finais
       }
-      if (vals[0] !== 0 && Math.abs(vals[0]) < 1e-6) {
-        // Mesma assinatura de corrupção acima, só que na própria linha de
-        // categoria — não dá pra saber o valor real ainda, só quando o bloco
-        // fechar (diferença contra o total). Não soma nada por ela agora.
+      if (fatCol === null) fatCol = [...rows.get(r).keys()].sort((a, b) => a - b)[0];
+      // Visto em "ML João Pessoa Manaira 31.xls": a célula de Faturamento
+      // (sempre o 1º valor da linha) veio 100% em branco — sem registro BIFF
+      // nenhum, não só um valor corrompido. rowVals(r) então devolve o valor
+      // da 2ª coluna (o %) na posição 0, e runningSum somava esse % como se
+      // fosse faturamento: o total do bloco nunca batia e o relatório
+      // inteiro (R$154.775) era descartado. Detecta pela AUSÊNCIA da coluna
+      // que se firmou como "a do Faturamento" na 1ª linha do bloco — mais
+      // confiável que olhar o valor, que aqui não é nem perto de zero.
+      const missingFat = !rows.get(r).has(fatCol);
+      if (missingFat || (vals[0] !== 0 && Math.abs(vals[0]) < 1e-6)) {
+        // Mesma ideia da corrupção quase-zero acima: não dá pra saber o
+        // valor real ainda, só quando o bloco fechar (diferença contra o
+        // total). Não soma nada por ela agora.
         pendingCorrupted.push(r);
         currentData.push(r);
         continue;
@@ -362,16 +395,24 @@ function parseReport(buf, consultor, arquivoOrigem) {
     warnings.push(`Produto: ${produtoNames.length} nome(s) extraído(s) mas ${produtoRows.length} linha(s) de dado encontrada(s) — categorias sem nome vão aparecer como "(categoria N)".`);
   }
   if (blocks[0] && blocks[0].corrections) {
-    warnings.push('Faturamento de 1 categoria do bloco de Serviço veio corrompido (valor quase-zero) — reconstruído pela diferença com o total do bloco.');
+    warnings.push('Faturamento de 1 categoria do bloco de Serviço veio corrompido ou ausente — reconstruído pela diferença com o total do bloco.');
   }
   if (blocks[1] && blocks[1].corrections) {
-    warnings.push('Faturamento de 1 categoria do bloco de Produto veio corrompido (valor quase-zero) — reconstruído pela diferença com o total do bloco.');
+    warnings.push('Faturamento de 1 categoria do bloco de Produto veio corrompido ou ausente — reconstruído pela diferença com o total do bloco.');
   }
 
   function buildItems(names, tipo, rowList, corrections) {
     return rowList.map((r, i) => {
       let vals = rowVals(r).slice();
-      if (corrections && corrections.has(r)) vals[0] = corrections.get(r);
+      if (corrections && corrections.has(r)) {
+        // Se a linha já tinha os 7 valores (faturamento corrompido, não
+        // ausente), corrige no lugar. Se só tinha 6 (faturamento realmente
+        // sem registro BIFF — ver missingFat em segmentBlocks), o valor
+        // recuperado entra na FRENTE, sem sobrescrever o que já é o % —
+        // um vals[0]=... aqui empurraria tudo pra posição errada de novo.
+        if (vals.length < 7) vals.unshift(corrections.get(r));
+        else vals[0] = corrections.get(r);
+      }
       if (vals.length === 6) vals = reconstructSingleGap(vals) || vals;
       while (vals.length < 7) vals.push(null);
       const [fat, pct, vol, pctvol, mserv, tix, mtck] = vals;
