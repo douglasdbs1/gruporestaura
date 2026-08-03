@@ -11,11 +11,13 @@
 // erradas ("RJ" no começo é Restaura Jeans, não o estado). A chave é
 // normalizada pra aceitar diferenças de caixa e acentuação entre arquivos.
 const LOJA_LOCATION_OVERRIDES = {
+  "mega cacador": ["SC","Caçador",""],
   "mega campinas cambui": ["SP","Campinas","Cambuí"],
   "mega campinas jd aurelia": ["SP","Campinas","Jardim Aurélia"],
   "mega franscisco beltrao": ["PR","Francisco Beltrão",""],
   "mega higienopolis": ["SP","São Paulo","Higienópolis"],
   "mega livramento": ["RS","Santana do Livramento",""],
+  "mega porto uniao": ["SC","Porto União",""],
   "mega santa maria": ["RS","Santa Maria",""],
   "mega santa rosa": ["RS","Santa Rosa",""],
   "ml barretos": ["SP","Barretos",""],
@@ -23,13 +25,16 @@ const LOJA_LOCATION_OVERRIDES = {
   "ml campinas dom pedro": ["SP","Campinas","Dom Pedro"],
   "ml campo grande": ["MS","Campo Grande",""],
   "ml caxias": ["RS","Caxias do Sul",""],
+  "ml florianopolis": ["SC","Florianópolis",""],
   "ml indaiatuba": ["SP","Indaiatuba",""],
   "ml joao pessoa manaira": ["PB","João Pessoa","Manaíra"],
   "ml joao pessoa tambau": ["PB","João Pessoa","Tambaú"],
+  "ml manaus": ["AM","Manaus",""],
   "ml mossoro": ["RN","Mossoró",""],
   "ml recife": ["PE","Recife",""],
   "ml recife madalena": ["PE","Recife","Madalena"],
   "ml salvador": ["BA","Salvador",""],
+  "ml sao roque": ["SP","São Roque",""],
   "ml sorocaba": ["SP","Sorocaba",""],
   "ml taubate": ["SP","Taubaté",""],
   "ml teutonia": ["RS","Teutônia",""],
@@ -37,16 +42,19 @@ const LOJA_LOCATION_OVERRIDES = {
   "rj alfenas": ["MG","Alfenas",""],
   "rj americana": ["SP","Americana",""],
   "rj azenha": ["RS","Porto Alegre","Azenha"],
+  "rj belem": ["PA","Belém",""],
   "rj belo horizonte": ["MG","Belo Horizonte",""],
   "rj camaqua": ["RS","Camaquã",""],
   "rj canoas": ["RS","Canoas",""],
   "rj carazinho": ["RS","Carazinho",""],
   "rj cassino": ["RS","Rio Grande","Cassino"],
   "rj caxias centro": ["RS","Caxias do Sul","Centro"],
+  "rj caxias s. pelegrino": ["RS","Caxias do Sul","São Pelegrino"],
   "rj caxias sao pelegrino": ["RS","Caxias do Sul","São Pelegrino"],
   "rj cruz alta": ["RS","Cruz Alta",""],
   "rj cuiaba": ["MT","Cuiabá",""],
   "rj farroupilha": ["RS","Farroupilha",""],
+  "rj guarapuava": ["PR","Guarapuava",""],
   "rj horizontina": ["RS","Horizontina",""],
   "rj ijui": ["RS","Ijuí",""],
   "rj jacana": ["SP","São Paulo","Jaçanã"],
@@ -71,7 +79,13 @@ const LOJA_LOCATION_OVERRIDES = {
   "rj ponta grossa": ["PR","Ponta Grossa",""],
   "rj ponta grossa 15 julho": ["PR","Ponta Grossa",""],
   "rj ponte rasa": ["SP","São Paulo","Ponte Rasa"],
+  "rj portao": ["PR","Curitiba","Portão"],
   "rj portao 15 julho": ["PR","Curitiba","Portão"],
+  // Provável duplicata mal-nomeada da "RJ Cassino" já existente (mesma loja
+  // interna "RESTAURA JEANS RS - CASSINO", arquivo só saiu com o nome da
+  // cidade em vez da unidade) — ver aviso passado ao Douglas em 03/08/2026.
+  // Mantido aqui só pra não exibir o nome cru enquanto isso não é corrigido.
+  "rj rio grande": ["RS","Rio Grande","Cassino"],
   "rj salvador": ["BA","Salvador",""],
   "rj santa cruz do sul": ["RS","Santa Cruz do Sul",""],
   "rj santo angelo": ["RS","Santo Ângelo",""],
@@ -80,6 +94,7 @@ const LOJA_LOCATION_OVERRIDES = {
   "rj silva bueno": ["SP","São Paulo","Silva Bueno"],
   "rj vila carrao": ["SP","São Paulo","Vila Carrão"],
   "rj vila matilde": ["SP","São Paulo","Vila Matilde"],
+  "sc cacador": ["SC","Caçador",""],
 };
 function locationKey(loja){return (loja||"").normalize("NFD").replace(new RegExp("[\\u0300-\\u036f]","g"),"").toLowerCase().trim();}
 function lojaLocation(loja){return LOJA_LOCATION_OVERRIDES[locationKey(loja)]||null;}
