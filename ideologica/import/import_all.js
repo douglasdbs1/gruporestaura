@@ -55,9 +55,13 @@ function titleCase(s) {
 }
 
 // Estrutura esperada: <root>/<Consultor>/<Mês>/*.xls (ou .xlsx por engano —
-// ignorado, não é o formato que o parser entende).
+// o parser não entende esse formato, mas agora reporta em vez de sumir
+// silenciosamente — ver ignoredXlsx e o caso real "Mega campinas JD
+// Aurélia 31.xlsx", que ficou invisível várias checagens até alguém notar
+// que faltava o corte 31 dessa loja).
 function findXlsFiles(root) {
   const out = []; // {filePath, consultor}
+  const ignoredXlsx = []; // {filePath, consultor} — .xlsx encontrado, não importado
   for (const consultorEntry of fs.readdirSync(root, { withFileTypes: true })) {
     if (!consultorEntry.isDirectory()) continue;
     const consultor = titleCase(consultorEntry.name);
@@ -66,13 +70,16 @@ function findXlsFiles(root) {
       if (!mesEntry.isDirectory()) continue;
       const mesPath = path.join(consultorPath, mesEntry.name);
       for (const fileEntry of fs.readdirSync(mesPath, { withFileTypes: true })) {
-        if (fileEntry.isFile() && /\.xls$/i.test(fileEntry.name)) {
+        if (!fileEntry.isFile()) continue;
+        if (/\.xls$/i.test(fileEntry.name)) {
           out.push({ filePath: path.join(mesPath, fileEntry.name), consultor });
+        } else if (/\.xlsx$/i.test(fileEntry.name)) {
+          ignoredXlsx.push({ filePath: path.join(mesPath, fileEntry.name), consultor });
         }
       }
     }
   }
-  return out;
+  return { files: out, ignoredXlsx };
 }
 
 function reportContentKey(relatorio, itens) {
@@ -133,12 +140,15 @@ async function main() {
 
   const env = loadEnv();
   const existing = force ? { byLoja: new Set(), byArquivo: new Set(), byContent: new Set() } : await fetchExistingKeys(env);
-  const files = findXlsFiles(rootArg);
+  const { files, ignoredXlsx } = findXlsFiles(rootArg);
 
   console.log(`${files.length} arquivo(s) .xls encontrado(s) em ${files.length ? new Set(files.map(f=>f.consultor)).size : 0} pasta(s) de consultor.`);
 
   let imported = 0, skipped = 0, failed = 0;
   const problems = [];
+  for (const f of ignoredXlsx) {
+    problems.push(`aviso "${path.basename(f.filePath)}" (${f.consultor}): é .xlsx (formato moderno), não .xls — o parser não lê esse formato. Confira se não é um corte novo perdido e peça pra reexportar como .xls do Allegro.Net.`);
+  }
   // Um mesmo relatório salvo com nomes de lojas diferentes duplica todas as
   // somas. Detecta pelo conteúdo bruto antes de confiar no nome do arquivo.
   const filesByHash = new Map();
