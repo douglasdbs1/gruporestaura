@@ -24,6 +24,8 @@ const LOJA_LOCATION_OVERRIDES = {
   "ml campo grande": ["MS","Campo Grande",""],
   "ml caxias": ["RS","Caxias do Sul",""],
   "ml indaiatuba": ["SP","Indaiatuba",""],
+  "ml joao pessoa manaira": ["PB","João Pessoa","Manaíra"],
+  "ml joao pessoa tambau": ["PB","João Pessoa","Tambaú"],
   "ml mossoro": ["RN","Mossoró",""],
   "ml recife": ["PE","Recife",""],
   "ml recife madalena": ["PE","Recife","Madalena"],
