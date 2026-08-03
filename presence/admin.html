@@ -1264,10 +1264,15 @@ function crmMetric(k,fallback=null){
   return Number.isFinite(Number(v))?Number(v):fallback;
 }
 function effGoLive(l){
-  if(l.status==='aberto')return ''; // aguardando = sem data efetiva (ignora até a data do CRM)
   if(l.goLive)return l.goLive;
+  // Antes, status "aberto" (aguardando confirmação do franqueado) ignorava
+  // qualquer data, inclusive a da Zoho — mas a sync do Zoho (payload.crm,
+  // sync/zoho_sync.js) já traz a data de go-live prevista, mais atual que o
+  // campo goLive manual daqui (quase sempre vazio). Só confia nela quando o
+  // status da tarefa na Zoho é "Agendado" — "Aberto" lá significa que o
+  // franqueado ainda não confirmou, então a data é só um palpite.
   const c=crmFor(l);
-  return (c&&c.golive)||'';
+  return (c&&c.golive&&/agendado/i.test(c.status||''))?c.golive:'';
 }
 function crmSignBar(l){
   if(l.status==='concluido')return '';
@@ -1426,7 +1431,11 @@ function renderActive(){
   const pct=k=>Math.round(cnt[k]/tot*100);
   const resps=[...new Set(getActiveRecords().map(l=>l.responsavel).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt'));
   const MES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
-  const upcoming=lojas.filter(l=>l.status!=='concluido'&&inNextDays(effGoLive(l),10)).sort((a,b)=>parseDate(effGoLive(a))-parseDate(effGoLive(b)));
+  // getViewLojas() (lojas + stubs do cadastro geral, ver buildStubs()) —
+  // sem isso, uma loja com go-live confirmado na Zoho mas que ainda não tem
+  // registro próprio de cronograma nunca aparecia aqui, só nas telas que já
+  // usavam essa view combinada (Go-Lives, TV).
+  const upcoming=getViewLojas().filter(l=>l.status!=='concluido'&&inNextDays(effGoLive(l),10)).sort((a,b)=>parseDate(effGoLive(a))-parseDate(effGoLive(b)));
   const glItems=upcoming.map(l=>{
     const gd=effGoLive(l);
     const d=parseDate(gd),diff=daysDiff(gd);
