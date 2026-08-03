@@ -264,6 +264,11 @@ function populateFilterOptions(){
     }
     applyHallConsultorFilter(consultorSel);
   }
+  // Default inicial: mês mais recente com dado, em vez de "Todos" — loadRelatorios()
+  // só roda 1x (sem refresh periódico), então isso só afeta o primeiro carregamento
+  // da página, nunca sobrescreve uma escolha manual do usuário.
+  const meses = [...new Set(allRelatorios.map(r=>r.periodo_inicio.slice(0,7)))].sort();
+  if(meses.length) mesFiltro = meses[meses.length-1];
   renderMesPills();
 }
 
