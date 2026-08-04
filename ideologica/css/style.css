@@ -330,3 +330,35 @@ td.col-sep{border-left:1px solid var(--border2);}
 .btn-mini{font-family:var(--font);font-size:10px;font-weight:700;color:var(--text3);
   background:transparent;border:1px solid var(--border);border-radius:999px;padding:4px 11px;cursor:pointer;}
 .btn-mini:hover{color:var(--brand-mid);border-color:var(--brand-mid);}
+
+/* ── Modal do pino ────────────────────────────────────────────────────────
+   Aberto pelo pino no mapa: traz o mesmo detalhamento da tabela pra não
+   obrigar a caçar a loja depois de achá-la no mapa. */
+.ov{position:fixed;inset:0;background:rgba(15,23,42,.5);display:flex;align-items:center;
+  justify-content:center;padding:24px;z-index:200;}
+.ov[hidden]{display:none;}
+.ov-box{background:var(--surface);border-radius:14px;width:min(880px,100%);max-height:88vh;
+  display:flex;flex-direction:column;box-shadow:0 18px 50px rgba(15,23,42,.3);overflow:hidden;}
+.ov-head{display:flex;align-items:flex-start;gap:14px;padding:16px 18px;border-bottom:1px solid var(--border);}
+.ov-title{font-size:14px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.ov-uf{font-weight:800;color:var(--text3);font-size:11px;}
+.ov-sub{font-size:11px;color:var(--text2);font-weight:600;margin-top:3px;}
+.ov-pin-band{font-size:9px;font-weight:800;letter-spacing:.03em;color:#fff;
+  padding:3px 8px;border-radius:999px;background:var(--pin-rj);}
+.ov-band-ml{background:var(--pin-ml);}
+.ov-band-mega{background:var(--pin-mega);}
+.ov-x{margin-left:auto;border:none;background:transparent;color:var(--text3);font-size:14px;
+  cursor:pointer;padding:4px 7px;border-radius:6px;line-height:1;}
+.ov-x:hover{background:var(--surface2);color:var(--brand-mid);}
+/* o modal abre com o foco no X (pra quem usa teclado fechar direto), mas o
+   anel padrao do browser fica pesado num botao pequeno */
+.ov-x:focus{outline:none;background:var(--surface2);}
+.ov-x:focus-visible{outline:2px solid var(--brand-mid);outline-offset:1px;}
+.ov-body{padding:6px 18px 18px;overflow:auto;}
+.ov-loja{padding:14px 0;border-bottom:1px solid var(--border);}
+.ov-loja:last-child{border-bottom:none;}
+.ov-loja-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.ov-loja-nome{font-size:12px;}
+.ov-loja-num{margin-left:auto;display:flex;align-items:center;gap:12px;font-size:12px;white-space:nowrap;}
+.ov-loja-per{font-size:11px;color:var(--text3);font-weight:600;margin:4px 0 8px;}
+@media(max-width:640px){.ov-loja-num{margin-left:0;}}

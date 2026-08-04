@@ -499,6 +499,7 @@ function aplicarZoomUf(wrap, rows){
       const x = p.xy[0] + inicio + i*passo, y = p.xy[1];
       const n = p.lojas.size;
       pins.push(`<g class="uf-pin" data-band="${p.band}" transform="translate(${x} ${y}) scale(${inv})"
+        data-pin="${encodeURIComponent(p.cidade+"|"+p.band)}"
         data-tip="${esc(p.cidade)}|${PIN_NOMES[p.band]||p.band}|${n}|${fmtMoney(p.fat)}">
         <path d="${PIN_PATH}"/>
         ${n>1 ? `<text x="0" y="-9.6" text-anchor="middle" class="uf-pin-n">${n}</text>`
@@ -507,6 +508,65 @@ function aplicarZoomUf(wrap, rows){
     });
   }
   camadaPins.innerHTML = pins.join("");
+}
+
+// Modal do pino: mostra as lojas daquela cidade+bandeira com o mesmo
+// detalhamento por serviço/produto da tabela (reusa lojaDetailHtml), pra não
+// obrigar a caçar a loja na tabela depois de achá-la no mapa.
+function abrirModalPin(chave){
+  const ov = document.getElementById("ov-pin");
+  if(!ov || !chave) return;
+  const [cidade, band] = decodeURIComponent(chave).split("|");
+
+  // usa a mesma leitura mais recente por loja+mês que alimenta KPIs e mapa
+  const doPin = latestPerLoja(getFiltered()).filter(r=>{
+    const loc = lojaLocation(r.loja) || [];
+    return loc[0]===ufFiltro && loc[1]===cidade && (brandOf(r.loja)||"rj")===band;
+  });
+  if(!doPin.length) return;
+
+  const porLoja = new Map();
+  for(const r of doPin){
+    const atual = porLoja.get(r.loja);
+    if(!atual || r.periodo_fim > atual.periodo_fim) porLoja.set(r.loja, r);
+  }
+  const lojas = [...porLoja.values()].sort((a,b)=>Number(b.total_faturado||0)-Number(a.total_faturado||0));
+  const totalFat = lojas.reduce((s,r)=>s+Number(r.total_faturado||0),0);
+  const totalTix = lojas.reduce((s,r)=>s+Number(r.total_tickets||0),0);
+
+  document.getElementById("ov-pin-title").innerHTML =
+    `<span class="ov-pin-band ov-band-${band}">${PIN_NOMES[band]||band}</span> ${esc(cidade)} <span class="ov-uf">${ufFiltro}</span>`;
+  document.getElementById("ov-pin-sub").textContent =
+    `${lojas.length} loja${lojas.length>1?"s":""} · ${fmtMoney(totalFat)}` + (totalTix?` · ${fmtNum(totalTix)} tickets`:"");
+
+  document.getElementById("ov-pin-body").innerHTML = lojas.map(r=>`
+    <div class="ov-loja">
+      <div class="ov-loja-top">
+        <div class="ov-loja-nome">${lojaLineHtml(r.loja)}</div>
+        <div class="ov-loja-num">
+          <span><b>${fmtMoney(r.total_faturado)}</b></span>
+          <span class="muted">${fmtNumOrDash(r.total_tickets)} tickets</span>
+          <span class="muted">${ticketMedioHtml(r.total_faturado, r.total_tickets, r.total_volume)}</span>
+        </div>
+      </div>
+      <div class="ov-loja-per">${fmtDate(r.periodo_inicio)} – ${fmtDate(r.periodo_fim)} · ${esc(r.consultor||"sem consultor")}</div>
+      ${lojaDetailHtml(r.loja, r.periodo_fim)}
+    </div>`).join("");
+
+  ov.hidden = false;
+  document.getElementById("ov-pin-x").focus();
+}
+function fecharModalPin(){
+  const ov = document.getElementById("ov-pin");
+  if(ov) ov.hidden = true;
+}
+function initModalPin(){
+  const ov = document.getElementById("ov-pin");
+  if(!ov) return;
+  document.getElementById("ov-pin-x").addEventListener("click", fecharModalPin);
+  // clicar no fundo escuro fecha; dentro da caixa, não
+  ov.addEventListener("click", e=>{ if(e.target===ov) fecharModalPin(); });
+  document.addEventListener("keydown", e=>{ if(e.key==="Escape" && !ov.hidden) fecharModalPin(); });
 }
 
 // Realce sincronizado nos dois sentidos (mapa ↔ lista): nos estados pequenos
@@ -566,8 +626,18 @@ function ligarHoverUf(wrap, lista, porUf, nomeDe){
   });
   svg.addEventListener("mouseleave", apagar);
   svg.addEventListener("click", e=>{
-    const p = e.target.closest("path");
-    if(p && p.classList.contains("has-lojas")) filtrarPorUf(p.dataset.uf);
+    const pin = e.target.closest(".uf-pin");
+    if(pin){ abrirModalPin(pin.dataset.pin); return; }
+    const p = e.target.closest("path[data-uf]");
+    if(p && p.classList.contains("has-lojas")){
+      // trocar de estado direto, sem precisar fechar antes
+      if(p.dataset.uf !== ufFiltro){ ufFiltro = p.dataset.uf; render(); }
+      return;
+    }
+    // Clique no vazio (mar, estado sem loja, fora do desenho) fecha o zoom.
+    // Antes só fechava clicando de novo no mesmo estado, o que ninguém
+    // adivinha — o instinto é clicar fora pra voltar.
+    if(ufFiltro){ ufFiltro = ""; render(); }
   });
 
   lista.querySelectorAll(".uf-item").forEach(it=>{
@@ -926,5 +996,6 @@ function initFilterHandlers(){
   initSortHandlers();
   initCutPillHandler();
   initLojaRankingHandler();
+  initModalPin();
   await loadRelatorios();
 })();
