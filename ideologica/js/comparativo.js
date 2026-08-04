@@ -152,18 +152,10 @@ function preferLojaName(a,b){
   if(accentsA !== accentsB) return accentsA;
   return a.length > b.length;
 }
-// foldKey() sozinho só remove acento/caixa — não basta quando a mesma loja
-// tem grafias mais diferentes entre arquivos, tipo abreviação ("RJ Caxias
-// S. Pelegrino" x "RJ CAXIAS SÃO PELEGRINO"): ficava sem bater e a loja
-// aparecia duas vezes no ranking. Quando já existe um UF/Cidade/Unidade
-// cadastrado em LOJA_LOCATION_OVERRIDES (loja-location.js) — que já lista
-// essas variantes como apelidos da mesma unidade — agrupa por esse trio em
-// vez do nome cru; só cai pro foldKey puro quando a loja ainda não tem
-// override.
-function canonicalGroupKey(loja){
-  const loc = lojaLocation(loja);
-  return loc ? 'loc:'+loc.join('|').toLowerCase() : 'key:'+foldKey(loja);
-}
+// canonicalGroupKey() vem de loja-location.js (carregado antes desta página)
+// — é a MESMA função usada pela visão geral, pela comparação anual e pelo
+// verificador de duplicidade do import. Manter uma cópia local aqui já
+// causou divergência silenciosa de regra entre as telas.
 function canonicalizeLojaNames(rows){
   const byKey = new Map();
   for(const r of rows){

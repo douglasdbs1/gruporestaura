@@ -112,3 +112,17 @@ function lojaLineHtml(loja){
   if(!loc)return `<span class="loja-line"><span class="loja-brand-slot">${brandTag(loja).trim()}</span><span class="loja-city">${esc(displayLoja(loja))}</span></span>`;
   return `<span class="loja-line" title="${esc(displayLoja(loja))}"><span class="loja-brand-slot">${brandTag(loja).trim()}</span><span class="loja-uf">${esc(loc[0])}</span><span class="loja-sep">·</span><span class="loja-city">${esc(loc[1])}</span>${loc[2]?`<span class="loja-sep">·</span><span class="loja-unit">${esc(loc[2])}</span>`:""}</span>`;
 }
+// Chave de agrupamento do ranking/KPIs: duas grafias diferentes do mesmo
+// arquivo ("RJ Caxias S. Pelegrino" x "RJ CAXIAS SÃO PELEGRINO") só contam
+// como UMA loja quando caem na mesma chave — senão o mês conta em dobro,
+// porque cada corte é acumulado desde o dia 1. Ver canonicalizeLojaNames()
+// nas 3 páginas.
+function canonicalGroupKey(loja){
+  const loc=lojaLocation(loja);
+  return loc?"loc:"+loc.join("|").toLowerCase():"key:"+locationKey(loja);
+}
+// Node (scripts de import/auditoria) usa as mesmas funções do dashboard pra
+// não divergir a regra. No browser `module` não existe e isso é ignorado.
+if(typeof module!=="undefined"&&module.exports){
+  module.exports={LOJA_LOCATION_OVERRIDES,locationKey,lojaLocation,canonicalGroupKey};
+}
