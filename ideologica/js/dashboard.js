@@ -5,6 +5,7 @@ let sortKey = "total_faturado";
 let sortDir = -1;
 let mesFiltro = ""; // "" = todos, ou "YYYY-MM"
 let ufFiltro = "";  // "" = todos, ou a sigla ("SP") — vem de clicar no mapa
+let buscaTexto = ""; // texto livre da barra de busca (loja/cidade/bairro/UF)
 
 const MESES_PT = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
 function mesLabel(ym){
@@ -295,6 +296,16 @@ function populateFilterOptions(){
   renderMesPills();
 }
 
+// Busca livre: procura no nome da loja E no UF/Cidade/Unidade, porque quem
+// digita "caxias" ou "moinhos" está pensando no lugar, não na grafia do
+// arquivo ("RJ MOINHOS"). Ignora acento e caixa, e exige que TODOS os termos
+// apareçam — "sp campinas" acha as de Campinas sem trazer o resto de SP.
+function casaBusca(loja, termo){
+  const loc = lojaLocation(loja) || [];
+  const alvo = locationKey([loja, displayLoja(loja), loc[0], loc[1], loc[2]].filter(Boolean).join(" "));
+  return locationKey(termo).split(/\s+/).filter(Boolean).every(t => alvo.includes(t));
+}
+
 function getFiltered(){
   const bandeira = document.getElementById("f-bandeira").value;
   const loja = document.getElementById("f-loja").value;
@@ -305,6 +316,7 @@ function getFiltered(){
     if(consultor && r.consultor!==consultor) return false;
     if(mesFiltro && !r.periodo_inicio.startsWith(mesFiltro)) return false;
     if(ufFiltro && ((lojaLocation(r.loja)||[])[0]||"")!==ufFiltro) return false;
+    if(buscaTexto && !casaBusca(r.loja, buscaTexto)) return false;
     return true;
   });
 }
@@ -511,9 +523,13 @@ function ligarHoverUf(wrap, lista, porUf, nomeDe){
     const p = pathDe(uf); if(!p) return;
     p.classList.add("hot");
     svg.classList.add("tem-hot"); // faz os outros estados recuarem (ver CSS)
-    // ordem do DOM = ordem de pintura no SVG: sem subir o estado pro fim, o
-    // contorno de realce fica escondido atrás dos vizinhos desenhados depois
-    p.parentNode.appendChild(p);
+    // Ordem do DOM = ordem de pintura no SVG. O estado precisa subir acima
+    // dos VIZINHOS (senão a borda de realce fica cortada por quem é desenhado
+    // depois), mas continuar abaixo dos PINOS — com appendChild puro ele ia
+    // pro fim de tudo e passava por cima dos pinos das cidades.
+    const camadaPins = svg.querySelector(".uf-pins");
+    if(camadaPins && camadaPins.parentNode === p.parentNode) p.parentNode.insertBefore(p, camadaPins);
+    else p.parentNode.appendChild(p);
     const it = itemDe(uf); if(it) it.classList.add("hot");
     const d = porUf.get(uf);
     const n = d ? d.lojas.size : 0;
@@ -833,10 +849,24 @@ function initFilterHandlers(){
     renderMesPills();
     render();
   });
+  const busca = document.getElementById("f-busca");
+  const buscaX = document.getElementById("f-busca-x");
+  if(busca){
+    busca.addEventListener("input", ()=>{
+      buscaTexto = busca.value.trim();
+      if(buscaX) buscaX.hidden = !buscaTexto;
+      render();
+    });
+    // Esc limpa sem tirar a mão do teclado
+    busca.addEventListener("keydown", e=>{ if(e.key==="Escape"){ busca.value=""; busca.dispatchEvent(new Event("input")); } });
+  }
+  if(buscaX) buscaX.addEventListener("click", ()=>{ busca.value=""; busca.dispatchEvent(new Event("input")); busca.focus(); });
+
   document.getElementById("btn-clear").addEventListener("click",()=>{
     document.getElementById("f-bandeira").value="";
     document.getElementById("f-loja").value="";
     document.getElementById("f-consultor").value="";
+    if(busca){ busca.value=""; buscaTexto=""; if(buscaX) buscaX.hidden = true; }
     mesFiltro="";
     ufFiltro="";
     renderMesPills();

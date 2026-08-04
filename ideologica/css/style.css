@@ -309,3 +309,14 @@ td.col-sep{border-left:1px solid var(--border2);}
 .uf-group-row .tg-qtd{color:var(--text3);font-weight:600;font-size:10px;margin-left:8px;}
 .uf-group-row .tg-total{font-weight:700;color:var(--text2);font-size:11px;background:var(--surface2);}
 .uf-group-row:hover td{background:var(--surface2);}
+
+/* Busca de loja: input com o "limpar" por dentro, que só aparece quando há
+   texto — botão sempre visível vira ruído numa barra de filtros já cheia. */
+.busca-wrap{position:relative;display:flex;align-items:center;}
+.busca-wrap input{font-family:var(--font);font-size:12px;padding:7px 26px 7px 9px;width:100%;
+  border:1px solid var(--border2);background:#fff;color:var(--text);border-radius:6px;outline:none;}
+.busca-wrap input:focus{border-color:var(--brand-mid);box-shadow:0 0 0 2px rgba(45,75,176,.12);}
+.busca-wrap input::-webkit-search-cancel-button{display:none;}
+.busca-x{position:absolute;right:5px;border:none;background:transparent;cursor:pointer;
+  color:var(--text3);font-size:11px;line-height:1;padding:3px;border-radius:50%;}
+.busca-x:hover{color:var(--brand-mid);background:var(--surface2);}
