@@ -21,6 +21,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { parseReport } = require('./parse_report');
+const { canonicalGroupKey } = require('../js/loja-location');
 const knownIssues = require('./known_issues.json');
 
 // Lembretes de problemas já diagnosticados (ver known_issues.json) — evita
@@ -80,6 +81,67 @@ function findXlsFiles(root) {
     }
   }
   return { files: out, ignoredXlsx };
+}
+
+// O dashboard identifica a loja pelo NOME DO ARQUIVO (lojaFromArquivo), não
+// pelo "Loja:" de dentro do relatório. Então dois cortes da mesma loja com
+// grafias diferentes no nome do arquivo ("RJ Portao 15 julho.xls" x "RJ
+// Portao 31.xls") viram DUAS lojas — e como cada corte é acumulado desde o
+// dia 1, o mês inteiro passa a ser contado em dobro (o corte 15 soma junto
+// com o 31, que já inclui o 15). Aconteceu de verdade com Portão e Francisco
+// Beltrão em julho/2026: +285 peças de tingimento fantasma só no Glávio,
+// e ninguém percebeu até um consultor estranhar o número.
+//
+// Usar o "Loja:" interno como chave parece a saída óbvia (não depende do
+// nome do arquivo), mas ele vem truncado por largura fixa do Crystal
+// Reports e o corte é curto demais pra identificar: "MINHA LAVANDERIA  CA"
+// casa igual com Caçador, Campinas e Caxias. Por isso a checagem compara os
+// NOMES DERIVADOS DOS ARQUIVOS entre si e só reclama quando o dashboard
+// realmente vai separá-los (canonicalGroupKey diferente) — grafias que já
+// caem na mesma chave não são problema e não viram ruído.
+function tokensNome(s) {
+  return (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(Boolean);
+}
+function distanciaEdicao(a, b) {
+  const dp = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+  for (let j = 0; j <= b.length; j++) dp[0][j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      dp[i][j] = a[i - 1] === b[j - 1] ? dp[i - 1][j - 1]
+        : 1 + Math.min(dp[i - 1][j - 1], dp[i - 1][j], dp[i][j - 1]);
+    }
+  }
+  return dp[a.length][b.length];
+}
+// Palavra que só existe no nome do arquivo por causa de como o consultor
+// salvou (corte, mês, cópia do Drive) — não faz parte do nome da loja.
+const MESES_ARQ = ['janeiro','fevereiro','marco','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+function ruidoDeNome(t) {
+  return /^\d+$/.test(t) || MESES_ARQ.includes(t) || ['b64','copia','final','novo','v2'].includes(t);
+}
+function provavelMesmaLoja(lojaA, lojaB) {
+  const ta = tokensNome(lojaA), tb = tokensNome(lojaB);
+  if (!ta.length || !tb.length) return false;
+  const [menor, maior] = ta.length <= tb.length ? [ta, tb] : [tb, ta];
+  // "RJ Portao" x "RJ Portao 15 julho", "ML CAXIAS" x "ML CAXIAS 31 (1)":
+  // um é prefixo do outro E o que sobra é só corte/mês/cópia. Se o que sobra
+  // for uma palavra de verdade são lojas IRMÃS, não a mesma ("ML Recife" x
+  // "ML Recife Madalena", "RJ Passo Fundo" x "RJ Passo Fundo Centro").
+  if (menor.every((t, i) => t === maior[i])) {
+    return maior.slice(menor.length).every(ruidoDeNome);
+  }
+  // "Mega Franscisco Beltrao" x "Mega Francisco Beltrao" (erro de digitação),
+  // "RJ CAXIAS SAO PELEGRINO" x "RJ Caxias S. Pelegrino" (abreviação). O
+  // limite relativo evita casar loja curta e parecida mas diferente de
+  // verdade — "RJ Penha" x "RJ AZENHA" é 1 letra em 9 (11%), enquanto
+  // "franscisco" x "francisco" é 1 em 23 (4%).
+  if (ta.length === tb.length) {
+    const sa = ta.join(' '), sb = tb.join(' ');
+    const d = distanciaEdicao(sa, sb);
+    return d > 0 && d <= 3 && d / Math.max(sa.length, sb.length) <= 0.10;
+  }
+  return false;
 }
 
 function reportContentKey(relatorio, itens) {
@@ -146,6 +208,7 @@ async function main() {
 
   let imported = 0, skipped = 0, failed = 0;
   const problems = [];
+  const identidades = []; // {arquivoOrigem, consultor, loja, lojaInterna, mes} — p/ checar duplicidade de identidade no fim
   for (const f of ignoredXlsx) {
     problems.push(`aviso "${path.basename(f.filePath)}" (${f.consultor}): é .xlsx (formato moderno), não .xls — o parser não lê esse formato. Confira se não é um corte novo perdido e peça pra reexportar como .xls do Allegro.Net.`);
   }
@@ -188,6 +251,7 @@ async function main() {
       problems.push(`aviso "${arquivoOrigem}": nome não começa com RJ/ML/MEGA — bandeira ficará em branco.`);
     }
     for (const w of warnings) problems.push(`aviso "${arquivoOrigem}": ${w}`);
+    identidades.push({ arquivoOrigem, consultor, loja: relatorio.loja, lojaInterna: relatorio.loja_interna, mes: relatorio.periodo_inicio.slice(0, 7) });
 
     const key = `${relatorio.loja}|||${relatorio.periodo_inicio}|||${relatorio.periodo_fim}`;
     const internalKey = `${relatorio.loja_interna}|||${relatorio.periodo_inicio}|||${relatorio.periodo_fim}`;
@@ -215,6 +279,29 @@ async function main() {
     } catch (e) {
       failed++;
       problems.push(`ERRO ao salvar "${arquivoOrigem}" (${relatorio.loja}): ${e.message}`);
+    }
+  }
+
+  // Duplicidade de IDENTIDADE (≠ duplicidade de conteúdo, checada lá em cima):
+  // dois arquivos do mesmo mês que são a mesma loja, mas com nomes que o
+  // dashboard vai ler como lojas diferentes — o que faz o mês contar em dobro.
+  const porChave = new Map(); // canonicalGroupKey -> {loja, mes, arquivos[]}
+  for (const it of identidades) {
+    const k = it.mes + '||' + canonicalGroupKey(it.loja);
+    if (!porChave.has(k)) porChave.set(k, { loja: it.loja, mes: it.mes, consultor: it.consultor, arquivos: [] });
+    porChave.get(k).arquivos.push(it.arquivoOrigem);
+  }
+  const grupos = [...porChave.values()];
+  const jaAvisado = new Set();
+  for (let i = 0; i < grupos.length; i++) {
+    for (let j = i + 1; j < grupos.length; j++) {
+      const a = grupos[i], b = grupos[j];
+      if (a.mes !== b.mes) continue;
+      if (!provavelMesmaLoja(a.loja, b.loja)) continue;
+      const par = [a.loja, b.loja].sort().join('||') + a.mes;
+      if (jaAvisado.has(par)) continue;
+      jaAvisado.add(par);
+      problems.push(`ATENÇÃO DUPLICIDADE DE LOJA (${a.consultor}, ${a.mes}): "${a.loja}" (${a.arquivos.join(', ')}) e "${b.loja}" (${b.arquivos.join(', ')}) parecem ser a MESMA loja, mas o dashboard vai contar como duas. Cada corte é acumulado desde o dia 1, então o mês inteiro conta em DOBRO. Renomeie os arquivos no Drive pro mesmo padrão, ou me peça pra cadastrar o apelido em ideologica/js/loja-location.js.`);
     }
   }
 
