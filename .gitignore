@@ -3,3 +3,4 @@ supabase_history.sql
 .claude/
 ideologica/.env
 backups/
+fix_bandeira_2026-08-04.sql
