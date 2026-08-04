@@ -2,6 +2,11 @@
   --bg:#eef1f4;--surface:#ffffff;--surface2:#f6f8fa;--border:#dde3e8;--border2:#b8c2cc;
   --text:#15171a;--text2:#4d5761;--text3:#7d8790;
   --teal:#065f46;--teal-bg:#def7ec;--teal-mid:#0f8b63;
+  /* Azul da marca (#203b8e é a cor exata da logo). A regra: AZUL veste a
+     interface — botão, pill, aba, link, linha selecionada; VERDE fica só
+     onde a cor significa dinheiro/dado (barra de faturamento, KPI, mapa,
+     crescimento). Assim a cor nunca vira decoração: ou é controle, ou é dado. */
+  --brand:#203b8e;--brand-mid:#2d4bb0;--brand-bg:#e7ebfa;
   --indigo:#33439b;--indigo-bg:#e7eafd;
   --red:#9d1c1c;--red-bg:#fde5e5;
   --blue:#15559a;--blue-bg:#e0efff;
@@ -32,20 +37,20 @@ body{font-family:var(--font);font-weight:600;background:linear-gradient(180deg,#
 
 .cut-pills{display:inline-flex;gap:3px;margin-left:6px;vertical-align:middle;}
 .cut-pill{font-family:var(--font);font-size:9px;font-weight:700;line-height:1;padding:3px 6px;border-radius:999px;border:1px solid var(--border2);background:var(--surface2);color:var(--text3);cursor:pointer;}
-.cut-pill:hover{border-color:var(--teal-mid);color:var(--teal-mid);}
-.cut-pill.active{background:var(--teal);border-color:var(--teal);color:#fff;}
+.cut-pill:hover{border-color:var(--brand-mid);color:var(--brand-mid);}
+.cut-pill.active{background:var(--brand);border-color:var(--brand);color:#fff;}
 
 .topbar{background:#fff;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;display:flex;align-items:center;padding:0 24px;gap:10px;height:52px;}
 .sys-title{font-size:13px;font-weight:600;color:var(--text);}
 .sys-sub{font-size:11px;color:var(--text3);margin-left:6px;}
 .spacer{flex:1;}
 .topbar-link{font-size:11px;color:var(--text3);text-decoration:none;}
-.topbar-link:hover{color:var(--teal-mid);}
+.topbar-link:hover{color:var(--brand-mid);}
 
 .app-switch{display:flex;align-items:center;gap:2px;padding:3px;background:var(--surface2);border:1px solid var(--border);border-radius:999px;font-size:11px;font-weight:700;}
 .app-switch a,.app-switch span{display:flex;align-items:center;height:24px;padding:0 14px;text-decoration:none;color:var(--text3);border-radius:999px;transition:color .15s ease,background .15s ease;}
-.app-switch a:hover{color:var(--teal-mid);background:rgba(15,139,99,.08);}
-.app-switch span.on{background:var(--teal-mid);color:#fff;box-shadow:0 1px 3px rgba(15,139,99,.35);}
+.app-switch a:hover{color:var(--brand-mid);background:rgba(45,75,176,.08);}
+.app-switch span.on{background:var(--brand);color:#fff;box-shadow:0 1px 3px rgba(32,59,142,.35);}
 .app-switch-div{display:none;}
 
 .content{max-width:1360px;margin:0 auto;padding:20px 24px 60px;}
@@ -62,8 +67,8 @@ body{font-family:var(--font);font-weight:600;background:linear-gradient(180deg,#
 .range-sep{font-size:11px;color:var(--text3);}
 .pill-toggle{display:flex;flex-wrap:wrap;gap:6px;}
 .pill-btn{font-family:var(--font);font-size:11px;font-weight:700;padding:7px 12px;border:1px solid var(--border2);background:#fff;color:var(--text2);border-radius:999px;cursor:pointer;}
-.pill-btn:hover{border-color:var(--teal-mid);color:var(--teal-mid);}
-.pill-btn.on{background:var(--teal-mid);border-color:var(--teal-mid);color:#fff;}
+.pill-btn:hover{border-color:var(--brand-mid);color:var(--brand-mid);}
+.pill-btn.on{background:var(--brand);border-color:var(--brand);color:#fff;}
 
 /* KPI CARDS */
 .kpis{display:grid;grid-template-columns:1.15fr 1fr 1fr 1.15fr .65fr;gap:12px;margin-bottom:18px;}
@@ -86,14 +91,14 @@ body{font-family:var(--font);font-weight:600;background:linear-gradient(180deg,#
 .bar-fill{height:100%;background:var(--teal-mid);border-radius:4px;}
 .bar-value{width:90px;flex-shrink:0;text-align:right;font-weight:700;color:var(--text);}
 .bar-row.clickable{cursor:pointer;}
-.bar-row.clickable:hover .bar-name{color:var(--teal-mid);}
-.bar-row.open .bar-name{color:var(--teal-mid);font-weight:800;}
+.bar-row.clickable:hover .bar-name{color:var(--brand-mid);}
+.bar-row.open .bar-name{color:var(--brand-mid);font-weight:800;}
 
 /* TABLE */
 .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
 table{width:100%;border-collapse:collapse;font-size:12px;}
 th{text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--surface2);cursor:pointer;user-select:none;}
-th:hover{color:var(--teal-mid);}
+th:hover{color:var(--brand-mid);}
 th:first-child,td:first-child{width:26%;white-space:nowrap;}
 .report-table th:nth-child(3),.report-table td:nth-child(3){width:1%;white-space:nowrap;}
 td{padding:9px 14px;border-bottom:1px solid var(--border);color:var(--text);}
@@ -105,8 +110,8 @@ tr:hover td{background:var(--surface2);}
 /* LOJA CLICÁVEL (ranking + tabela) */
 .expand-caret{display:inline-block;font-size:9px;color:var(--text3);margin-right:6px;transition:transform .15s;}
 .loja-row{cursor:pointer;}
-.loja-row.open{background:var(--teal-bg);}
-.loja-row.open td{background:var(--teal-bg);}
+.loja-row.open{background:var(--brand-bg);}
+.loja-row.open td{background:var(--brand-bg);}
 .loja-row.open .expand-caret{transform:rotate(90deg);}
 .bar-row.open .expand-caret{transform:rotate(90deg);}
 .loja-detail-row td{padding:0;border-bottom:1px solid var(--border);background:var(--surface2);}
@@ -134,7 +139,7 @@ tr:hover td{background:var(--surface2);}
 /* COMPARATIVO */
 .tabs{display:flex;gap:6px;margin-bottom:14px;}
 .tab-btn{font-family:var(--font);font-size:11px;font-weight:700;padding:8px 14px;border:1px solid var(--border);background:var(--surface);color:var(--text2);border-radius:8px;cursor:pointer;text-transform:uppercase;letter-spacing:.03em;}
-.tab-btn.active{background:var(--teal);color:#fff;border-color:var(--teal);}
+.tab-btn.active{background:var(--brand);color:#fff;border-color:var(--brand);}
 .tab-btn:hover:not(.active){background:var(--surface2);}
 
 .group-block{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:14px;overflow:hidden;}
@@ -193,8 +198,8 @@ tr:hover td{background:var(--surface2);}
 .ca-lojas-filtro-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
 .ca-lojas-filtro-head label{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;}
 .ca-loja-pill{font-family:var(--font);font-size:11px;font-weight:700;padding:7px 12px;border:1px solid var(--border2);background:#fff;color:var(--text2);border-radius:999px;cursor:pointer;}
-.ca-loja-pill:hover{border-color:var(--teal-mid);color:var(--teal-mid);}
-.ca-loja-pill.on{background:var(--teal);border-color:var(--teal);color:#fff;}
+.ca-loja-pill:hover{border-color:var(--brand-mid);color:var(--brand-mid);}
+.ca-loja-pill.on{background:var(--brand);border-color:var(--brand);color:#fff;}
 
 th.col-sep{border-left:1px solid var(--border2);}
 td.col-sep{border-left:1px solid var(--border2);}
@@ -214,15 +219,29 @@ td.col-sep{border-left:1px solid var(--border2);}
    fique gigante numa tela larga. */
 .uf-map-wrap{position:relative;min-width:0;width:100%;max-width:620px;justify-self:center;}
 .uf-map{width:100%;height:auto;display:block;}
-.uf-map path{fill:var(--uf-0);stroke:#fff;stroke-width:1;transition:fill .12s ease;cursor:default;}
+.uf-map path{fill:var(--uf-0);stroke:#fff;stroke-width:1;cursor:default;
+  transition:fill .12s ease,opacity .15s ease,transform .15s cubic-bezier(.2,.8,.3,1.2),filter .15s ease;}
 .uf-map path.has-lojas{cursor:pointer;}
 .uf-map path.n1{fill:var(--uf-1);}
 .uf-map path.n2{fill:var(--uf-2);}
 .uf-map path.n3{fill:var(--uf-3);}
 .uf-map path.n4{fill:var(--uf-4);}
-/* realce: contorno escuro + o estado sobe pro topo da pilha (paint-order do
-   SVG e' a ordem do DOM, entao sem isso o stroke fica cortado pelos vizinhos) */
-.uf-map path.hot{stroke:var(--text);stroke-width:1.6;}
+/* Realce: o estado "descola" do mapa — cresce um tico a partir do próprio
+   centro e ganha sombra, enquanto os vizinhos recuam. A elevação é o que
+   deixa claro QUAL estado está sob o cursor mesmo nos pequenos do Nordeste,
+   onde só mudar a borda quase não aparece. O estado também sobe pro fim do
+   DOM (ver ligarHoverUf): no SVG a ordem de pintura é a ordem do DOM, senão
+   a sombra e a borda ficariam cortadas pelos vizinhos desenhados depois. */
+.uf-map path.hot{
+  stroke:#fff;stroke-width:1.8;
+  transform-box:fill-box;transform-origin:center;transform:scale(1.035);
+  filter:drop-shadow(0 3px 7px rgba(15,23,42,.38));
+}
+.uf-map.tem-hot path:not(.hot){opacity:.45;}
+@media(prefers-reduced-motion:reduce){
+  .uf-map path{transition:fill .12s ease;}
+  .uf-map path.hot{transform:none;}
+}
 .uf-map .uf-hot-layer path{pointer-events:none;}
 
 .uf-tip{position:absolute;pointer-events:none;background:var(--text);color:#fff;border-radius:7px;
@@ -235,7 +254,7 @@ td.col-sep{border-left:1px solid var(--border2);}
 .uf-list{display:flex;flex-direction:column;gap:2px;max-height:520px;overflow:auto;}
 .uf-item{display:grid;grid-template-columns:26px 1fr auto;gap:8px;align-items:center;
   padding:5px 7px;border-radius:6px;cursor:pointer;border:1px solid transparent;}
-.uf-item:hover,.uf-item.hot{background:var(--teal-bg);border-color:var(--teal-mid);}
+.uf-item:hover,.uf-item.hot{background:var(--brand-bg);border-color:var(--brand-mid);}
 .uf-item .ui-sigla{font-weight:850;color:var(--text);font-size:11px;}
 .uf-item .ui-nome{color:var(--text2);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .uf-item .ui-n{font-weight:800;color:var(--teal);font-size:11px;}
@@ -246,7 +265,7 @@ td.col-sep{border-left:1px solid var(--border2);}
 .uf-legend .lg-item{display:inline-flex;align-items:center;gap:5px;font-size:10px;color:var(--text2);font-weight:700;}
 .uf-legend .lg-sw{width:14px;height:10px;border-radius:2px;border:1px solid var(--border);}
 .uf-chip{font-family:var(--font);font-size:10px;font-weight:700;letter-spacing:.02em;text-transform:none;
-  background:var(--teal);color:#fff;border:none;border-radius:999px;padding:3px 9px;margin-left:8px;
+  background:var(--brand);color:#fff;border:none;border-radius:999px;padding:3px 9px;margin-left:8px;
   cursor:pointer;display:inline-flex;align-items:center;gap:6px;vertical-align:middle;}
-.uf-chip:hover{background:var(--teal-mid);}
+.uf-chip:hover{background:var(--brand-mid);}
 .uf-chip .uf-chip-x{opacity:.75;font-size:11px;line-height:1;}

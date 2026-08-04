@@ -417,6 +417,7 @@ function ligarHoverUf(wrap, lista, porUf, nomeDe){
     apagar();
     const p = pathDe(uf); if(!p) return;
     p.classList.add("hot");
+    svg.classList.add("tem-hot"); // faz os outros estados recuarem (ver CSS)
     // ordem do DOM = ordem de pintura no SVG: sem subir o estado pro fim, o
     // contorno de realce fica escondido atrás dos vizinhos desenhados depois
     p.parentNode.appendChild(p);
@@ -428,6 +429,7 @@ function ligarHoverUf(wrap, lista, porUf, nomeDe){
     if(evt) posicionarTip(evt);
   }
   function apagar(){
+    svg.classList.remove("tem-hot");
     svg.querySelectorAll("path.hot").forEach(p=>p.classList.remove("hot"));
     lista.querySelectorAll(".uf-item.hot").forEach(i=>i.classList.remove("hot"));
     tip.classList.remove("on");
