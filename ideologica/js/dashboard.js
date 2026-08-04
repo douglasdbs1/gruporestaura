@@ -609,7 +609,33 @@ function renderTable(rows){
     if(typeof va === "string") return sortDir*va.localeCompare(vb);
     return sortDir*((va||0)-(vb||0));
   });
-  tbody.innerHTML = groupRows.map(({key, list, chosen})=>{
+  // Agrupa por UF. Dentro do estado a ordem escolhida na coluna é preservada;
+  // já os ESTADOS entram pelo total do próprio estado (não pela maior loja
+  // isolada) — senão a Paraíba, com 2 lojas, apareceria na frente de SP e RS
+  // só porque tem a maior loja da rede. Ordenação por texto (Loja/Consultor)
+  // não tem total que faça sentido somar, então aí é alfabético por UF.
+  const porUf = new Map();
+  for(const g of groupRows){
+    const uf = (lojaLocation(g.chosen.loja)||[])[0] || "";
+    if(!porUf.has(uf)) porUf.set(uf, []);
+    porUf.get(uf).push(g);
+  }
+  const ehTexto = typeof (groupRows[0]||{}).sortBasis?.[sortKey] === "string";
+  const ordenados = [...porUf.entries()].sort((a,b)=>{
+    if(!a[0]) return 1;               // "sem estado cadastrado" sempre por último
+    if(!b[0]) return -1;
+    if(ehTexto) return a[0].localeCompare(b[0],"pt");
+    const soma = itens => itens.reduce((s,g)=>s+Number(g.sortBasis[sortKey]||0),0);
+    return sortDir*(soma(a[1])-soma(b[1]));
+  });
+  const nomeUf = s => (typeof BR_UF_PATHS!=="undefined" ? (BR_UF_PATHS.find(u=>u.sigla===s)||{}).nome : "") || "";
+  const linhaGrupo = (uf, itens) => {
+    const total = itens.reduce((s,g)=>s+Number(g.chosen.total_faturado||0),0);
+    const rotulo = uf ? `<span class="tg-uf">${uf}</span><span class="tg-nome">${esc(nomeUf(uf))}</span>` : `<span class="tg-nome">Sem estado cadastrado</span>`;
+    return `<tr class="uf-group-row"><td colspan="3">${rotulo}<span class="tg-qtd">${itens.length} loja${itens.length>1?"s":""}</span></td><td class="num tg-total">${fmtMoney(total)}</td><td colspan="2"></td></tr>`;
+  };
+
+  tbody.innerHTML = ordenados.map(([uf, itens])=> linhaGrupo(uf, itens) + itens.map(({key, list, chosen})=>{
     const showMonth = new Set(list.map(r=>(r.periodo_inicio||"").slice(0,7))).size > 1;
     const pills = list.length>1 ? `<span class="cut-pills">${list.map(r=>
       `<button type="button" class="cut-pill${r.periodo_fim===chosen.periodo_fim?" active":""}" data-group="${encodeURIComponent(key)}" data-periodo="${r.periodo_fim}">${cutLabel(r.periodo_fim,showMonth)}</button>`
@@ -625,7 +651,7 @@ function renderTable(rows){
       <td class="num">${ticketMedioHtml(chosen.total_faturado, chosen.total_tickets, chosen.total_volume)}</td>
     </tr>
     <tr class="loja-detail-row"${isOpen?"":' style="display:none"'}><td colspan="6">${isOpen?lojaDetailHtml(chosen.loja, chosen.periodo_fim):""}</td></tr>`;
-  }).join("");
+  }).join("")).join("");
 }
 
 function initCutPillHandler(){

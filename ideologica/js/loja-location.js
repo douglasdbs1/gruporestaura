@@ -26,6 +26,10 @@ const LOJA_LOCATION_OVERRIDES = {
   "ml botucatu": ["SP","Botucatu",""],
   "ml campinas dom pedro": ["SP","Campinas","Dom Pedro"],
   "ml campo grande": ["MS","Campo Grande",""],
+  // o arquivo veio "CAMPOS DOAS GOY" (erro de digitação + corte); o nome certo
+  // está no "Loja:" interno do relatório: MINHA LAVANDERIA - CAMPOS DOS GOYTACAZES
+  "ml campos doas goy": ["RJ","Campos dos Goytacazes",""],
+  "ml campos dos goytacazes": ["RJ","Campos dos Goytacazes",""],
   "ml caxias": ["RS","Caxias do Sul",""],
   "ml florianopolis": ["SC","Florianópolis",""],
   "ml goiania oeste": ["GO","Goiânia","Oeste"],
@@ -46,6 +50,7 @@ const LOJA_LOCATION_OVERRIDES = {
   "rj alfenas": ["MG","Alfenas",""],
   "rj americana": ["SP","Americana",""],
   "rj azenha": ["RS","Porto Alegre","Azenha"],
+  "rj balsas": ["MA","Balsas",""],
   "rj belem": ["PA","Belém",""],
   "rj belo horizonte": ["MG","Belo Horizonte",""],
   "rj camaqua": ["RS","Camaquã",""],
