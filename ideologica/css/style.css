@@ -6,6 +6,10 @@
   --red:#9d1c1c;--red-bg:#fde5e5;
   --blue:#15559a;--blue-bg:#e0efff;
   --rj-1:#b41414;--rj-2:#19236e;--ml:#0055be;
+  /* Rampa sequencial do mapa de lojas (uma hue só, claro→escuro — a ordem é
+     lida pela luminosidade, o que sobrevive a daltonismo). uf-0 é "sem loja"
+     e fica FORA da rampa, num cinza sem saturação, pra nunca parecer "pouca". */
+  --uf-0:#e6ebef;--uf-1:#86d0b2;--uf-2:#3aae87;--uf-3:#12855f;--uf-4:#065f46;
   --font:'Montserrat',system-ui,sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -193,3 +197,53 @@ tr:hover td{background:var(--surface2);}
 
 th.col-sep{border-left:1px solid var(--border2);}
 td.col-sep{border-left:1px solid var(--border2);}
+
+/* ── Mapa de lojas por estado ────────────────────────────────────────────
+   Coroplético: a cor do estado codifica QUANTAS lojas ele tem (rampa teal
+   do projeto, do claro ao escuro). Estados sem loja ficam num cinza neutro
+   fora da rampa, pra "nenhuma" nunca ser confundido com "pouca".
+   O mapa é sempre acompanhado da lista ao lado: os estados do Nordeste são
+   pequenos demais pra caber rótulo, então a lista é que dá o número exato
+   (e serve de table view pra quem não distingue as cores). */
+.uf-grid{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:24px;align-items:start;}
+@media(max-width:900px){.uf-grid{grid-template-columns:1fr;}}
+/* o SVG e' quase quadrado (760x781): sem limitar a largura ele estica pela
+   coluna inteira e o desenho fica pequeno no meio de um vazio enorme */
+.uf-map-wrap{position:relative;min-width:0;max-width:620px;margin:0 auto;}
+.uf-map{width:100%;height:auto;display:block;}
+.uf-map path{fill:var(--uf-0);stroke:#fff;stroke-width:1;transition:fill .12s ease;cursor:default;}
+.uf-map path.has-lojas{cursor:pointer;}
+.uf-map path.n1{fill:var(--uf-1);}
+.uf-map path.n2{fill:var(--uf-2);}
+.uf-map path.n3{fill:var(--uf-3);}
+.uf-map path.n4{fill:var(--uf-4);}
+/* realce: contorno escuro + o estado sobe pro topo da pilha (paint-order do
+   SVG e' a ordem do DOM, entao sem isso o stroke fica cortado pelos vizinhos) */
+.uf-map path.hot{stroke:var(--text);stroke-width:1.6;}
+.uf-map .uf-hot-layer path{pointer-events:none;}
+
+.uf-tip{position:absolute;pointer-events:none;background:var(--text);color:#fff;border-radius:7px;
+  padding:7px 10px;font-size:11px;font-weight:700;line-height:1.45;white-space:nowrap;
+  box-shadow:0 4px 14px rgba(0,0,0,.22);opacity:0;transform:translate(-50%,-115%);transition:opacity .1s ease;z-index:5;}
+.uf-tip.on{opacity:1;}
+.uf-tip .tip-uf{color:#8fe3c1;}
+.uf-tip .tip-sub{font-weight:600;color:#c9d2da;font-size:10px;}
+
+.uf-list{display:flex;flex-direction:column;gap:2px;max-height:520px;overflow:auto;}
+.uf-item{display:grid;grid-template-columns:26px 1fr auto;gap:8px;align-items:center;
+  padding:5px 7px;border-radius:6px;cursor:pointer;border:1px solid transparent;}
+.uf-item:hover,.uf-item.hot{background:var(--teal-bg);border-color:var(--teal-mid);}
+.uf-item .ui-sigla{font-weight:850;color:var(--text);font-size:11px;}
+.uf-item .ui-nome{color:var(--text2);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.uf-item .ui-n{font-weight:800;color:var(--teal);font-size:11px;}
+.uf-empty{color:var(--text3);font-size:11px;padding:6px 2px;}
+
+.uf-legend{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap;}
+.uf-legend .lg-label{font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.03em;}
+.uf-legend .lg-item{display:inline-flex;align-items:center;gap:5px;font-size:10px;color:var(--text2);font-weight:700;}
+.uf-legend .lg-sw{width:14px;height:10px;border-radius:2px;border:1px solid var(--border);}
+.uf-chip{font-family:var(--font);font-size:10px;font-weight:700;letter-spacing:.02em;text-transform:none;
+  background:var(--teal);color:#fff;border:none;border-radius:999px;padding:3px 9px;margin-left:8px;
+  cursor:pointer;display:inline-flex;align-items:center;gap:6px;vertical-align:middle;}
+.uf-chip:hover{background:var(--teal-mid);}
+.uf-chip .uf-chip-x{opacity:.75;font-size:11px;line-height:1;}

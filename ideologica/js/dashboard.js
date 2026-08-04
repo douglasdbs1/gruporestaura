@@ -4,6 +4,7 @@ let tingimentoPorRelatorio = new Map(); // relatorio_id -> peças (volume) capta
 let sortKey = "total_faturado";
 let sortDir = -1;
 let mesFiltro = ""; // "" = todos, ou "YYYY-MM"
+let ufFiltro = "";  // "" = todos, ou a sigla ("SP") — vem de clicar no mapa
 
 const MESES_PT = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
 function mesLabel(ym){
@@ -253,11 +254,28 @@ function populateFilterOptions(){
   const lojaSel = document.getElementById("f-loja");
   const consultorSel = document.getElementById("f-consultor");
   if(lojaSel.options.length<=1){
-    const lojas = [...new Set(allRelatorios.map(r=>r.loja))].sort();
+    // Agrupa por UF (optgroup) — a lista já passou de 90 lojas e rolar uma
+    // lista plana pra achar uma loja específica ficou ruim. Quem ainda não
+    // tem UF cadastrado em loja-location.js cai num grupo "Sem estado", que
+    // serve de lembrete visual pra cadastrar.
+    const lojas = [...new Set(allRelatorios.map(r=>r.loja))];
+    const porUf = new Map();
     for(const l of lojas){
-      const opt=document.createElement("option");
-      opt.value=l; opt.textContent=lojaDisplayText(l);
-      lojaSel.appendChild(opt);
+      const uf = (lojaLocation(l)||[])[0] || "Sem estado";
+      if(!porUf.has(uf)) porUf.set(uf,[]);
+      porUf.get(uf).push(l);
+    }
+    const ufs = [...porUf.keys()].sort((a,b)=>
+      a==="Sem estado" ? 1 : b==="Sem estado" ? -1 : a.localeCompare(b,"pt"));
+    for(const uf of ufs){
+      const grupo=document.createElement("optgroup");
+      grupo.label = uf==="Sem estado" ? uf : `${uf} · ${porUf.get(uf).length} loja${porUf.get(uf).length>1?"s":""}`;
+      for(const l of porUf.get(uf).sort((a,b)=>lojaDisplayText(a).localeCompare(lojaDisplayText(b),"pt"))){
+        const opt=document.createElement("option");
+        opt.value=l; opt.textContent=lojaDisplayText(l);
+        grupo.appendChild(opt);
+      }
+      lojaSel.appendChild(grupo);
     }
   }
   if(consultorSel.options.length<=1){
@@ -286,6 +304,7 @@ function getFiltered(){
     if(loja && r.loja!==loja) return false;
     if(consultor && r.consultor!==consultor) return false;
     if(mesFiltro && !r.periodo_inicio.startsWith(mesFiltro)) return false;
+    if(ufFiltro && ((lojaLocation(r.loja)||[])[0]||"")!==ufFiltro) return false;
     return true;
   });
 }
@@ -315,7 +334,142 @@ function render(){
   renderKpis(snapshot);
   renderRanking("rank-consultor", groupSum(snapshot,"consultor"));
   renderRanking("rank-loja", groupSum(snapshot,"loja"), true);
+  renderUfMap(snapshot);
   renderTable(filtered);
+}
+
+// ── Mapa de lojas por estado ─────────────────────────────────────────────
+// Coroplético em faixas fixas em vez de escala contínua: a distribuição é de
+// cauda muito longa (RS 26 e SP 24 lojas, contra 1 loja na maioria dos
+// estados), então uma escala linear pintaria quase tudo no tom mais claro e
+// só dois estados no escuro. As faixas mostram a diferença entre "1 loja" e
+// "um punhado" que é o que interessa aqui.
+const UF_FAIXAS = [
+  {min:10, cls:"n4", label:"10+"},
+  {min:4,  cls:"n3", label:"4–9"},
+  {min:2,  cls:"n2", label:"2–3"},
+  {min:1,  cls:"n1", label:"1"},
+];
+function ufFaixa(n){ return (UF_FAIXAS.find(f=>n>=f.min)||{cls:""}).cls; }
+
+function renderUfMap(rows){
+  const wrap = document.getElementById("uf-map-wrap");
+  const lista = document.getElementById("uf-list");
+  if(!wrap || !lista || typeof BR_UF_PATHS === "undefined") return;
+
+  // conta lojas (não relatórios) e soma faturamento por UF, dentro do filtro atual
+  const porUf = new Map();
+  for(const r of rows){
+    const uf = (lojaLocation(r.loja)||[])[0];
+    if(!uf) continue; // loja sem UF cadastrado ainda — aparece no aviso do rodapé
+    if(!porUf.has(uf)) porUf.set(uf,{lojas:new Set(),fat:0});
+    const o = porUf.get(uf);
+    o.lojas.add(r.loja);
+    o.fat += Number(r.total_faturado||0);
+  }
+  const semUf = rows.filter(r=>!(lojaLocation(r.loja)||[])[0]).length;
+
+  const paths = BR_UF_PATHS.map(u=>{
+    const d = porUf.get(u.sigla);
+    const n = d ? d.lojas.size : 0;
+    return `<path d="${u.d}" data-uf="${u.sigla}" class="${n?"has-lojas "+ufFaixa(n):""}"><title>${u.nome}: ${n} loja${n===1?"":"s"}</title></path>`;
+  }).join("");
+  wrap.innerHTML = `<svg class="uf-map" viewBox="${BR_UF_VIEWBOX}" role="img" aria-label="Mapa do Brasil com a quantidade de lojas por estado">${paths}</svg><div class="uf-tip" id="uf-tip"></div>`;
+
+  const ordenado = [...porUf.entries()].sort((a,b)=> b[1].lojas.size-a[1].lojas.size || a[0].localeCompare(b[0]));
+  const nomeDe = s => (BR_UF_PATHS.find(u=>u.sigla===s)||{}).nome || s;
+  lista.innerHTML = ordenado.length
+    ? ordenado.map(([uf,o])=>`<div class="uf-item" data-uf="${uf}" title="Clique para filtrar por ${esc(nomeDe(uf))}"><span class="ui-sigla">${uf}</span><span class="ui-nome">${esc(nomeDe(uf))}</span><span class="ui-n">${o.lojas.size}</span></div>`).join("")
+      + (semUf?`<div class="uf-empty">${semUf} relatório(s) sem estado cadastrado</div>`:"")
+    : `<div class="uf-empty">Nenhuma loja no filtro atual.</div>`;
+
+  // Filtrar por um estado deixa o mapa quase todo cinza — sem um aviso claro
+  // isso parece defeito, e o "Limpar filtros" fica longe, lá no topo.
+  const chip = document.getElementById("uf-filtro-chip");
+  if(chip){
+    chip.innerHTML = ufFiltro
+      ? `<button type="button" class="uf-chip" id="uf-chip-btn" title="Remover o filtro de estado">${ufFiltro} · ${esc(nomeDe(ufFiltro))} <span class="uf-chip-x">✕</span></button>`
+      : "";
+    const btn = document.getElementById("uf-chip-btn");
+    if(btn) btn.addEventListener("click", ()=>{ ufFiltro=""; render(); });
+  }
+
+  const legenda = document.getElementById("uf-legend");
+  if(legenda){
+    legenda.innerHTML = `<span class="lg-label">Lojas por estado</span>`
+      + `<span class="lg-item"><span class="lg-sw" style="background:var(--uf-0)"></span>0</span>`
+      + [...UF_FAIXAS].reverse().map(f=>`<span class="lg-item"><span class="lg-sw" style="background:var(--uf-${f.cls.slice(1)})"></span>${f.label}</span>`).join("");
+  }
+
+  ligarHoverUf(wrap, lista, porUf, nomeDe);
+}
+
+// Realce sincronizado nos dois sentidos (mapa ↔ lista): nos estados pequenos
+// do Nordeste é praticamente impossível acertar o mouse, então passar na
+// lista é o caminho prático — e passar no mapa acende a linha correspondente.
+function ligarHoverUf(wrap, lista, porUf, nomeDe){
+  const svg = wrap.querySelector("svg");
+  const tip = wrap.querySelector("#uf-tip");
+  const pathDe = uf => svg.querySelector(`path[data-uf="${uf}"]`);
+  const itemDe = uf => lista.querySelector(`.uf-item[data-uf="${uf}"]`);
+
+  function acender(uf, evt){
+    apagar();
+    const p = pathDe(uf); if(!p) return;
+    p.classList.add("hot");
+    // ordem do DOM = ordem de pintura no SVG: sem subir o estado pro fim, o
+    // contorno de realce fica escondido atrás dos vizinhos desenhados depois
+    p.parentNode.appendChild(p);
+    const it = itemDe(uf); if(it) it.classList.add("hot");
+    const d = porUf.get(uf);
+    const n = d ? d.lojas.size : 0;
+    tip.innerHTML = `<span class="tip-uf">${uf}</span> ${esc(nomeDe(uf))}<br><span class="tip-sub">${n} loja${n===1?"":"s"}${d?" · "+fmtMoney(d.fat):""}</span>`;
+    tip.classList.add("on");
+    if(evt) posicionarTip(evt);
+  }
+  function apagar(){
+    svg.querySelectorAll("path.hot").forEach(p=>p.classList.remove("hot"));
+    lista.querySelectorAll(".uf-item.hot").forEach(i=>i.classList.remove("hot"));
+    tip.classList.remove("on");
+  }
+  function posicionarTip(evt){
+    const r = wrap.getBoundingClientRect();
+    tip.style.left = (evt.clientX - r.left) + "px";
+    tip.style.top = (evt.clientY - r.top - 6) + "px";
+  }
+
+  svg.addEventListener("mousemove", e=>{
+    const p = e.target.closest("path");
+    if(!p){ apagar(); return; }
+    const uf = p.dataset.uf;
+    if(!p.classList.contains("hot")) acender(uf, e); else posicionarTip(e);
+  });
+  svg.addEventListener("mouseleave", apagar);
+  svg.addEventListener("click", e=>{
+    const p = e.target.closest("path");
+    if(p && p.classList.contains("has-lojas")) filtrarPorUf(p.dataset.uf);
+  });
+
+  lista.querySelectorAll(".uf-item").forEach(it=>{
+    it.addEventListener("mouseenter", ()=>{
+      acender(it.dataset.uf);
+      // tooltip ancorado no centro do estado, já que o mouse está na lista
+      const p = pathDe(it.dataset.uf);
+      if(p){
+        const b = p.getBBox(), vb = svg.viewBox.baseVal, r = svg.getBoundingClientRect();
+        tip.style.left = ((b.x+b.width/2)/vb.width*r.width) + "px";
+        tip.style.top = ((b.y+b.height/2)/vb.height*r.height) + "px";
+      }
+    });
+    it.addEventListener("mouseleave", apagar);
+    it.addEventListener("click", ()=>filtrarPorUf(it.dataset.uf));
+  });
+}
+
+// Clicar num estado filtra o painel inteiro por ele; clicar de novo desfaz.
+function filtrarPorUf(uf){
+  ufFiltro = (ufFiltro===uf) ? "" : uf;
+  render();
 }
 
 function renderKpis(rows){
@@ -554,6 +708,7 @@ function initFilterHandlers(){
     document.getElementById("f-loja").value="";
     document.getElementById("f-consultor").value="";
     mesFiltro="";
+    ufFiltro="";
     renderMesPills();
     render();
   });
