@@ -15,6 +15,10 @@
      lida pela luminosidade, o que sobrevive a daltonismo). uf-0 é "sem loja"
      e fica FORA da rampa, num cinza sem saturação, pra nunca parecer "pouca". */
   --uf-0:#e6ebef;--uf-1:#86d0b2;--uf-2:#3aae87;--uf-3:#12855f;--uf-4:#065f46;
+  /* Pinos das cidades: mesma leitura de cor das tags de bandeira (RJ vermelho,
+     ML azul, Mega verde), só que em tons um pouco mais vivos — o pino é
+     pequeno e precisa aguentar ficar sobre o cinza do estado ampliado. */
+  --pin-rj:#c62828;--pin-ml:#0b63d6;--pin-mega:#0f8b63;
   --font:'Montserrat',system-ui,sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -222,28 +226,47 @@ td.col-sep{border-left:1px solid var(--border2);}
    fique gigante numa tela larga. */
 .uf-map-wrap{position:relative;min-width:0;width:100%;max-width:460px;justify-self:center;}
 .uf-map{width:100%;height:auto;display:block;}
-.uf-map path{fill:var(--uf-0);stroke:#fff;stroke-width:1;cursor:default;
+.uf-map .uf-zoom>path{fill:var(--uf-0);stroke:#fff;stroke-width:1;cursor:default;
   transition:fill .12s ease,opacity .15s ease,transform .15s cubic-bezier(.2,.8,.3,1.2),filter .15s ease;}
-.uf-map path.has-lojas{cursor:pointer;}
-.uf-map path.n1{fill:var(--uf-1);}
-.uf-map path.n2{fill:var(--uf-2);}
-.uf-map path.n3{fill:var(--uf-3);}
-.uf-map path.n4{fill:var(--uf-4);}
+.uf-map .uf-zoom>path.has-lojas{cursor:pointer;}
+.uf-map .uf-zoom>path.n1{fill:var(--uf-1);}
+.uf-map .uf-zoom>path.n2{fill:var(--uf-2);}
+.uf-map .uf-zoom>path.n3{fill:var(--uf-3);}
+.uf-map .uf-zoom>path.n4{fill:var(--uf-4);}
 /* Realce: o estado "descola" do mapa — cresce um tico a partir do próprio
    centro e ganha sombra, enquanto os vizinhos recuam. A elevação é o que
    deixa claro QUAL estado está sob o cursor mesmo nos pequenos do Nordeste,
    onde só mudar a borda quase não aparece. O estado também sobe pro fim do
    DOM (ver ligarHoverUf): no SVG a ordem de pintura é a ordem do DOM, senão
    a sombra e a borda ficariam cortadas pelos vizinhos desenhados depois. */
-.uf-map path.hot{
+.uf-map .uf-zoom>path.hot{
   stroke:#fff;stroke-width:1.8;
   transform-box:fill-box;transform-origin:center;transform:scale(1.035);
   filter:drop-shadow(0 3px 7px rgba(15,23,42,.38));
 }
-.uf-map.tem-hot path:not(.hot){opacity:.45;}
+.uf-map.tem-hot .uf-zoom>path:not(.hot){opacity:.45;}
+
+/* ZOOM NO ESTADO */
+.uf-zoom{transition:transform .45s cubic-bezier(.25,.8,.3,1);transform-origin:0 0;}
+/* no zoom o mapa deixa de falar de densidade: o estado focado vira fundo
+   neutro pros pinos aparecerem, e os vizinhos recuam pra dar contexto sem
+   competir. */
+.uf-map.com-zoom .uf-zoom>path.focado{fill:#dfe6ec;stroke-width:.6;}
+.uf-map.com-zoom .uf-zoom>path:not(.focado){opacity:.25;}
+.uf-map.com-zoom.tem-hot .uf-zoom>path:not(.hot){opacity:.25;}
+.uf-map.com-zoom .uf-zoom>path.hot{transform:none;filter:none;}
+
+.uf-pin{cursor:pointer;transition:opacity .12s ease;}
+.uf-pin path{fill:var(--pin-rj);stroke:#fff;stroke-width:1.4;paint-order:stroke;
+  filter:drop-shadow(0 1.5px 2px rgba(15,23,42,.45));}
+.uf-pin[data-band="ml"] path{fill:var(--pin-ml);}
+.uf-pin[data-band="mega"] path{fill:var(--pin-mega);}
+.uf-pin:hover path{stroke-width:2;}
+.uf-pin .uf-pin-n{font-family:var(--font);font-size:9px;font-weight:800;fill:#fff;}
+@media(prefers-reduced-motion:reduce){.uf-zoom{transition:none;}}
 @media(prefers-reduced-motion:reduce){
-  .uf-map path{transition:fill .12s ease;}
-  .uf-map path.hot{transform:none;}
+  .uf-map .uf-zoom>path{transition:fill .12s ease;}
+  .uf-map .uf-zoom>path.hot{transform:none;}
 }
 .uf-map .uf-hot-layer path{pointer-events:none;}
 
@@ -267,6 +290,10 @@ td.col-sep{border-left:1px solid var(--border2);}
 .uf-legend .lg-label{font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.03em;}
 .uf-legend .lg-item{display:inline-flex;align-items:center;gap:5px;font-size:10px;color:var(--text2);font-weight:700;}
 .uf-legend .lg-sw{width:14px;height:10px;border-radius:2px;border:1px solid var(--border);}
+/* na legenda de bandeira a amostra imita o pino (gota), pra ligar direto ao
+   que está no mapa em vez de virar mais um quadradinho de cor */
+.uf-legend .lg-pin{width:10px;height:10px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);
+  border:1.5px solid #fff;box-shadow:0 0 0 1px rgba(15,23,42,.18);}
 .uf-chip{font-family:var(--font);font-size:10px;font-weight:700;letter-spacing:.02em;text-transform:none;
   background:var(--brand);color:#fff;border:none;border-radius:999px;padding:3px 9px;margin-left:8px;
   cursor:pointer;display:inline-flex;align-items:center;gap:6px;vertical-align:middle;}

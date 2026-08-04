@@ -372,9 +372,13 @@ function renderUfMap(rows){
   const paths = BR_UF_PATHS.map(u=>{
     const d = porUf.get(u.sigla);
     const n = d ? d.lojas.size : 0;
-    return `<path d="${u.d}" data-uf="${u.sigla}" class="${n?"has-lojas "+ufFaixa(n):""}"><title>${u.nome}: ${n} loja${n===1?"":"s"}</title></path>`;
+    return `<path d="${u.d}" data-uf="${u.sigla}" class="${n?"has-lojas "+ufFaixa(n):""}${ufFiltro===u.sigla?" focado":""}"><title>${u.nome}: ${n} loja${n===1?"":"s"}</title></path>`;
   }).join("");
-  wrap.innerHTML = `<svg class="uf-map" viewBox="${BR_UF_VIEWBOX}" role="img" aria-label="Mapa do Brasil com a quantidade de lojas por estado">${paths}</svg><div class="uf-tip" id="uf-tip"></div>`;
+  // Tudo (contornos + pinos) vive dentro de um <g> só, porque o zoom é um
+  // transform nesse grupo — assim mapa e pinos nunca saem de registro.
+  wrap.innerHTML = `<svg class="uf-map${ufFiltro?" com-zoom":""}" viewBox="${BR_UF_VIEWBOX}" role="img" aria-label="Mapa do Brasil com a quantidade de lojas por estado">`
+    + `<g class="uf-zoom">${paths}<g class="uf-pins"></g></g></svg>`
+    + `<div class="uf-tip" id="uf-tip"></div>`;
 
   const ordenado = [...porUf.entries()].sort((a,b)=> b[1].lojas.size-a[1].lojas.size || a[0].localeCompare(b[0]));
   const nomeDe = s => (BR_UF_PATHS.find(u=>u.sigla===s)||{}).nome || s;
@@ -394,14 +398,103 @@ function renderUfMap(rows){
     if(btn) btn.addEventListener("click", ()=>{ ufFiltro=""; render(); });
   }
 
+  // A legenda acompanha o que o mapa está mostrando: no Brasil inteiro a cor
+  // do estado é densidade de lojas; com um estado aberto o assunto vira a
+  // bandeira de cada pino, e a escala de densidade não diz mais nada.
   const legenda = document.getElementById("uf-legend");
   if(legenda){
-    legenda.innerHTML = `<span class="lg-label">Lojas por estado</span>`
-      + `<span class="lg-item"><span class="lg-sw" style="background:var(--uf-0)"></span>0</span>`
-      + [...UF_FAIXAS].reverse().map(f=>`<span class="lg-item"><span class="lg-sw" style="background:var(--uf-${f.cls.slice(1)})"></span>${f.label}</span>`).join("");
+    legenda.innerHTML = ufFiltro
+      ? `<span class="lg-label">Bandeira</span>`
+        + ["rj","ml","mega"].map(b=>`<span class="lg-item"><span class="lg-pin" style="background:var(--pin-${b})"></span>${PIN_NOMES[b]}</span>`).join("")
+      : `<span class="lg-label">Lojas por estado</span>`
+        + `<span class="lg-item"><span class="lg-sw" style="background:var(--uf-0)"></span>0</span>`
+        + [...UF_FAIXAS].reverse().map(f=>`<span class="lg-item"><span class="lg-sw" style="background:var(--uf-${f.cls.slice(1)})"></span>${f.label}</span>`).join("");
   }
 
+  aplicarZoomUf(wrap, rows);
   ligarHoverUf(wrap, lista, porUf, nomeDe);
+}
+
+// ── Zoom no estado + pinos das cidades ───────────────────────────────────
+// Com um estado selecionado o mapa amplia nele e troca de assunto: deixa de
+// responder "quantas lojas por estado" (a rampa de cor) e passa a responder
+// "em que cidades elas estão". Por isso o estado focado fica num tom neutro
+// — manter o verde escuro de SP faria o pino verde da Mega sumir dentro dele.
+// A cor sai do CSS por [data-band] — `fill="var(--x)"` como ATRIBUTO do SVG
+// não resolve variável CSS (só funciona como propriedade), e o pino saía sem
+// cor nenhuma.
+const PIN_NOMES = { rj:"Restaura Jeans", ml:"Minha Lavanderia", mega:"Mega" };
+// gota clássica de GPS com a ponta exatamente em (0,0), pra ancorar na cidade
+const PIN_PATH = "M0 0C-3.6-6-7-9.4-7-13.2A7 7 0 1 1 7-13.2C7-9.4 3.6-6 0 0Z";
+
+function aplicarZoomUf(wrap, rows){
+  const svg = wrap.querySelector("svg");
+  const grupo = svg.querySelector(".uf-zoom");
+  const camadaPins = svg.querySelector(".uf-pins");
+  if(!grupo || !camadaPins) return;
+
+  if(!ufFiltro){                       // Brasil inteiro: sem zoom, sem pinos
+    grupo.style.transform = "";
+    camadaPins.innerHTML = "";
+    return;
+  }
+  const alvo = svg.querySelector(`path[data-uf="${ufFiltro}"]`);
+  if(!alvo) return;
+
+  const vb = svg.viewBox.baseVal;
+  const b = alvo.getBBox();
+  // 0.82 deixa uma folga em volta: colado na borda o estado fica sufocado e
+  // os pinos do litoral encostam no limite do quadro.
+  const escala = Math.min(vb.width/b.width, vb.height/b.height) * 0.82;
+  const tx = vb.width/2 - (b.x + b.width/2)*escala;
+  const ty = vb.height/2 - (b.y + b.height/2)*escala;
+  grupo.style.transform = `translate(${tx}px,${ty}px) scale(${escala})`;
+
+  // agrupa por cidade+bandeira: São Paulo capital tem 7 lojas RJ, e 7 pinos no
+  // mesmo ponto viram um borrão. Um pino por bandeira, com a contagem dentro.
+  const porPin = new Map();
+  for(const r of rows){
+    const loc = lojaLocation(r.loja);
+    if(!loc || loc[0] !== ufFiltro) continue;
+    const xy = (typeof CIDADE_XY!=="undefined") && CIDADE_XY[`${loc[0]}|${loc[1]}`];
+    if(!xy) continue;
+    const band = brandOf(r.loja) || "rj";
+    const k = `${loc[1]}|${band}`;
+    if(!porPin.has(k)) porPin.set(k,{cidade:loc[1], band, xy, lojas:new Set(), fat:0});
+    const p = porPin.get(k);
+    p.lojas.add(r.loja);
+    p.fat += Number(r.total_faturado||0);
+  }
+
+  // duas bandeiras na mesma cidade ficariam uma em cima da outra: espalha
+  // horizontalmente em torno do ponto real, mantendo o conjunto centrado.
+  const porCidade = new Map();
+  for(const p of porPin.values()){
+    if(!porCidade.has(p.cidade)) porCidade.set(p.cidade,[]);
+    porCidade.get(p.cidade).push(p);
+  }
+  // O pino não pode crescer junto com o zoom, senão vira um balão gigante —
+  // mas compensar em 1/escala puro deixa ele do tamanho que teria no Brasil
+  // inteiro (uns 8px, ilegível). O fator 2.1 fixa o pino em ~25px na tela,
+  // independente de quanto o estado ampliou.
+  const inv = 2.1/escala;
+  const pins = [];
+  for(const grupoCidade of porCidade.values()){
+    grupoCidade.sort((a,b)=>b.lojas.size-a.lojas.size);
+    const passo = 15*inv;
+    const inicio = -passo*(grupoCidade.length-1)/2;
+    grupoCidade.forEach((p,i)=>{
+      const x = p.xy[0] + inicio + i*passo, y = p.xy[1];
+      const n = p.lojas.size;
+      pins.push(`<g class="uf-pin" data-band="${p.band}" transform="translate(${x} ${y}) scale(${inv})"
+        data-tip="${esc(p.cidade)}|${PIN_NOMES[p.band]||p.band}|${n}|${fmtMoney(p.fat)}">
+        <path d="${PIN_PATH}"/>
+        ${n>1 ? `<text x="0" y="-9.6" text-anchor="middle" class="uf-pin-n">${n}</text>`
+              : `<circle cx="0" cy="-13.2" r="2.6" fill="#fff"/>`}
+      </g>`);
+    });
+  }
+  camadaPins.innerHTML = pins.join("");
 }
 
 // Realce sincronizado nos dois sentidos (mapa ↔ lista): nos estados pequenos
@@ -441,6 +534,15 @@ function ligarHoverUf(wrap, lista, porUf, nomeDe){
   }
 
   svg.addEventListener("mousemove", e=>{
+    // pino tem prioridade sobre o estado embaixo dele
+    const pin = e.target.closest(".uf-pin");
+    if(pin){
+      const [cidade,bandeira,n,fat] = (pin.dataset.tip||"").split("|");
+      tip.innerHTML = `<span class="tip-uf">${esc(bandeira)}</span> ${esc(cidade)}<br><span class="tip-sub">${n} loja${n==="1"?"":"s"} · ${esc(fat)}</span>`;
+      tip.classList.add("on");
+      posicionarTip(e);
+      return;
+    }
     const p = e.target.closest("path");
     if(!p){ apagar(); return; }
     const uf = p.dataset.uf;
