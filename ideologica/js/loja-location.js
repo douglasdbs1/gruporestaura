@@ -68,12 +68,17 @@ const LOJA_LOCATION_OVERRIDES = {
   "rj horizontina": ["RS","Horizontina",""],
   "rj ijui": ["RS","Ijuí",""],
   "rj jacana": ["SP","São Paulo","Jaçanã"],
+  "rj jardim goias": ["GO","Goiânia","Jardim Goiás"],
   "rj lajeado": ["RS","Lajeado",""],
   "rj limeira": ["SP","Limeira",""],
   "rj lindoia": ["RS","Porto Alegre","Lindóia"],
   "rj linhares": ["ES","Linhares",""],
   "rj moinhos": ["RS","Porto Alegre","Moinhos de Vento"],
+  // mesma loja do "rj moinhos" — o arquivo passou a vir com o "Poa" na
+  // frente; sem o apelido viraria uma segunda loja e o mês contaria em dobro
+  "rj poa moinhos": ["RS","Porto Alegre","Moinhos de Vento"],
   "rj montes claros": ["MG","Montes Claros",""],
+  "rj novo hamburgo": ["RS","Novo Hamburgo",""],
   "rj parauapebas": ["PA","Parauapebas",""],
   "rj passo fundo": ["RS","Passo Fundo",""],
   "rj passo fundo centro": ["RS","Passo Fundo","Centro"],
@@ -81,6 +86,11 @@ const LOJA_LOCATION_OVERRIDES = {
   "rj passo fundo sao cristovao": ["RS","Passo Fundo","São Cristóvão"],
   "rj pelotas": ["RS","Pelotas",""],
   "rj penha": ["SP","São Paulo","Penha"],
+  "rj pq sao jorge": ["SP","São Paulo","Parque São Jorge"],
+  // o corte de junho veio nomeado "306" (3 dígitos), e lojaFromArquivo só
+  // corta 1-2 dígitos do fim — sem este apelido o mês de junho ficaria numa
+  // loja separada da de julho
+  "rj pq sao jorge 306": ["SP","São Paulo","Parque São Jorge"],
   "rj picos": ["PI","Picos",""],
   "rj piracicaba": ["SP","Piracicaba",""],
   "rj pirassununga": ["SP","Pirassununga",""],

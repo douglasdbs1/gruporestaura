@@ -99,6 +99,10 @@ function findXlsFiles(root) {
 // NOMES DERIVADOS DOS ARQUIVOS entre si e só reclama quando o dashboard
 // realmente vai separá-los (canonicalGroupKey diferente) — grafias que já
 // caem na mesma chave não são problema e não viram ruído.
+function lojaInternaKey(s) {
+  return (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim();
+}
 function tokensNome(s) {
   return (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '')
     .toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(Boolean);
@@ -297,7 +301,14 @@ async function main() {
     for (let j = i + 1; j < grupos.length; j++) {
       const a = grupos[i], b = grupos[j];
       if (a.mes !== b.mes) continue;
-      if (!provavelMesmaLoja(a.loja, b.loja)) continue;
+      // "RJ MOINHOS" x "RJ Poa Moinhos" (palavra enfiada no meio) escapa da
+      // comparação por nome, mas os dois trazem o MESMO "Loja:" interno —
+      // igualdade exata do nome interno é prova suficiente de que é a mesma
+      // loja. Só vale pra igualdade exata: nome truncado ("MINHA LAVANDERIA
+      // JO") é curto demais pra servir de identidade (ver comentário acima).
+      const internaIgual = a.lojaInterna && b.lojaInterna
+        && lojaInternaKey(a.lojaInterna) === lojaInternaKey(b.lojaInterna);
+      if (!internaIgual && !provavelMesmaLoja(a.loja, b.loja)) continue;
       const par = [a.loja, b.loja].sort().join('||') + a.mes;
       if (jaAvisado.has(par)) continue;
       jaAvisado.add(par);

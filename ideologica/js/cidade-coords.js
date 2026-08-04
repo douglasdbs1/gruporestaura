@@ -43,6 +43,7 @@ const CIDADE_XY={
   "RS|Ijuí":[389.7,672.3],
   "RS|Lajeado":[426.3,694.7],
   "RS|Passo Fundo":[417.6,671.2],
+  "RS|Novo Hamburgo":[444.9,700.6],
   "RS|Pelotas":[419.7,737.3],
   "RS|Porto Alegre":[442.6,707.6],
   "RS|Rio Grande":[418.6,750.2],
