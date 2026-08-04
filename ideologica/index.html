@@ -7,7 +7,7 @@
 <link rel="canonical" href="https://douglasdbs1.github.io/gruporestaura/ideologica/">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/style.css?v=20260804-mapa">
 </head>
 <body>
 
@@ -86,8 +86,12 @@
       <div id="rank-loja"></div>
     </div>
     <div class="panel">
-      <h3>Faturamento por Consultor</h3>
-      <div id="rank-consultor"></div>
+      <h3>Lojas por estado <span id="uf-filtro-chip"></span></h3>
+      <div class="uf-grid">
+        <div class="uf-map-wrap" id="uf-map-wrap"></div>
+        <div class="uf-list" id="uf-list"></div>
+      </div>
+      <div class="uf-legend" id="uf-legend"></div>
     </div>
   </div>
 
@@ -110,12 +114,8 @@
   </div>
 
   <div class="panel" style="margin-top:18px;">
-    <h3>Lojas por estado <span id="uf-filtro-chip"></span></h3>
-    <div class="uf-grid">
-      <div class="uf-map-wrap" id="uf-map-wrap"></div>
-      <div class="uf-list" id="uf-list"></div>
-    </div>
-    <div class="uf-legend" id="uf-legend"></div>
+    <h3>Faturamento por Consultor</h3>
+    <div id="rank-consultor"></div>
   </div>
 
 </div>
