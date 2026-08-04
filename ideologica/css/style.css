@@ -326,7 +326,7 @@ td.col-sep{border-left:1px solid var(--border2);}
 .uf-group-row.recolhido .tg-caret{transform:rotate(-90deg);}
 .uf-group-row:hover .tg-uf{color:var(--brand-mid);}
 .uf-group-row:hover .tg-caret{color:var(--brand-mid);}
-.table-head{display:flex;justify-content:flex-end;padding:8px 14px 0;}
+.table-head{display:flex;justify-content:flex-end;padding:10px 14px;}
 .btn-mini{font-family:var(--font);font-size:10px;font-weight:700;color:var(--text3);
   background:transparent;border:1px solid var(--border);border-radius:999px;padding:4px 11px;cursor:pointer;}
 .btn-mini:hover{color:var(--brand-mid);border-color:var(--brand-mid);}
