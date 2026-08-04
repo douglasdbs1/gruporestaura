@@ -676,6 +676,7 @@ function renderRanking(elId, entries, isLoja){
 // importado (ex.: RJ Limeira aparecia 2x — junho e julho).
 const activeCutByGroup = new Map(); // groupKey -> periodo_fim escolhido
 const openLojaGroups = new Set(); // groupKeys com o detalhe aberto no momento
+const ufsRecolhidas = new Set();  // UFs com as lojas escondidas na tabela
 let lastTableRows = [];
 
 function groupKey(r){
@@ -747,13 +748,20 @@ function renderTable(rows){
     return sortDir*(soma(a[1])-soma(b[1]));
   });
   const nomeUf = s => (typeof BR_UF_PATHS!=="undefined" ? (BR_UF_PATHS.find(u=>u.sigla===s)||{}).nome : "") || "";
-  const linhaGrupo = (uf, itens) => {
+  const linhaGrupo = (uf, itens, recolhido) => {
     const total = itens.reduce((s,g)=>s+Number(g.chosen.total_faturado||0),0);
     const rotulo = uf ? `<span class="tg-uf">${uf}</span><span class="tg-nome">${esc(nomeUf(uf))}</span>` : `<span class="tg-nome">Sem estado cadastrado</span>`;
-    return `<tr class="uf-group-row"><td colspan="3">${rotulo}<span class="tg-qtd">${itens.length} loja${itens.length>1?"s":""}</span></td><td class="num tg-total">${fmtMoney(total)}</td><td colspan="2"></td></tr>`;
+    return `<tr class="uf-group-row${recolhido?" recolhido":""}" data-uf="${uf}" title="${recolhido?"Mostrar":"Recolher"} as lojas de ${esc(uf?nomeUf(uf):"sem estado")}">`
+      + `<td colspan="3"><span class="tg-caret">▾</span>${rotulo}<span class="tg-qtd">${itens.length} loja${itens.length>1?"s":""}</span></td>`
+      + `<td class="num tg-total">${fmtMoney(total)}</td><td colspan="2"></td></tr>`;
   };
 
-  tbody.innerHTML = ordenados.map(([uf, itens])=> linhaGrupo(uf, itens) + itens.map(({key, list, chosen})=>{
+  tbody.innerHTML = ordenados.map(([uf, itens])=>{
+    // Estado recolhido não renderiza as lojas (em vez de escondê-las com CSS):
+    // com 78 linhas na tabela, deixar o DOM só com o que aparece é mais leve,
+    // e o que estava expandido volta igual porque openLojaGroups é por loja.
+    if(ufsRecolhidas.has(uf)) return linhaGrupo(uf, itens, true);
+    return linhaGrupo(uf, itens, false) + itens.map(({key, list, chosen})=>{
     const showMonth = new Set(list.map(r=>(r.periodo_inicio||"").slice(0,7))).size > 1;
     const pills = list.length>1 ? `<span class="cut-pills">${list.map(r=>
       `<button type="button" class="cut-pill${r.periodo_fim===chosen.periodo_fim?" active":""}" data-group="${encodeURIComponent(key)}" data-periodo="${r.periodo_fim}">${cutLabel(r.periodo_fim,showMonth)}</button>`
@@ -769,11 +777,27 @@ function renderTable(rows){
       <td class="num">${ticketMedioHtml(chosen.total_faturado, chosen.total_tickets, chosen.total_volume)}</td>
     </tr>
     <tr class="loja-detail-row"${isOpen?"":' style="display:none"'}><td colspan="6">${isOpen?lojaDetailHtml(chosen.loja, chosen.periodo_fim):""}</td></tr>`;
-  }).join("")).join("");
+    }).join("");
+  }).join("");
+
+  const btnUfs = document.getElementById("btn-toggle-ufs");
+  if(btnUfs){
+    const ufsNaTela = ordenados.map(([uf])=>uf);
+    const todosRecolhidos = ufsNaTela.length && ufsNaTela.every(u=>ufsRecolhidas.has(u));
+    btnUfs.textContent = todosRecolhidos ? "Expandir todos" : "Recolher todos";
+    btnUfs.hidden = ufsNaTela.length < 2;
+  }
 }
 
 function initCutPillHandler(){
   document.getElementById("tbody").addEventListener("click",(e)=>{
+    const grupo = e.target.closest("tr.uf-group-row");
+    if(grupo){
+      const uf = grupo.dataset.uf;
+      if(ufsRecolhidas.has(uf)) ufsRecolhidas.delete(uf); else ufsRecolhidas.add(uf);
+      renderTable(lastTableRows);
+      return;
+    }
     const pill = e.target.closest(".cut-pill");
     if(pill){
       // troca o corte sem fechar o detalhe se ele já estiver aberto — só
@@ -849,6 +873,17 @@ function initFilterHandlers(){
     renderMesPills();
     render();
   });
+  // Recolher os 18 estados um a um pra ver só o resumo não valeria o clique;
+  // o botão inverte tudo de uma vez. O rótulo segue o que o clique VAI fazer.
+  const btnUfs = document.getElementById("btn-toggle-ufs");
+  if(btnUfs) btnUfs.addEventListener("click", ()=>{
+    const ufsNaTela = [...document.querySelectorAll(".uf-group-row")].map(r=>r.dataset.uf);
+    const todosRecolhidos = ufsNaTela.length && ufsNaTela.every(u=>ufsRecolhidas.has(u));
+    ufsRecolhidas.clear();
+    if(!todosRecolhidos) ufsNaTela.forEach(u=>ufsRecolhidas.add(u));
+    renderTable(lastTableRows);
+  });
+
   const busca = document.getElementById("f-busca");
   const buscaX = document.getElementById("f-busca-x");
   if(busca){
