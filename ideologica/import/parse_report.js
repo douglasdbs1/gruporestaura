@@ -218,15 +218,36 @@ function reconstructSingleGap(vals) {
 }
 
 function sanitizeItem(it) {
+  const fat = Number(it.faturamento || 0);
+  // Média zerada com faturamento e quantidade positivos é aritmeticamente
+  // impossível — quem veio corrompido é a média, não a contagem. Visto em
+  // "RJ Caxias S. Pelegrino 31.xls": Méd.Tck. veio 0 e derrubava a linha
+  // inteira, jogando fora um Volume de 308 peças que estava certo (e
+  // conferia com Méd.Serv.). Recalcula antes de conferir a consistência.
+  if (fat > 0 && it.volume > 0 && it.media_servico === 0) it.media_servico = round2(fat / it.volume);
+  if (fat > 0 && it.tickets > 0 && it.media_ticket === 0) it.media_ticket = round2(fat / it.tickets);
+
+  const confere = (media, qtd) => (media == null || !qtd) ? null : Math.abs(media - fat / qtd) <= 0.5;
+  const servOk = confere(it.media_servico, it.volume);   // valida o par Volume/Méd.Serv.
+  const tckOk = confere(it.media_ticket, it.tickets);    // valida o par Tickets/Méd.Tck.
+  const conferiveis = [servOk, tckOk].filter(v => v !== null).length;
+  const falhas = [servOk, tckOk].filter(v => v === false).length;
+
   let bad = false;
   if (it.percentual != null && !(it.percentual >= 0 && it.percentual <= 100)) bad = true;
   if (it.percentual_volume != null && !(it.percentual_volume >= 0 && it.percentual_volume <= 100)) bad = true;
-  if (it.media_servico != null && it.volume) {
-    if (Math.abs(it.media_servico - it.faturamento / it.volume) > 0.5) bad = true;
+  // Quando TUDO que dava pra conferir falhou, a leitura provavelmente
+  // desalinhou (célula em branco no meio da linha embaralha as posições
+  // seguintes) e nada da linha é confiável — zera tudo, como antes.
+  if (falhas > 0 && falhas === conferiveis) bad = true;
+
+  // Já quando um par confere e o outro não, o problema é só do par que
+  // falhou: zerar a linha inteira descartaria dado bom (era o que fazia).
+  if (!bad && falhas > 0) {
+    if (servOk === false) { it.volume = null; it.media_servico = null; }
+    if (tckOk === false) { it.tickets = null; it.media_ticket = null; }
   }
-  if (it.media_ticket != null && it.tickets) {
-    if (Math.abs(it.media_ticket - it.faturamento / it.tickets) > 0.5) bad = true;
-  }
+
   if (bad) {
     for (const k of ['percentual', 'volume', 'percentual_volume', 'media_servico', 'tickets', 'media_ticket']) {
       it[k] = null;

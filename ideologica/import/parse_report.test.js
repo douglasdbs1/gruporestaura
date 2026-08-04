@@ -186,3 +186,64 @@ test('parseReport reconstrói e preenche o Volume que veio em branco no meio da 
   assert.equal(ting.media_servico, 63.22);
   assert.equal(ting.media_ticket, 100.3);
 });
+
+// Reproduz o bug real de "RJ Caxias S. Pelegrino 31.xls": a linha do
+// TINGIMENTO veio COMPLETA (7 valores), mas a Méd. Tck. veio corrompida em
+// zero. Como sanitizeItem() zerava a linha inteira quando QUALQUER conta não
+// batia, um Volume de 308 peças — que conferia certinho com a Méd. Serv. —
+// era descartado junto, e o mês aparecia com menos tingimento que o corte
+// anterior (impossível, já que os cortes são acumulados).
+test('parseReport preserva Volume/Méd.Serv. quando só a Méd. Tck. veio corrompida', () => {
+  const sep = Buffer.from([0x00, 0x00]);
+  const strings = Buffer.concat([
+    wide('Loja: TESTE'), sep,
+    wide('Período de 01/07/2026 até 31/07/2026'), sep,
+    wide('Méd. Tck.'), sep,
+    wide('TINGIMENTO'), sep,
+    wide('Total por Grupo de Serviço:'), sep,
+  ]);
+  // Faturamento 1000, Volume 100 (Méd.Serv. 10 confere), Tickets 50, mas a
+  // Méd. Tck. veio 0 em vez de 20.
+  const numbers = Buffer.concat([
+    numberRecord(1, 1, 1000), numberRecord(1, 2, 25), numberRecord(1, 3, 100),
+    numberRecord(1, 4, 25), numberRecord(1, 5, 10), numberRecord(1, 6, 50), numberRecord(1, 7, 0),
+    numberRecord(2, 1, 1000), numberRecord(2, 2, 100), numberRecord(2, 3, 50),
+  ]);
+  const { itens } = parseReport(Buffer.concat([strings, numbers]), 'Consultor Teste', 'Loja Teste 31.xls');
+
+  const ting = itens.find(i => i.categoria === 'TINGIMENTO');
+  assert.ok(ting, 'TINGIMENTO deveria aparecer como item');
+  assert.equal(ting.volume, 100, 'Volume confere com a Méd. Serv. e não pode ser descartado');
+  assert.equal(ting.media_servico, 10);
+  assert.equal(ting.tickets, 50, 'Tickets continua válido — quem estava corrompida era a média');
+  assert.equal(ting.media_ticket, 20, 'Méd. Tck. zerada é recalculada por faturamento/tickets');
+});
+
+// Proteção original que NÃO pode ser afrouxada pelo fix acima: quando uma
+// célula em branco no meio da linha desalinha a leitura, os valores caem em
+// posições erradas e NENHUMA conta bate — aí a linha toda é descartada
+// mesmo (só o faturamento, que é sempre o 1º valor, se mantém).
+test('parseReport ainda descarta a linha inteira quando nenhuma conta bate (leitura desalinhada)', () => {
+  const sep = Buffer.from([0x00, 0x00]);
+  const strings = Buffer.concat([
+    wide('Loja: TESTE'), sep,
+    wide('Período de 01/07/2026 até 31/07/2026'), sep,
+    wide('Méd. Tck.'), sep,
+    wide('CAT_X'), sep,
+    wide('Total por Grupo de Serviço:'), sep,
+  ]);
+  // Méd.Serv. (7) e Méd.Tck. (9) não batem com 1000/100 nem 1000/50.
+  const numbers = Buffer.concat([
+    numberRecord(1, 1, 1000), numberRecord(1, 2, 25), numberRecord(1, 3, 100),
+    numberRecord(1, 4, 25), numberRecord(1, 5, 7), numberRecord(1, 6, 50), numberRecord(1, 7, 9),
+    numberRecord(2, 1, 1000), numberRecord(2, 2, 100), numberRecord(2, 3, 50),
+  ]);
+  const { itens } = parseReport(Buffer.concat([strings, numbers]), 'Consultor Teste', 'Loja Teste 31.xls');
+
+  const cat = itens.find(i => i.categoria === 'CAT_X');
+  assert.equal(cat.faturamento, 1000, 'faturamento é o 1º valor da linha e nunca é afetado');
+  assert.equal(cat.volume, null);
+  assert.equal(cat.tickets, null);
+  assert.equal(cat.media_servico, null);
+  assert.equal(cat.media_ticket, null);
+});
