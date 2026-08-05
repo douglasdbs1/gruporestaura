@@ -1342,7 +1342,25 @@ function isMegaStore(l){return (l.rede==='both') || (l.grupo||'').toLowerCase().
 function hasPresenceNumber(l){return !!(l.num||'').trim();}
 function inNextDays(dateStr,days){const d=daysDiff(dateStr);return d!==null&&d>=0&&d<=days;}
 function getDatabase(){
-  const extras=dbExtra.map((l,i)=>({...l,_extraIdx:i,_fromGL:false}));
+  // Um go-live CONCLUÍDO é o fato mais forte que existe sobre a loja: se ele
+  // aconteceu, o sistema está rodando lá. O cadastro geral costuma continuar
+  // dizendo "transicao" porque ninguém volta nele à mão depois do go-live —
+  // era o caso da AM Manaus e da SP Cerquilho, que tinham go-live concluído e
+  // mesmo assim ficavam fora da aba "Sistema Presence Ativo".
+  const conclNum=new Set(), conclNome=new Set();
+  for(const g of lojas){
+    if(g.status!=='concluido') continue;
+    const n=(g.num||'').trim();
+    if(n) conclNum.add(n);
+    const nm=normLojaName(g.loja);
+    if(nm) conclNome.add(nm);
+  }
+  const temGoLiveConcluido=l=>{
+    const n=(l.num||'').trim();
+    return (n&&conclNum.has(n))||conclNome.has(normLojaName(l.nome));
+  };
+  const extras=dbExtra.map((l,i)=>({...l,_extraIdx:i,_fromGL:false,
+    status:(l.status!=='ativo'&&temGoLiveConcluido(l))?'ativo':l.status}));
   const exNums=new Set(extras.map(l=>(l.num||'').trim()).filter(Boolean));
   const exNames=new Set(extras.map(l=>normLojaName(l.nome)));
   const fromGL=lojas.filter(l=>{
