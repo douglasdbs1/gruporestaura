@@ -145,6 +145,53 @@ const LOJA_LOCATION_OVERRIDES = {
   "rj vila carrao": ["SP","São Paulo","Vila Carrão"],
   "rj vila matilde": ["SP","São Paulo","Vila Matilde"],
   "sc cacador": ["SC","Caçador",""],
+
+  // ── Aliases pelo nome INTERNO do relatório (achados via varredura direta no
+  // Supabase em 05/08/2026: 40 nomes de loja sem mapeamento, cruzados contra
+  // os já existentes acima). Alguns relatórios foram salvos com o nome interno
+  // do Ideologica em vez do nome derivado do arquivo — sem o alias aqui essas
+  // lojas ficavam com card PRÓPRIO em "Sem estado cadastrado", separadas do
+  // card certo da mesma loja (ex: "RESTAURA JEANS CANOAS" ficava fora do
+  // agrupamento de "RJ Canoas"/"RJ Canos"). Não mexe nos dados, só
+  // faz o dashboard agrupar como a mesma loja.
+  "minha lavanderia - teut": ["RS","Teutônia",""],
+  "minha lavanderia ba - salvador": ["BA","Salvador",""],
+  "minha lavanderia e restaura jeans higien": ["SP","São Paulo","Higienópolis"],
+  "minha lavanderia madalena": ["PE","Recife","Madalena"],
+  "minha lavanderia ms - campo grande": ["MS","Campo Grande",""],
+  "minha lavanderia sp - taubat": ["SP","Taubaté",""],
+  "restaura jeans - camaqua": ["RS","Camaquã",""],
+  "restaura jeans - penha": ["SP","São Paulo","Penha"],
+  // internamente truncado pra "PO"; confirmado pelo arquivo de origem (RJ Ponte Rasa 11.xls)
+  "restaura jeans - po": ["SP","São Paulo","Ponte Rasa"],
+  "restaura jeans - poa cristal": ["RS","Porto Alegre","Cristal"],
+  "restaura jeans / azenha - poa": ["RS","Porto Alegre","Azenha"],
+  "restaura jeans americana": ["SP","Americana",""],
+  "restaura jeans canoas": ["RS","Canoas",""],
+  "restaura jeans es - linhares": ["ES","Linhares",""],
+  "restaura jeans horizontina": ["RS","Horizontina",""],
+  "restaura jeans mg - alfenas": ["MG","Alfenas",""],
+  "restaura jeans moinhos de vento": ["RS","Porto Alegre","Moinhos de Vento"],
+  "restaura jeans montes claros-mg": ["MG","Montes Claros",""],
+  "restaura jeans pa - parauapebas": ["PA","Parauapebas",""],
+  "restaura jeans passo fundo": ["RS","Passo Fundo",""],
+  "restaura jeans passo fundo sao cristovao": ["RS","Passo Fundo","São Cristóvão"],
+  "restaura jeans pi - picos": ["PI","Picos",""],
+  "restaura jeans piracicaba": ["SP","Piracicaba",""],
+  "restaura jeans pirassununga": ["SP","Pirassununga",""],
+  "restaura jeans pr - ponta grossa": ["PR","Ponta Grossa",""],
+  "restaura jeans rs - carazinho": ["RS","Carazinho",""],
+  "restaura jeans rs - cassino": ["RS","Rio Grande","Cassino"],
+  "restaura jeans rs - cruz alta": ["RS","Cruz Alta",""],
+  "restaura jeans rs - iju": ["RS","Ijuí",""],
+  "restaura jeans rs - lajeado": ["RS","Lajeado",""],
+  "restaura jeans rs - pelotas": ["RS","Pelotas",""],
+  "restaura jeans rs - santa rosa": ["RS","Santa Rosa",""],
+  "restaura jeans rs far": ["RS","Farroupilha",""],
+  "restaura jeans rs santo angelo": ["RS","Santo Ângelo",""],
+  "restaura jeans salvador": ["BA","Salvador",""],
+  "restaura jeans santa cruz do sul": ["RS","Santa Cruz do Sul",""],
+  "restaura jeans vila matilde": ["SP","São Paulo","Vila Matilde"],
 };
 function locationKey(loja){return (loja||"").normalize("NFD").replace(new RegExp("[\\u0300-\\u036f]","g"),"").toLowerCase().trim();}
 function lojaLocation(loja){return LOJA_LOCATION_OVERRIDES[locationKey(loja)]||null;}
