@@ -23,6 +23,7 @@ const LOJA_LOCATION_OVERRIDES = {
   "mega santa maria": ["RS","Santa Maria",""],
   "mega santa rosa": ["RS","Santa Rosa",""],
   "ml barretos": ["SP","Barretos",""],
+  "ml blumenau": ["SC","Blumenau",""],
   "ml botucatu": ["SP","Botucatu",""],
   "ml campinas dom pedro": ["SP","Campinas","Dom Pedro"],
   "ml campo grande": ["MS","Campo Grande",""],
@@ -31,8 +32,11 @@ const LOJA_LOCATION_OVERRIDES = {
   "ml campos doas goy": ["RJ","Campos dos Goytacazes",""],
   "ml campos dos goytacazes": ["RJ","Campos dos Goytacazes",""],
   "ml caxias": ["RS","Caxias do Sul",""],
+  "ml curitiba": ["PR","Curitiba",""],
   "ml florianopolis": ["SC","Florianópolis",""],
   "ml goiania oeste": ["GO","Goiânia","Oeste"],
+  // confirmado via Presence (CRM): loja do Glávio, contrato assinado 30/06/2026
+  "ml guaira": ["PR","Guaíra",""],
   "ml indaiatuba": ["SP","Indaiatuba",""],
   "ml joao pessoa manaira": ["PB","João Pessoa","Manaíra"],
   "ml joao pessoa tambau": ["PB","João Pessoa","Tambaú"],
@@ -47,9 +51,13 @@ const LOJA_LOCATION_OVERRIDES = {
   "ml taubate": ["SP","Taubaté",""],
   "ml teutonia": ["RS","Teutônia",""],
   "ml vargem grande": ["SP","Vargem Grande Paulista",""],
+  "ml xanxere": ["SC","Xanxerê",""],
   "rj alfenas": ["MG","Alfenas",""],
   "rj americana": ["SP","Americana",""],
+  "rj arapongas": ["PR","Arapongas",""],
   "rj azenha": ["RS","Porto Alegre","Azenha"],
+  // mesma loja do "rj azenha" — arquivo veio com "Poa" na frente
+  "rj poa azenha": ["RS","Porto Alegre","Azenha"],
   "rj balsas": ["MA","Balsas",""],
   "rj belem": ["PA","Belém",""],
   "rj belo horizonte": ["MG","Belo Horizonte",""],
@@ -61,22 +69,35 @@ const LOJA_LOCATION_OVERRIDES = {
   "rj canos": ["RS","Canoas",""],
   "rj carazinho": ["RS","Carazinho",""],
   "rj cassino": ["RS","Rio Grande","Cassino"],
+  // internamente "RESTAURA JEANS GO - CATAL"
+  "rj catalao": ["GO","Catalão",""],
   "rj chapeco": ["SC","Chapecó",""],
+  "rj concordia": ["SC","Concórdia",""],
   "rj caxias centro": ["RS","Caxias do Sul","Centro"],
   "rj caxias s. pelegrino": ["RS","Caxias do Sul","São Pelegrino"],
   "rj caxias sao pelegrino": ["RS","Caxias do Sul","São Pelegrino"],
   "rj cruz alta": ["RS","Cruz Alta",""],
   "rj cuiaba": ["MT","Cuiabá",""],
   "rj farroupilha": ["RS","Farroupilha",""],
+  "rj garopaba": ["SC","Garopaba",""],
+  "rj gravatai": ["RS","Gravataí",""],
   "rj guarapuava": ["PR","Guarapuava",""],
   "rj horizontina": ["RS","Horizontina",""],
   "rj ijui": ["RS","Ijuí",""],
+  "rj imbituba": ["SC","Imbituba",""],
   "rj jacana": ["SP","São Paulo","Jaçanã"],
   "rj jardim goias": ["GO","Goiânia","Jardim Goiás"],
+  // confirmado via Presence (CRM): loja do Glávio, contrato assinado 01/07/2026
+  "rj laguna": ["SC","Laguna",""],
   "rj lajeado": ["RS","Lajeado",""],
   "rj limeira": ["SP","Limeira",""],
   "rj lindoia": ["RS","Porto Alegre","Lindóia"],
   "rj linhares": ["ES","Linhares",""],
+  // duas unidades na mesma cidade — "Londrina Centro" já tinha relatório
+  // importado antes mas sem esta entrada (exibia nome cru); confirmado pelo
+  // nome interno do relatório ("RESTAURA JEANS PR - LONDRINA")
+  "rj londrina alphaville": ["PR","Londrina","Alphaville"],
+  "rj londrina centro": ["PR","Londrina","Centro"],
   "rj moinhos": ["RS","Porto Alegre","Moinhos de Vento"],
   // mesma loja do "rj moinhos" — o arquivo passou a vir com o "Poa" na
   // frente; sem o apelido viraria uma segunda loja e o mês contaria em dobro
@@ -96,6 +117,8 @@ const LOJA_LOCATION_OVERRIDES = {
   // loja separada da de julho
   "rj pq sao jorge 306": ["SP","São Paulo","Parque São Jorge"],
   "rj picos": ["PI","Picos",""],
+  // confirmado via Presence (CRM): contrato assinado 12/06/2026
+  "rj pinhais": ["PR","Pinhais",""],
   "rj piracicaba": ["SP","Piracicaba",""],
   "rj pirassununga": ["SP","Pirassununga",""],
   "rj poa cristal": ["RS","Porto Alegre","Cristal"],
@@ -113,6 +136,9 @@ const LOJA_LOCATION_OVERRIDES = {
   "rj salvador": ["BA","Salvador",""],
   "rj santa cruz do sul": ["RS","Santa Cruz do Sul",""],
   "rj santo angelo": ["RS","Santo Ângelo",""],
+  // arquivo veio sem o "dos" ("RJ São José Campos"); loja interna do
+  // relatório confirma que é a mesma "RESTAURA JEANS SAO JOSE DOS CAMPOS"
+  "rj sao jose campos": ["SP","São José dos Campos",""],
   "rj sao jose dos campos": ["SP","São José dos Campos",""],
   "rj saude": ["SP","São Paulo","Saúde"],
   "rj silva bueno": ["SP","São Paulo","Silva Bueno"],

@@ -641,6 +641,10 @@ body.tv-mode .content{max-width:none;padding:0;background:#0a1330;}
 #check-obs{height:46px;min-height:46px;}
 @media(max-width:820px){.stage-row{grid-template-columns:1fr;}.check-modal .check-list{grid-template-columns:1fr;}}
 .check-modal .mhdr{padding:12px 16px;}
+.check-mhdr-ttl{display:flex;flex-direction:column;gap:1px;}
+.check-golive-sub{font-size:11px;font-weight:700;color:var(--text3);}
+.check-golive-sub.today{color:var(--teal-mid);}
+.check-golive-sub.over{color:#c0392b;}
 .check-modal .mbody{padding:14px 16px 10px;}
 .check-modal .mfooter{padding:10px 16px;align-items:center;flex-wrap:wrap;}
 .check-modal textarea{min-height:54px!important;}
@@ -990,7 +994,7 @@ td.oc{max-width:260px;}
 <!-- MODAL CHECKLIST CADASTROS -->
 <div class="overlay" id="ov-check" onclick="if(event.target===this)closeChecklistModal()">
 <div class="modal check-modal">
-  <div class="mhdr"><h2 id="check-mtitle">Checklist de cadastros</h2><button class="xbtn" onclick="closeChecklistModal()">&times;</button></div>
+  <div class="mhdr"><div class="check-mhdr-ttl"><h2 id="check-mtitle">Checklist de cadastros</h2><span id="check-golive-sub" class="check-golive-sub"></span></div><button class="xbtn" onclick="closeChecklistModal()">&times;</button></div>
   <div class="mbody">
     <input type="hidden" id="check-key" value="">
     <div class="stage-row">
@@ -1743,6 +1747,17 @@ function openChecklistModal(idx){
   const c=checklistFor(l),p=checklistProgress(l);
   document.getElementById('check-key').value=currentChecklistKey;
   document.getElementById('check-mtitle').textContent='Implantação - '+l.loja;
+  const glSub=document.getElementById('check-golive-sub');
+  const rec=tvRecord(l);
+  if(!rec._tvDate){
+    glSub.textContent='Sem data de go-live marcada';
+    glSub.className='check-golive-sub';
+  }else{
+    const diff=rec._tvDiff;
+    const rel=diff===0?'hoje':diff===1?'amanhã':diff===-1?'ontem':diff<0?`atrasado ${Math.abs(diff)}d`:`em ${diff}d`;
+    glSub.textContent=`Go-live: ${fmtDate(rec._tvDate)} (${rel})${rec._tvSource==='ZOHO'?' · CRM':''}`;
+    glSub.className='check-golive-sub'+(diff===0?' today':diff<0?' over':'');
+  }
   const started=p.done>0;
   const stageCheck=(id,label,flag,em,noneTxt,checked,locked)=>{
     const i=stageDateInfo(flag,em);
