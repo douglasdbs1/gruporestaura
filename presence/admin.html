@@ -421,73 +421,106 @@ body.admin.locked .kb-card, body.admin.locked tbody tr, body.admin.locked .tl-it
 body.tv-mode{background:#0a1330;overflow:hidden;}
 body.tv-mode .logo-bar,body.tv-mode .topbar,body.tv-mode .page-nav{display:none;}
 body.tv-mode .content{max-width:none;padding:0;background:#0a1330;}
-.tv-wrap{height:100vh;background:#0a1330;color:#eef1f7;padding:20px 28px 22px;display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;gap:14px;overflow:hidden;}
-.tv-head{display:grid;grid-template-columns:1fr auto;gap:18px;align-items:start;}
-.tv-kicker{font-size:13px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#4fd1a5;margin-bottom:6px;}
-.tv-title{font-size:clamp(34px,5vw,72px);font-weight:850;line-height:.95;text-transform:uppercase;}
-.tv-sub{font-size:clamp(14px,1.25vw,20px);font-weight:600;color:#93a0c4;margin-top:10px;}
-.tv-clock{text-align:right;}
-.tv-time{font-size:clamp(38px,4.8vw,70px);font-weight:850;line-height:1;color:#fff;}
-.tv-date{font-size:clamp(17px,1.5vw,24px);font-weight:700;color:#93a0c4;margin-top:6px;text-transform:uppercase;letter-spacing:.08em;}
-.tv-stage{min-height:0;display:grid;grid-template-columns:1fr 300px;gap:18px;}
-.tv-slides{min-height:0;height:100%;}
-.tv-rail{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;align-content:start;}
-.tv-rail .tv-stat.ok .n{color:#4fd1a5;}
-.tv-progress{height:6px;border-radius:999px;background:#1a2463;overflow:hidden;}
+/* ── PAINEL DE TV ─────────────────────────────────────────────────────────
+   Alvo: monitor de 19" visto de longe, sem ninguém por perto pra interagir.
+   Isso muda as regras em relação ao resto do sistema:
+   - o tamanho da fonte é ditado pela ALTURA da tela (vh), não pela largura:
+     numa TV o que falta é espaço vertical, e é ele que decide quantos cards
+     cabem sem espremer a tipografia;
+   - uma tela responde UMA pergunta. O rail lateral de números que ficava
+     aqui competia com a lista e obrigava o nome da loja a caber em 24px —
+     virou um slide próprio, onde os números aparecem grandes de verdade;
+   - nada de rolagem automática ou animação longa: de longe, texto que se
+     move é texto que não se lê. Só a troca de slide, com barra de progresso
+     pra ninguém achar que a tela travou. */
+.tv-wrap{height:100vh;background:#0a1330;color:#eef1f7;padding:2.2vh 2.4vw;display:grid;
+  grid-template-rows:auto minmax(0,1fr) auto;gap:2vh;overflow:hidden;}
+
+.tv-head{display:grid;grid-template-columns:1fr auto;gap:2vw;align-items:center;}
+.tv-kicker{font-size:clamp(11px,1.5vh,18px);font-weight:800;letter-spacing:.16em;
+  text-transform:uppercase;color:#4fd1a5;margin-bottom:.6vh;}
+.tv-title{font-size:clamp(26px,4.6vh,58px);font-weight:850;line-height:1;text-transform:uppercase;letter-spacing:.01em;}
+.tv-clock{text-align:right;line-height:1;}
+.tv-time{font-size:clamp(30px,5.6vh,68px);font-weight:850;color:#fff;font-variant-numeric:tabular-nums;}
+.tv-date{font-size:clamp(12px,1.9vh,22px);font-weight:700;color:#93a0c4;margin-top:.7vh;
+  text-transform:uppercase;letter-spacing:.09em;}
+
+.tv-stage{min-height:0;position:relative;}
+.tv-slide{display:none;height:100%;min-height:0;animation:tvFade .4s ease;}
+.tv-slide.on{display:flex;flex-direction:column;}
+@keyframes tvFade{from{opacity:0;transform:translateY(1vh)}to{opacity:1;transform:none}}
+
+/* LISTA DE GO-LIVES — os cards dividem a altura entre si, então 3 cards
+   ficam maiores que 6. É o que mantém a leitura confortável quando há
+   pouca coisa marcada, em vez de sobrar um vazio enorme embaixo. */
+.tv-list{display:grid;gap:1.4vh;min-height:0;flex:1;}
+.tv-card{display:grid;grid-template-columns:auto 1fr auto;gap:2vw;align-items:center;
+  background:#131c42;border:1px solid #262f5c;border-left:.9vh solid #4fd1a5;
+  border-radius:10px;padding:1.4vh 2vw;min-height:0;overflow:hidden;}
+.tv-card.hoje{border-left-color:#ffcf5a;background:linear-gradient(90deg,#20244a,#131c42 45%);}
+.tv-date-box{text-align:center;min-width:clamp(70px,7vw,120px);}
+.tv-d{font-size:clamp(34px,7.4vh,84px);font-weight:850;line-height:.86;color:#fff;font-variant-numeric:tabular-nums;}
+.tv-m{font-size:clamp(11px,1.7vh,20px);font-weight:850;text-transform:uppercase;color:#93a0c4;margin-top:.5vh;letter-spacing:.1em;}
+.tv-info{min-width:0;}
+.tv-loja{font-size:clamp(24px,5.2vh,58px);font-weight:850;line-height:1.02;color:#fff;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tv-sub2{font-size:clamp(14px,2.4vh,28px);font-weight:700;color:#93a0c4;margin-top:.7vh;
+  display:flex;gap:.9vw;align-items:center;white-space:nowrap;overflow:hidden;}
+.tv-sub2 b{color:#dfe7f7;font-weight:800;}
+.tv-quando{text-align:right;flex-shrink:0;}
+.tv-quando b{display:block;font-size:clamp(20px,3.6vh,42px);font-weight:850;line-height:1;color:#fff;white-space:nowrap;}
+.tv-quando.hoje b{color:#ffcf5a;}
+.tv-quando span{display:block;font-size:clamp(10px,1.5vh,17px);font-weight:800;text-transform:uppercase;
+  letter-spacing:.1em;color:#93a0c4;margin-top:.5vh;}
+
+/* AGENDA DA SEMANA — uma faixa por dia, com as lojas daquele dia em linha */
+.tv-dias{display:grid;gap:1.2vh;min-height:0;flex:1;}
+.tv-dia{display:grid;grid-template-columns:clamp(120px,15vw,230px) 1fr;gap:1.6vw;align-items:center;
+  background:#131c42;border:1px solid #262f5c;border-radius:10px;padding:1.2vh 1.8vw;min-height:0;overflow:hidden;}
+.tv-dia.today{border-color:#ffcf5a;background:linear-gradient(90deg,#20244a,#131c42 40%);}
+.tv-dia-nome{font-size:clamp(18px,3.4vh,40px);font-weight:850;text-transform:uppercase;color:#fff;line-height:1.05;}
+.tv-dia-nome small{display:block;font-size:.5em;color:#93a0c4;letter-spacing:.08em;margin-top:.4vh;}
+.tv-dia-lojas{display:flex;flex-wrap:wrap;gap:.8vw 1.4vw;min-width:0;}
+.tv-dia-loja{font-size:clamp(16px,2.9vh,34px);font-weight:800;color:#dfe7f7;white-space:nowrap;}
+.tv-dia-loja i{font-style:normal;color:#93a0c4;font-weight:700;}
+.tv-dia-vazio{font-size:clamp(14px,2.2vh,24px);font-weight:700;color:#5d6a94;}
+
+/* PANORAMA — os números que antes ficavam espremidos no rail lateral */
+.tv-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:1.6vh 1.6vw;min-height:0;flex:1;}
+.tv-num{background:#131c42;border:1px solid #262f5c;border-radius:12px;padding:1.6vh 1.6vw;
+  display:flex;flex-direction:column;justify-content:center;min-height:0;}
+.tv-num .n{font-size:clamp(40px,10vh,120px);font-weight:850;line-height:.9;color:#fff;font-variant-numeric:tabular-nums;}
+.tv-num .l{font-size:clamp(12px,2.1vh,24px);font-weight:800;color:#93a0c4;text-transform:uppercase;
+  letter-spacing:.09em;margin-top:1vh;line-height:1.2;}
+.tv-num.ok .n{color:#4fd1a5;}
+.tv-num.warn .n{color:#ffcf5a;}
+.tv-num.hot .n{color:#ff8f85;}
+
+.tv-pill{display:inline-flex;align-items:center;border:1px solid #33407a;background:#1a2463;color:#dfe7f7;
+  border-radius:999px;padding:.35vh .8vw;font-size:clamp(10px,1.5vh,16px);font-weight:850;white-space:nowrap;}
+.tv-pill.crm{background:#3a300f;border-color:#80692e;color:#ffdf86;}
+
+.tv-empty{height:100%;display:flex;align-items:center;justify-content:center;text-align:center;color:#93a0c4;
+  font-size:clamp(22px,4vh,46px);font-weight:850;background:#131c42;border:1px dashed #33407a;border-radius:10px;padding:3vh;}
+
+.tv-foot{display:grid;grid-template-columns:1fr auto;gap:1.6vw;align-items:center;}
+.tv-progress{height:.7vh;min-height:4px;border-radius:999px;background:#1a2463;overflow:hidden;}
 .tv-progress-fill{height:100%;width:0;border-radius:999px;background:#4fd1a5;}
 @keyframes tvprog{from{width:0}to{width:100%}}
-.tv-slide{display:none;min-height:0;animation:tvFade .45s ease;}
-.tv-slide.on{display:flex;flex-direction:column;height:100%;}
-@keyframes tvFade{from{opacity:.65;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.tv-main-list{display:grid;gap:14px;min-height:0;flex:1;}
-.tv-gl-card{display:grid;grid-template-columns:118px 1fr auto;gap:18px;align-items:center;background:#131c42;border:1px solid #262f5c;border-left:8px solid #4fd1a5;border-radius:8px;padding:18px 22px;min-height:0;overflow:hidden;}
-.tv-gl-card.today{border-left-color:#ffcf5a;background:#131c42;}
-.tv-gl-card.risk{border-left-color:#ff7777;background:#131c42;}
-.tv-day{font-size:48px;font-weight:850;line-height:.9;color:#fff;}
-.tv-mon{font-size:15px;font-weight:850;text-transform:uppercase;color:#93a0c4;margin-top:5px;}
-.tv-store{font-size:clamp(24px,2.6vw,42px);font-weight:850;line-height:1.04;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.tv-consultor{font-size:clamp(22px,2.1vw,34px);font-weight:850;color:#fff;margin-top:8px;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.tv-consultor span{color:#4fd1a5;}
-.tv-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:9px;color:#93a0c4;font-size:14px;font-weight:700;}
-.tv-pill{display:inline-flex;align-items:center;gap:5px;border:1px solid #33407a;background:#1a2463;color:#dfe7f7;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:850;white-space:nowrap;}
-.tv-pill.hot{background:#3c2020;border-color:#744040;color:#ffb0a8;}
-.tv-pill.good{background:#102a42;border-color:#255a7a;color:#4fd1a5;}
-.tv-pill.crm{background:#3a300f;border-color:#80692e;color:#ffdf86;}
-.tv-when{text-align:right;min-width:124px;}
-.tv-when b{display:block;font-size:clamp(24px,2.3vw,38px);line-height:1;color:#fff;}
-.tv-when span{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#93a0c4;}
-.tv-stat{background:#131c42;border:1px solid #262f5c;border-radius:8px;padding:18px;}
-.tv-stat .n{font-size:clamp(32px,3.4vw,52px);font-weight:850;line-height:.9;color:#fff;}
-.tv-stat .l{font-size:14px;font-weight:800;color:#93a0c4;text-transform:uppercase;letter-spacing:.08em;margin-top:8px;}
-.tv-section-title{font-size:clamp(30px,3.2vw,48px);font-weight:850;margin-bottom:18px;color:#fff;flex-shrink:0;}
-.tv-week{display:grid;grid-template-columns:1fr;gap:10px;min-height:0;flex:1;}
-.tv-daycol{background:#131c42;border:1px solid #262f5c;border-radius:8px;padding:14px 20px;min-width:0;display:grid;grid-template-columns:178px 1fr;gap:16px;align-items:stretch;min-height:0;overflow:hidden;}
-.tv-daycol.today{border-color:#ffcf5a;box-shadow:inset 0 0 0 1px #ffcf5a;}
-.tv-dayname{font-size:clamp(26px,2.8vw,40px);font-weight:850;text-transform:uppercase;letter-spacing:.04em;color:#fff;line-height:1;}
-.tv-week-items{display:grid;gap:8px;min-height:0;}
-.tv-week-item{background:#1a2463;border:1px solid #33407a;border-radius:7px;padding:10px 14px;margin-bottom:0;min-height:0;overflow:hidden;}
-.tv-week-store{font-size:clamp(24px,2.35vw,34px);font-weight:850;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.04;}
-.tv-week-meta{font-size:clamp(16px,1.45vw,22px);font-weight:800;color:#93a0c4;margin-top:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
-.tv-risk-list{display:grid;grid-template-columns:1fr;gap:12px;}
-.tv-risk-viewport{height:348px;overflow:hidden;}
-.tv-risk-viewport.roll .tv-risk-list{animation:tvRiskRoll var(--risk-duration,18s) linear infinite alternate;}
-@keyframes tvRiskRoll{from{transform:translateY(0)}to{transform:translateY(var(--roll-offset,0))}}
-.tv-risk-card{background:#131c42;border:1px solid #262f5c;border-left:8px solid #ff7777;border-radius:8px;padding:18px 22px;min-height:108px;display:flex;align-items:center;justify-content:space-between;gap:18px;}
-.tv-risk-card.warn{border-left-color:#ffcf5a;}
-.tv-risk-main{min-width:0;}
-.tv-risk-title{font-size:clamp(34px,3.5vw,54px);font-weight:850;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1;}
-.tv-risk-meta{font-size:clamp(18px,1.6vw,26px);font-weight:800;color:#93a0c4;margin-top:12px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
-.tv-risk-days{text-align:right;flex-shrink:0;}
-.tv-risk-days b{display:block;font-size:clamp(44px,4.4vw,72px);font-weight:850;line-height:.95;color:#ffcf5a;}
-.tv-risk-days.hot b{color:#ff8f85;}
-.tv-risk-days b small{font-size:.45em;font-weight:850;color:#93a0c4;}
-.tv-risk-days span{font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#93a0c4;}
-.tv-empty{height:100%;display:flex;align-items:center;justify-content:center;text-align:center;color:#93a0c4;font-size:clamp(34px,3vw,52px);font-weight:850;background:#131c42;border:1px dashed #33407a;border-radius:8px;padding:30px;}
-.tv-foot{display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center;color:#93a0c4;font-size:16px;font-weight:800;}
-.tv-dots{display:flex;gap:8px;}
-.tv-dot{width:34px;height:5px;border-radius:999px;background:#33407a;}
+.tv-dots{display:flex;gap:.6vw;}
+.tv-dot{width:clamp(18px,2.4vw,40px);height:.7vh;min-height:4px;border-radius:999px;background:#33407a;}
 .tv-dot.on{background:#4fd1a5;}
-@media(max-width:900px){.tv-wrap{padding:18px;}.tv-head,.tv-stage{grid-template-columns:1fr;}.tv-rail{grid-template-columns:repeat(3,1fr);}.tv-clock{text-align:left;}.tv-gl-card{grid-template-columns:76px 1fr;}.tv-when{grid-column:1/-1;text-align:left;}.tv-week,.tv-risk-list{grid-template-columns:1fr;}.tv-daycol{grid-template-columns:1fr;}.tv-store,.tv-week-store,.tv-risk-title{white-space:normal;}.tv-foot{grid-template-columns:1fr;}}
+.tv-fonte{font-size:clamp(10px,1.4vh,15px);font-weight:700;color:#5d6a94;text-align:right;margin-top:.5vh;}
+
+@media(max-width:900px){
+  .tv-head{grid-template-columns:1fr;}
+  .tv-clock{text-align:left;}
+  .tv-card{grid-template-columns:auto 1fr;}
+  .tv-quando{grid-column:1/-1;text-align:left;}
+  .tv-dia{grid-template-columns:1fr;}
+  .tv-nums{grid-template-columns:repeat(2,1fr);}
+  .tv-loja,.tv-dia-loja{white-space:normal;}
+}
 
 /* ACTIVE PRESENCE */
 .active-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:14px;}
@@ -1864,14 +1897,20 @@ function tvWhen(diff){
   if(diff<0)return {big:`-${Math.abs(diff)}d`,small:'atrasado'};
   return {big:`${diff}d`,small:'para o go-live'};
 }
+// Some da TV o go-live que o Zoho marcou mas que já PASSOU sem ninguém
+// confirmar aqui — senão a tela vira um mural de datas vencidas. O dia de
+// HOJE não entra nessa regra: era o caso do GO Mineiros, que sumia do painel
+// justamente no dia em que a informação mais importa (antes o corte era <=0).
 function tvHidden(l){
   const crm=crmFor(l);
-  return l&&l.status==='aberto'&&crm&&/agendado/i.test(crm.status||'')&&daysDiff(crm.golive)<=0;
+  return l&&l.status==='aberto'&&crm&&/agendado/i.test(crm.status||'')&&daysDiff(crm.golive)<0;
 }
 function tvRecord(l){
   const crm=crmFor(l);
   const crmAgendado=crm&&crm.golive&&/agendado/i.test(crm.status||'');
-  const crmFuture=crmAgendado&&daysDiff(crm.golive)>0;
+  // >=0 e não >0: com o corte em ">0" a loja que tem go-live marcado no Zoho
+  // para HOJE ficava sem data nenhuma e sumia do painel — justo no dia.
+  const crmFuture=crmAgendado&&daysDiff(crm.golive)>=0;
   const g=l.status==='aberto'?(crmFuture?crm.golive:''):(l.goLive||(crmAgendado?crm.golive:''));
   const d=parseDate(g);
   return {...l,_tvDate:g,_tvParsed:d,_tvDiff:daysDiff(g),_tvCrm:!!(!l.goLive&&(l.status==='aberto'?crmFuture:crmAgendado)),_tvAssinatura:crm&&crm.assinatura,_tvSource:l.goLive?'PRESENCE':(l.status==='aberto'?crmFuture:crmAgendado)?'ZOHO':''};
@@ -1883,16 +1922,14 @@ function tvUpcoming(){
 }
 function tvCard(l){
   const p=tvDateParts(l._tvDate),w=tvWhen(l._tvDiff);
-  const cls=l._tvDiff===0?' today':l._tvDiff<0?' risk':'';
-  const crm=l._tvCrm?'<span class="tv-pill crm">ZOHO</span>':'';
-  return `<div class="tv-gl-card${cls}">
-    <div><div class="tv-day">${p.day}</div><div class="tv-mon">${p.mon}</div></div>
-    <div>
-      <div class="tv-store">${esc(l.loja)}</div>
-      <div class="tv-consultor"><span>Consultor:</span> ${esc(l.responsavel||'Sem responsavel')}</div>
-      <div class="tv-meta">${redeTagHtml(l)}${crm}<span>${esc(l.status||'')}</span></div>
+  const hoje=l._tvDiff===0;
+  return `<div class="tv-card${hoje?' hoje':''}">
+    <div class="tv-date-box"><div class="tv-d">${p.day}</div><div class="tv-m">${p.mon}</div></div>
+    <div class="tv-info">
+      <div class="tv-loja">${esc(l.loja)}</div>
+      <div class="tv-sub2">${redeTagHtml(l)}<b>${esc(l.responsavel||'sem consultor')}</b>${l._tvCrm?'<span class="tv-pill crm">ZOHO</span>':''}</div>
     </div>
-    <div class="tv-when"><b>${w.big}</b><span>${w.small}</span></div>
+    <div class="tv-quando${hoje?' hoje':''}"><b>${w.big}</b><span>${w.small}</span></div>
   </div>`;
 }
 function tvSameDay(a,b){return a&&b&&a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();}
@@ -1905,59 +1942,61 @@ function tvAgendaDays(items){
     .filter(d=>{const k=d.toISOString().slice(0,10);if(seen.has(k))return false;seen.add(k);return true;})
     .slice(0,5);
 }
+// Quantos cards cabem sem espremer: numa tela baixa, 6 cards deixariam o nome
+// da loja ilegível de longe. Prefere mostrar menos e grande — o resto aparece
+// no slide da agenda.
+function tvCabem(){
+  const h=(typeof window!=='undefined'&&window.innerHeight)||768;
+  return h<720?4:h<900?5:6;
+}
 function tvSlideUpcoming(items){
-  // Mostra TODOS os go-lives de hoje+amanha, sem limite - se tiver poucos,
-  // completa ate 6 (numero que cabe bem na tela) com os proximos mais
-  // proximos, pra nao deixar a tela com espaco vazio. Sem rolagem: os cards
-  // dividem a altura disponivel entre si (grid-template-rows dinamico).
-  const todayTomorrow=items.filter(l=>l._tvDiff===0||l._tvDiff===1).length;
-  const TARGET=6;
-  const rows=items.slice(0,Math.max(TARGET,todayTomorrow));
-  const list=rows.map(tvCard).join('');
+  // Hoje e amanhã entram sempre, mesmo que estourem o limite: um go-live que
+  // acontece agora não pode ficar de fora da tela por causa de layout.
+  const urgentes=items.filter(l=>l._tvDiff<=1).length;
+  const rows=items.slice(0,Math.max(tvCabem(),urgentes));
   return `<section class="tv-slide on" data-tv-slide="0">
-    <div class="tv-section-title">Próximos go-lives</div>
-    <div class="tv-main-list" style="grid-template-rows:repeat(${rows.length||1},1fr)">${list||'<div class="tv-empty">Nenhum go-live marcado nos próximos 30 dias.</div>'}</div>
+    <div class="tv-list" style="grid-template-rows:repeat(${rows.length||1},1fr)">
+      ${rows.length?rows.map(tvCard).join(''):'<div class="tv-empty">Nenhum go-live marcado nos próximos 30 dias.</div>'}
+    </div>
   </section>`;
 }
 function tvSlideWeek(items){
   const days=tvAgendaDays(items);
+  const linha=d=>{
+    const doDia=items.filter(l=>tvSameDay(l._tvParsed,d));
+    const nome=d.toLocaleDateString('pt-BR',{weekday:'long'}).replace('-feira','');
+    const dm=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+    return `<div class="tv-dia${tvSameDay(d,TODAY)?' today':''}">
+      <div class="tv-dia-nome">${esc(nome)}<small>${dm}${tvSameDay(d,TODAY)?' · hoje':''}</small></div>
+      <div class="tv-dia-lojas">${doDia.length
+        ? doDia.map(l=>`<span class="tv-dia-loja">${esc(l.loja)} <i>· ${esc(l.responsavel||'sem consultor')}</i></span>`).join('')
+        : '<span class="tv-dia-vazio">sem go-live</span>'}</div>
+    </div>`;
+  };
   return `<section class="tv-slide" data-tv-slide="1">
-    <div class="tv-section-title">Agenda da semana</div>
-    <div class="tv-week" style="grid-template-rows:repeat(${days.length||1},1fr)">${days.length?days.map(d=>{
-      const dayItems=items.filter(l=>tvSameDay(l._tvParsed,d)).slice(0,3);
-      const name=d.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'}).replace('.','');
-      return `<div class="tv-daycol${tvSameDay(d,TODAY)?' today':''}">
-        <div class="tv-dayname">${esc(name)}</div>
-        <div class="tv-week-items" style="grid-template-rows:repeat(${dayItems.length||1},1fr)">${dayItems.length?dayItems.map(l=>`<div class="tv-week-item"><div class="tv-week-store">${esc(l.loja)}</div><div class="tv-consultor"><span>Consultor:</span> ${esc(l.responsavel||'Sem responsável')}</div><div class="tv-week-meta">${redeTagHtml(l)}${l._tvCrm?'<span class="tv-pill crm">ZOHO</span>':''}</div></div>`).join(''):'<div class="tv-week-meta">Sem go-live marcado.</div>'}</div>
-      </div>`;
-    }).join(''):'<div class="tv-empty">Nenhum go-live marcado nos próximos 7 dias.</div>'}</div>
+    <div class="tv-dias" style="grid-template-rows:repeat(${days.length||1},1fr)">
+      ${days.length?days.map(linha).join(''):'<div class="tv-empty">Nenhum go-live nos próximos 7 dias.</div>'}
+    </div>
   </section>`;
 }
-function tvSignAge(l){
-  const d=parseDate(l._tvAssinatura||'');
-  if(!d)return null;
-  return Math.max(0,Math.round((TODAY-d)/86400000));
-}
-function tvSlideRisks(){
-  const active=getViewLojas().filter(l=>l.status!=='concluido'&&!tvHidden(l)).map(tvRecord);
-  const seen=new Set(); // 1 card por loja
-  const list=active.map(l=>({l,age:tvSignAge(l)}))
-    .filter(x=>x.age!==null)
-    .filter(x=>{const k=(x.l.num&&x.l.num.trim())||x.l.loja;if(seen.has(k))return false;seen.add(k);return true;})
-    .sort((a,b)=>b.age-a.age)
-    .slice(0,8);
-  const visible=3,rowH=120,extra=Math.max(0,list.length-visible);
-  const rollStyle=extra?` style="--roll-offset:-${extra*rowH}px;--risk-duration:${tvSlideMs(2)}ms"`:'';
+// Panorama: os mesmos números que ficavam espremidos no rail lateral, agora
+// grandes. Prefere o número do Zoho quando existe (é a fonte da gestão) e cai
+// pra contagem local quando não veio.
+function tvSlidePanorama(){
+  const view=getViewLojas().filter(l=>!tvHidden(l));
+  const semData=view.filter(l=>l.status!=='concluido'&&!tvRecord(l)._tvDate).length;
+  const nums=[
+    {n:crmMetric('implantados',getActiveRecords().filter(l=>!isHQActive(l)).length),l:'Lojas com o sistema ativo',cls:'ok'},
+    {n:crmMetric('agendados',view.filter(l=>l.status==='agendado').length),l:'Go-live agendado',cls:''},
+    {n:crmMetric('semAgenda',semData),l:'Sem data definida',cls:'warn'},
+    {n:crmMetric('contratos',view.filter(l=>l.status==='aberto').length),l:'Contratos assinados',cls:''},
+    {n:crmMetric('aImplantar',null),l:'Ainda a implantar',cls:''},
+    {n:crmMetric('implantadosMes',null),l:'Implantados neste mês',cls:'ok'},
+  ].filter(x=>x.n!==null&&x.n!==undefined);
   return `<section class="tv-slide" data-tv-slide="2">
-    <div class="tv-section-title">Lojas com contrato assinado há mais tempo</div>
-    <div class="tv-risk-viewport${extra?' roll':''}"${rollStyle}><div class="tv-risk-list">${list.length?list.map(r=>`<div class="tv-risk-card ${r.age>=60?'':'warn'}">
-      <div class="tv-risk-main">
-        <div class="tv-risk-title">${esc(r.l.loja)}</div>
-        <div class="tv-consultor"><span>Consultor:</span> ${esc(r.l.responsavel||'Sem responsável')}</div>
-        <div class="tv-risk-meta">${redeTagHtml(r.l)}<span>assinado em ${esc(fmtDate(r.l._tvAssinatura)||'—')}</span></div>
-      </div>
-      <div class="tv-risk-days${r.age>=60?' hot':''}"><b>${r.age}<small>/60</small></b><span>dias</span></div>
-    </div>`).join(''):'<div class="tv-empty">Nenhum contrato aguardando go-live.</div>'}</div></div>
+    <div class="tv-nums">
+      ${nums.map(x=>`<div class="tv-num ${x.cls}"><div class="n">${Number(x.n).toLocaleString("pt-BR")}</div><div class="l">${x.l}</div></div>`).join('')}
+    </div>
   </section>`;
 }
 function updateTVClock(){
@@ -1969,7 +2008,7 @@ function updateTVClock(){
 // Duração por slide (ms) — índice bate com data-tv-slide de cada <section>.
 // "Próximos go-lives" fica mais tempo na tela por ser a info mais importante;
 // as demais giram mais rápido.
-const TV_SLIDE_DURATIONS=[20000,10000,10000]; // 0=Próximos go-lives, 1=Agenda da semana, 2=Contratos aguardando
+const TV_SLIDE_DURATIONS=[22000,13000,11000]; // 0=Próximos go-lives, 1=Agenda da semana, 2=Panorama
 function tvSlideMs(n){return TV_SLIDE_DURATIONS[n]??TV_SLIDE_DURATIONS[0];}
 function tvRestartProgress(){
   const bar=document.getElementById('tv-progress-fill');
@@ -1988,6 +2027,8 @@ function showTVSlide(n){
   tvSlide=(n+slides.length)%slides.length;
   slides.forEach((s,i)=>s.classList.toggle('on',i===tvSlide));
   dots.forEach((d,i)=>d.classList.toggle('on',i===tvSlide));
+  const titulo=document.getElementById('tv-slide-title');
+  if(titulo&&typeof TV_TITULOS!=='undefined'&&TV_TITULOS[tvSlide]) titulo.textContent=TV_TITULOS[tvSlide];
   tvRestartProgress();
   scheduleTVAdvance();
 }
@@ -2006,44 +2047,38 @@ function startTV(){
     if(dayChanged||lastStateUpdatedAt!==before){const keep=tvSlide;renderTV();showTVSlide(keep);}
   },TV_REFRESH_MS);
 }
+// Cada slide tem seu próprio título no cabeçalho: quem olha de longe precisa
+// saber o que está vendo sem depender de ter pegado a troca de tela.
+const TV_TITULOS=['Próximos go-lives','Agenda da semana','Panorama da implantação'];
 function renderTV(){
   const items=tvUpcoming();
-  const all=getViewLojas().filter(l=>l.status!=='concluido'&&!tvHidden(l)).map(tvRecord);
-  const stats={
-    today:items.filter(l=>l._tvDiff===0).length,
-    week:items.filter(l=>l._tvDiff>=0&&l._tvDiff<=7).length,
-    noDate:all.filter(l=>!l._tvDate).length
-  };
-  const updated=crmData&&crmData.atualizadoEm?new Date(crmData.atualizadoEm).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'sem sincronização do CRM';
-  const view=getViewLojas().filter(l=>!tvHidden(l));
-  // "Sistema ativo" usa a mesma conta do hero da tela Ativa (Presence Ativo + go-lives concluidos, sem Retaguarda Matriz)
-  const rail={
-    ativo:crmMetric('implantados',getActiveRecords().filter(l=>!isHQActive(l)).length),
-    assinado:crmMetric('contratos',view.filter(l=>l.status==='aberto').length),
-    agendado:crmMetric('agendados',view.filter(l=>l.status==='agendado').length)
-  };
+  const hoje=items.filter(l=>l._tvDiff===0).length;
+  const updated=crmData&&crmData.atualizadoEm
+    ? new Date(crmData.atualizadoEm).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})
+    : 'sem sincronização do CRM';
   document.getElementById('content').innerHTML=`<div class="tv-wrap">
-    <div class="tv-head">
-      <div><div class="tv-title">Go-lives no radar</div><div class="tv-sub">Painel rotativo para acompanhamento da franqueadora</div></div>
-      <div class="tv-clock"><div class="tv-time" id="tv-time"></div><div class="tv-date" id="tv-date"></div></div>
-    </div>
-    <div class="tv-stage">
-      <div class="tv-slides">
-        ${tvSlideUpcoming(items)}
-        ${tvSlideWeek(items)}
-        ${tvSlideRisks()}
+    <header class="tv-head">
+      <div>
+        <div class="tv-kicker">Implantação Presence${hoje?` · ${hoje} go-live${hoje>1?'s':''} hoje`:''}</div>
+        <div class="tv-title" id="tv-slide-title">${TV_TITULOS[0]}</div>
       </div>
-      <aside class="tv-rail">
-        <div class="tv-stat"><div class="n">${stats.today}</div><div class="l">Hoje</div></div>
-        <div class="tv-stat ok"><div class="n">${rail.ativo}</div><div class="l">Sistema ativo</div></div>
-        <div class="tv-stat"><div class="n">${stats.week}</div><div class="l">Próximos 7 dias</div></div>
-        <div class="tv-stat"><div class="n">${rail.assinado}</div><div class="l">Contratos assinados</div></div>
-        <div class="tv-stat"><div class="n">${stats.noDate}</div><div class="l">Sem data</div></div>
-        <div class="tv-stat"><div class="n">${rail.agendado}</div><div class="l">Go-live agendado</div></div>
-      </aside>
-    </div>
-    <div class="tv-progress"><div class="tv-progress-fill" id="tv-progress-fill"></div></div>
-    <div class="tv-foot"><div>Dados do painel atualizados automaticamente. CRM: ${esc(updated)}.</div><div class="tv-dots"><span class="tv-dot on"></span><span class="tv-dot"></span><span class="tv-dot"></span></div></div>
+      <div class="tv-clock">
+        <div class="tv-time" id="tv-time"></div>
+        <div class="tv-date" id="tv-date"></div>
+      </div>
+    </header>
+    <main class="tv-stage">
+      ${tvSlideUpcoming(items)}
+      ${tvSlideWeek(items)}
+      ${tvSlidePanorama()}
+    </main>
+    <footer class="tv-foot">
+      <div>
+        <div class="tv-progress"><div class="tv-progress-fill" id="tv-progress-fill"></div></div>
+        <div class="tv-fonte">CRM sincronizado em ${esc(updated)}</div>
+      </div>
+      <div class="tv-dots"><span class="tv-dot on"></span><span class="tv-dot"></span><span class="tv-dot"></span></div>
+    </footer>
   </div>`;
   tvSlide=0;
   startTV();
