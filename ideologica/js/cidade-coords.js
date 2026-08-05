@@ -27,6 +27,7 @@ const CIDADE_XY={
   "PB|João Pessoa":[758.7,248.9],
   "PE|Recife":[757.5,266.4],
   "PI|Picos":[629.7,246.8],
+  "PR|Campo Largo":[472.6,611.7],
   "PR|Curitiba":[479,615.3],
   "PR|Francisco Beltrão":[404.5,626.8],
   "PR|Guarapuava":[436.3,613.2],

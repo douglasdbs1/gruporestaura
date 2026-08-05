@@ -54,7 +54,11 @@ const LOJA_LOCATION_OVERRIDES = {
   "rj belem": ["PA","Belém",""],
   "rj belo horizonte": ["MG","Belo Horizonte",""],
   "rj camaqua": ["RS","Camaquã",""],
+  "rj campo largo": ["PR","Campo Largo",""],
   "rj canoas": ["RS","Canoas",""],
+  // "Canos" é a Canoas com o nome do arquivo digitado errado (falta o "a") —
+  // sem o apelido viraria uma loja separada e o mês contaria em dobro
+  "rj canos": ["RS","Canoas",""],
   "rj carazinho": ["RS","Carazinho",""],
   "rj cassino": ["RS","Rio Grande","Cassino"],
   "rj chapeco": ["SC","Chapecó",""],
