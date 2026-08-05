@@ -60,11 +60,16 @@ function titleCase(s) {
 // silenciosamente — ver ignoredXlsx e o caso real "Mega campinas JD
 // Aurélia 31.xlsx", que ficou invisível várias checagens até alguém notar
 // que faltava o corte 31 dessa loja).
+// Pastas da raiz que NÃO são de consultor. Hoje elas já escapariam por não
+// terem o nível de mês dentro, mas basta alguém criar uma subpasta pra um
+// relatório errado voltar a ser importado — a exclusão explícita evita isso.
+const PASTAS_FORA = ['ARQUIVOS ERRADOS', 'DADOS ANTIGOS', 'SISTEMA'];
 function findXlsFiles(root) {
   const out = []; // {filePath, consultor}
   const ignoredXlsx = []; // {filePath, consultor} — .xlsx encontrado, não importado
   for (const consultorEntry of fs.readdirSync(root, { withFileTypes: true })) {
     if (!consultorEntry.isDirectory()) continue;
+    if (PASTAS_FORA.includes(consultorEntry.name.toUpperCase())) continue;
     const consultor = titleCase(consultorEntry.name);
     const consultorPath = path.join(root, consultorEntry.name);
     for (const mesEntry of fs.readdirSync(consultorPath, { withFileTypes: true })) {
