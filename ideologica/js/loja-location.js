@@ -23,6 +23,8 @@ const LOJA_LOCATION_OVERRIDES = {
   "mega higienopolis": ["SP","São Paulo","Higienópolis"],
   "mega livramento": ["RS","Santana do Livramento",""],
   "mega porto uniao": ["SC","Porto União",""],
+  // internamente "SC MINHA LAVANDERIA - S" (truncado); loja do Glavio
+  "mega sao jose": ["SC","São José",""],
   "mega santa maria": ["RS","Santa Maria",""],
   "mega santa rosa": ["RS","Santa Rosa",""],
   "ml barretos": ["SP","Barretos",""],
