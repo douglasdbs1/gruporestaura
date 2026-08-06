@@ -1,0 +1,35 @@
+name: Deploy Pages
+
+# Substitui o pipeline legado do Pages (build_type "legacy", baseado em
+# Jekyll) que ficou preso em status "errored" em 06/08/2026 — vários pushes
+# seguidos coincidiam com o build anterior ainda rodando e travavam a fila
+# em "deployment_in_progress"/"building" pra sempre. O "concurrency" abaixo
+# resolve isso: um push novo CANCELA o deploy anterior ainda em andamento em
+# vez de disputar com ele.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - id: deployment
+        uses: actions/deploy-pages@v4
