@@ -4,3 +4,5 @@ supabase_history.sql
 ideologica/.env
 backups/
 fix_bandeira_2026-08-04.sql
+dist-cloudflare/
+.wrangler/
