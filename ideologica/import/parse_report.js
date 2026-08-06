@@ -281,6 +281,45 @@ function parseReport(buf, consultor, arquivoOrigem) {
       if (m) { periodoInicio = toIsoDate(m[1]); periodoFim = toIsoDate(m[2]); }
     }
   }
+  // Fallback mais tolerante: alguns arquivos trazem o texto do período
+  // fragmentado/corrompido de jeitos que os dois casos acima não cobrem —
+  // caractere de lixo no meio do prefixo ("Período de 01/0}"), prefixo
+  // truncado sem sobra nenhuma ("Período d"), ou a data completa numa string
+  // solta com lixo no lugar de "Período de" ("ÿ 01/07/2026 até 18/07/2026").
+  // Acha a data final por "até DD/MM/AAAA" em qualquer string (é o pedaço
+  // que sempre sobrevive intacto nos 3 casos vistos em 06/08/2026); se a data
+  // inicial não estiver na mesma string, remonta o dia+mês do prefixo
+  // "Período de" (mesmo truncado) completando o mês que faltar com os
+  // dígitos que sobraram no começo da string que tem o "até".
+  if (!periodoInicio || !periodoFim) {
+    let fimIdx = -1, fimMatch = null;
+    for (let i = 0; i < strings.length; i++) {
+      const m = /at[eé]\D{0,3}(\d{2}\/\d{2}\/\d{4})/i.exec(strings[i]);
+      if (m) { fimMatch = m; fimIdx = i; break; }
+    }
+    if (fimMatch) {
+      const fimStr = strings[fimIdx];
+      const inicioNaMesma = /(\d{2}\/\d{2}\/\d{4})/.exec(fimStr.slice(0, fimMatch.index));
+      if (inicioNaMesma) {
+        periodoInicio = toIsoDate(inicioNaMesma[1]);
+        periodoFim = toIsoDate(fimMatch[1]);
+      } else {
+        const prefixo = strings.find(s => plain(s).startsWith('periodo de'));
+        const dm = prefixo && /(\d{2})\D+(\d{0,2})/.exec(prefixo.slice(prefixo.toLowerCase().indexOf('de') + 2));
+        if (dm) {
+          let mes = dm[2] || '';
+          if (mes.length < 2) {
+            const sobra = /^(\d{1,2})\/\d{4}/.exec(fimStr);
+            if (sobra) mes = (mes + sobra[1]).slice(-2);
+          }
+          if (mes.length === 2) {
+            periodoInicio = `${fimMatch[1].slice(6, 10)}-${mes}-${dm[1]}`;
+            periodoFim = toIsoDate(fimMatch[1]);
+          }
+        }
+      }
+    }
+  }
 
   // Categorias de Servico: entre "Méd. Tck." (fim do cabecalho) e "Total por
   // Grupo de Serviço:". Categorias de Produto (se houver): entre "Produto" e
@@ -508,4 +547,4 @@ function parseReport(buf, consultor, arquivoOrigem) {
   return { relatorio, itens, warnings };
 }
 
-module.exports = { parseReport, extractNumbers, extractStrings, bandeiraFromArquivo, lojaFromArquivo };
+module.exports = { parseReport, extractNumbers, extractStrings, bandeiraFromArquivo, lojaFromArquivo, sanitizeItem, round2 };
