@@ -439,9 +439,29 @@ function parseReport(buf, consultor, arquivoOrigem) {
 
   const expectedBlocks = iProdutoLbl !== -1 ? 2 : 1;
   const { blocks, remainingRows } = segmentBlocks(sortedRows, expectedBlocks);
+  const warnings = [];
+  // O subtotal "Total por Grupo de Serviço" às vezes não tem valor numérico
+  // gravado no arquivo (célula de fórmula sem cache, visto em
+  // "RJ_Morada_do_Vale_31.xls" 06/08/2026) — sem essa linha de total pra
+  // fechar o bloco, o algoritmo acima engole as linhas do Produto junto nas
+  // de Serviço. Um SALTO no número da linha (ex.: 11 → 14, faltando 12/13
+  // onde os dois subtotais deveriam estar) é evidência forte de que ali era
+  // a fronteira entre os dois blocos — usa o maior salto como corte.
+  if (expectedBlocks === 2 && blocks.length === 1 && blocks[0].dataRows.length > 1) {
+    const dr = blocks[0].dataRows;
+    let cutAt = -1, maiorSalto = 1;
+    for (let j = 1; j < dr.length; j++) {
+      const salto = dr[j] - dr[j - 1];
+      if (salto > maiorSalto) { maiorSalto = salto; cutAt = j; }
+    }
+    if (cutAt !== -1) {
+      warnings.push(`Não achei o subtotal numérico de "Total por Grupo de Serviço" (célula sem valor gravado no arquivo) — separei Serviço/Produto pelo salto no número da linha (linha ${dr[cutAt - 1]} → ${dr[cutAt]}). Confira os totais por categoria.`);
+      blocks[1] = { dataRows: dr.slice(cutAt), totalCorrupted: false, corrections: null };
+      blocks[0] = { ...blocks[0], dataRows: dr.slice(0, cutAt) };
+    }
+  }
   const servicoRows = (blocks[0] || {}).dataRows || [];
   const produtoRows = (blocks[1] || {}).dataRows || [];
-  const warnings = [];
   if (blocks[0] && blocks[0].totalCorrupted) {
     warnings.push('Total do bloco de Serviço veio corrompido (valor praticamente zero) — usei a soma das linhas de categoria no lugar dele.');
   }
