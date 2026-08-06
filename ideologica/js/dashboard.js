@@ -4,6 +4,7 @@ let tingimentoPorRelatorio = new Map(); // relatorio_id -> peças (volume) capta
 let sortKey = "total_faturado";
 let sortDir = -1;
 let mesFiltro = ""; // "" = todos, ou "YYYY-MM"
+let metricaFiltro = "loja"; // "loja" | chave de CATEGORIA_BUCKETS — o que o painel "Faturamento por Loja" está rankeando
 let ufFiltro = "";  // "" = todos, ou a sigla ("SP") — vem de clicar no mapa
 let buscaTexto = ""; // texto livre da barra de busca (loja/cidade/bairro/UF)
 
@@ -345,9 +346,23 @@ function render(){
   const snapshot = latestPerLoja(filtered);
   renderKpis(snapshot);
   renderRanking("rank-consultor", groupSum(snapshot,"consultor"));
-  renderRanking("rank-loja", groupSum(snapshot,"loja"), true);
+  renderRankLoja(snapshot);
   renderUfMap(snapshot);
   renderTable(filtered);
+}
+
+// Painel "Faturamento por Loja" — a métrica rankeada (faturamento total ou
+// uma das 5 categorias) é escolhida pelas pills #rank-loja-metricas.
+function renderRankLoja(snapshot){
+  const titulo = document.getElementById("rank-loja-titulo");
+  if(metricaFiltro==="loja"){
+    titulo.textContent = "Faturamento por Loja (top 10)";
+    renderRanking("rank-loja", groupSum(snapshot,"loja"), {isLoja:true});
+  }else{
+    const bucket = CATEGORIA_BUCKETS[metricaFiltro];
+    titulo.textContent = bucket.titulo;
+    renderRanking("rank-loja", groupSumCategoria(snapshot, metricaFiltro), {isLoja:true, comQtd:bucket.comQtd});
+  }
 }
 
 // ── Mapa de lojas por estado ─────────────────────────────────────────────
@@ -707,6 +722,36 @@ function lojaDetailHtml(lojaName, periodoFim){
     </div>`;
 }
 
+// Rankings por categoria de serviço/produto — mesma ideia do KPI de
+// tingimento (tingimentoPorRelatorio), só que por loja em vez de um total só,
+// e reaproveitado pros outros 4 recortes pedidos pelo Douglas em 06/08/2026.
+// "comQtd" mostra volume junto do valor na barra (Couro/Tingimento); os
+// outros mostram só valor. Dados de 2025 (histórico) não têm quebra por
+// categoria — não entram aqui, só no ranking "Faturamento" (por total_faturado).
+const CATEGORIA_BUCKETS = {
+  couro:      { titulo: "Couro (top 10)",              comQtd: true,  match: it => it.tipo==="servico" && plain(it.categoria)==="couro" },
+  tingimento: { titulo: "Tingimento (top 10)",          comQtd: true,  match: it => it.tipo==="servico" && plain(it.categoria).includes("tingimento") },
+  lavanderia: { titulo: "Lavanderia + Tapetes/Estofados (top 10)", comQtd: false, match: it => it.tipo==="servico" && (plain(it.categoria).startsWith("lavanderia") || plain(it.categoria).includes("tapetes e estofados")) },
+  costura:    { titulo: "Costura (top 10)",             comQtd: false, match: it => it.tipo==="servico" && plain(it.categoria)==="costura" },
+  produtos:   { titulo: "Venda de Produtos (top 10)",   comQtd: false, match: it => it.tipo==="produto" },
+};
+function plain(s){ return (s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().trim(); }
+
+function groupSumCategoria(rows, bucketKey){
+  const bucket = CATEGORIA_BUCKETS[bucketKey];
+  const map = new Map(); // loja -> {valor, qtd}
+  for(const r of rows){
+    for(const it of (r.itens||[])){
+      if(!bucket.match(it)) continue;
+      const cur = map.get(r.loja) || {valor:0, qtd:0};
+      cur.valor += Number(it.faturamento||0);
+      cur.qtd += Number(it.volume||0);
+      map.set(r.loja, cur);
+    }
+  }
+  return [...map.entries()].filter(([,v])=>v.valor||v.qtd).map(([loja,v])=>[loja,v.valor,v.qtd]).sort((a,b)=>b[1]-a[1]);
+}
+
 function groupSum(rows,key){
   const map = new Map();
   for(const r of rows){
@@ -716,20 +761,21 @@ function groupSum(rows,key){
   return [...map.entries()].sort((a,b)=>b[1]-a[1]);
 }
 
-function renderRanking(elId, entries, isLoja){
+function renderRanking(elId, entries, opts){
+  const { isLoja, comQtd } = opts || {};
   const el = document.getElementById(elId);
   if(!entries.length){
     el.innerHTML = `<div class="state-msg">Sem dados no período/filtro selecionado.</div>`;
     return;
   }
   const max = entries[0][1] || 1;
-  el.innerHTML = entries.slice(0,10).map(([name,val])=>{
+  el.innerHTML = entries.slice(0,10).map(([name,val,qtd])=>{
     const row = `
     <div class="bar-row${isLoja?" clickable":""}"${isLoja?` data-loja="${encodeURIComponent(name)}"`:""}>
       <div class="bar-name">${isLoja?`<span class="expand-caret">▸</span>`:""}${isLoja?lojaLineHtml(name):esc(name)}</div>
       <div class="bar-track-row">
         <div class="bar-track"><div class="bar-fill" style="width:${Math.max(2,(val/max)*100)}%"></div></div>
-        <div class="bar-value">${fmtMoney(val)}</div>
+        <div class="bar-value${comQtd?" stacked":""}">${fmtMoney(val)}${comQtd?`<span class="bar-qtd">${fmtNum(qtd)} peça${qtd===1?"":"s"}</span>`:""}</div>
       </div>
     </div>`;
     const detail = isLoja ? `<div class="loja-detail-wrap" style="display:none"></div>` : "";
@@ -941,6 +987,13 @@ function initFilterHandlers(){
     if(!btn) return;
     mesFiltro = btn.dataset.mes;
     renderMesPills();
+    render();
+  });
+  document.getElementById("rank-loja-metricas").addEventListener("click",(e)=>{
+    const btn = e.target.closest(".pill-btn");
+    if(!btn) return;
+    metricaFiltro = btn.dataset.metrica;
+    document.querySelectorAll("#rank-loja-metricas .pill-btn").forEach(b=>b.classList.toggle("on", b===btn));
     render();
   });
   // Recolher os 18 estados um a um pra ver só o resumo não valeria o clique;

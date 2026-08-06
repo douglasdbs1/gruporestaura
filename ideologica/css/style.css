@@ -88,12 +88,16 @@ body{font-family:var(--font);font-weight:600;background:linear-gradient(180deg,#
 @media(max-width:1100px){.panels{grid-template-columns:1fr;}}
 .panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;}
 .panel h3{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:12px;text-transform:uppercase;letter-spacing:.03em;}
+#rank-loja-metricas{margin:-6px 0 14px;}
+#rank-loja-metricas .pill-btn{font-size:10px;padding:5px 10px;}
 .bar-row{margin-bottom:10px;font-size:12px;}
 .bar-name{color:var(--text2);white-space:normal;overflow-wrap:break-word;margin-bottom:4px;}
 .bar-track-row{display:flex;align-items:center;gap:8px;}
 .bar-track{flex:1;height:16px;background:var(--surface2);border-radius:4px;overflow:hidden;}
 .bar-fill{height:100%;background:var(--teal-mid);border-radius:4px;}
 .bar-value{width:90px;flex-shrink:0;text-align:right;font-weight:700;color:var(--text);}
+.bar-value.stacked{width:118px;line-height:1.25;}
+.bar-qtd{display:block;font-size:10px;font-weight:600;color:var(--text3);}
 .bar-row.clickable{cursor:pointer;}
 .bar-row.clickable:hover .bar-name{color:var(--brand-mid);}
 .bar-row.open .bar-name{color:var(--brand-mid);font-weight:800;}
