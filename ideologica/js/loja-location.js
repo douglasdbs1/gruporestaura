@@ -162,6 +162,7 @@ const LOJA_LOCATION_OVERRIDES = {
   // agrupamento de "RJ Canoas"/"RJ Canos"). Não mexe nos dados, só
   // faz o dashboard agrupar como a mesma loja.
   "minha lavanderia - teut": ["RS","Teutônia",""],
+  "minha lavanderia sc -fraiburgo": ["SC","Fraiburgo",""],
   "minha lavanderia parque amazonia": ["GO","Goiânia","Parque Amazônia"],
   "minha lavanderia ba - salvador": ["BA","Salvador",""],
   "minha lavanderia e restaura jeans higien": ["SP","São Paulo","Higienópolis"],
@@ -169,7 +170,9 @@ const LOJA_LOCATION_OVERRIDES = {
   "minha lavanderia ms - campo grande": ["MS","Campo Grande",""],
   "minha lavanderia sp - taubat": ["SP","Taubaté",""],
   "restaura jeans - camaqua": ["RS","Camaquã",""],
+  "restaura jeans - cel. fabriciano": ["MG","Coronel Fabriciano",""],
   "restaura jeans - penha": ["SP","São Paulo","Penha"],
+  "sc - joinville": ["SC","Joinville",""],
   // internamente truncado pra "PO"; confirmado pelo arquivo de origem (RJ Ponte Rasa 11.xls)
   "restaura jeans - po": ["SP","São Paulo","Ponte Rasa"],
   "restaura jeans - poa cristal": ["RS","Porto Alegre","Cristal"],

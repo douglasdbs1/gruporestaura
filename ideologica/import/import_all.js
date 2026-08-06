@@ -218,6 +218,7 @@ async function main() {
   let imported = 0, skipped = 0, failed = 0;
   const problems = [];
   const identidades = []; // {arquivoOrigem, consultor, loja, lojaInterna, mes} — p/ checar duplicidade de identidade no fim
+  const riscoFuturo = new Map(); // loja -> loja_interna sem alias pro mesmo grupo (ver comentário abaixo)
   for (const f of ignoredXlsx) {
     problems.push(`aviso "${path.basename(f.filePath)}" (${f.consultor}): é .xlsx (formato moderno), não .xls — o parser não lê esse formato. Confira se não é um corte novo perdido e peça pra reexportar como .xls do Allegro.Net.`);
   }
@@ -260,6 +261,17 @@ async function main() {
       problems.push(`aviso "${arquivoOrigem}": nome não começa com RJ/ML/MEGA — bandeira ficará em branco.`);
     }
     for (const w of warnings) problems.push(`aviso "${arquivoOrigem}": ${w}`);
+    // Risco de fragmentação silenciosa: se um relatório futuro dessa MESMA
+    // loja for salvo com o nome interno em vez do nome do arquivo (já
+    // aconteceu 9 vezes — ver varredura de 06/08/2026), ele cai num grupo
+    // diferente no dashboard e some pra "Sem estado cadastrado" sem erro
+    // nenhum, só voltando a aparecer numa varredura manual. Junta por loja
+    // (não por arquivo — senão vira 100 linhas repetidas) pra um resumo à
+    // parte no fim, sem afogar os erros de verdade no meio do caminho.
+    if (relatorio.loja_interna && relatorio.loja_interna !== relatorio.loja
+        && canonicalGroupKey(relatorio.loja_interna) !== canonicalGroupKey(relatorio.loja)) {
+      riscoFuturo.set(relatorio.loja, relatorio.loja_interna);
+    }
     identidades.push({ arquivoOrigem, consultor, loja: relatorio.loja, lojaInterna: relatorio.loja_interna, mes: relatorio.periodo_inicio.slice(0, 7) });
 
     const key = `${relatorio.loja}|||${relatorio.periodo_inicio}|||${relatorio.periodo_fim}`;
@@ -327,6 +339,11 @@ async function main() {
     console.log('');
     console.log('Avisos/erros:');
     for (const p of problems) console.log('  ' + p);
+  }
+  if (riscoFuturo.size) {
+    console.log('');
+    console.log(`Risco de fragmentação futura — ${riscoFuturo.size} loja(s) cujo nome interno não tem alias pro mesmo grupo (se um próximo corte vier salvo com esse nome, vira loja fantasma separada sem erro nenhum):`);
+    for (const [loja, lojaInterna] of riscoFuturo) console.log(`  "${loja}" ⇄ "${lojaInterna}"`);
   }
 }
 
