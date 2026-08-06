@@ -100,6 +100,7 @@ const LOJA_LOCATION_OVERRIDES = {
   "rj itapema": ["SC","Itapema",""],
   "rj jacana": ["SP","São Paulo","Jaçanã"],
   "rj jardim goias": ["GO","Goiânia","Jardim Goiás"],
+  "rj jardins": ["SP","São Paulo","Jardins"],
   "rj joinville": ["SC","Joinville",""],
   // confirmado via Presence (CRM): loja do Glávio, contrato assinado 01/07/2026
   "rj laguna": ["SC","Laguna",""],
@@ -110,12 +111,15 @@ const LOJA_LOCATION_OVERRIDES = {
   // duas unidades na mesma cidade — "Londrina Centro" já tinha relatório
   // importado antes mas sem esta entrada (exibia nome cru); confirmado pelo
   // nome interno do relatório ("RESTAURA JEANS PR - LONDRINA")
+  // nome interno "SHOPPING AURORA" -- unidade dentro de Londrina
+  "rj londrina aurora": ["PR","Londrina","Aurora"],
   "rj londrina alphaville": ["PR","Londrina","Alphaville"],
   "rj londrina centro": ["PR","Londrina","Centro"],
   "rj moinhos": ["RS","Porto Alegre","Moinhos de Vento"],
   // mesma loja do "rj moinhos" — o arquivo passou a vir com o "Poa" na
   // frente; sem o apelido viraria uma segunda loja e o mês contaria em dobro
   "rj poa moinhos": ["RS","Porto Alegre","Moinhos de Vento"],
+  "rj moema": ["SP","São Paulo","Moema"],
   "rj montes claros": ["MG","Montes Claros",""],
   "rj morada do vale": ["RS","Novo Hamburgo","Morada do Vale"],
   "rj novo hamburgo": ["RS","Novo Hamburgo",""],
