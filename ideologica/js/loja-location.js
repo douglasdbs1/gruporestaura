@@ -228,14 +228,33 @@ function lojaLineHtml(loja){
   if(!loc)return `<span class="loja-line"><span class="loja-brand-slot">${brandTag(loja).trim()}</span><span class="loja-city">${esc(displayLoja(loja))}</span></span>`;
   return `<span class="loja-line" title="${esc(displayLoja(loja))}"><span class="loja-brand-slot">${brandTag(loja).trim()}</span><span class="loja-uf">${esc(loc[0])}</span><span class="loja-sep">·</span><span class="loja-city">${esc(loc[1])}</span>${loc[2]?`<span class="loja-sep">·</span><span class="loja-unit">${esc(loc[2])}</span>`:""}</span>`;
 }
+// Bandeira só a partir do TEXTO da loja (sem depender da coluna bandeira do
+// banco, pra canonicalGroupKey continuar podendo ser chamada só com a
+// string, do jeito que import_all.js/dashboard.js/comparativo.js já usam).
+// Mesma heurística de brandFromText() nas páginas — mantida aqui em vez de
+// importada porque este arquivo roda também no Node (import), sem module.
+function bandeiraFromLojaTexto(loja){
+  const l=(loja||"").toLowerCase();
+  const isRJ=l.startsWith("rj ")||l.includes("restaura jeans")||l.includes("jeans");
+  const isML=l.startsWith("ml ")||l.includes("lavanderia");
+  if((isRJ&&isML)||l.includes("mega"))return "mega";
+  if(isML)return "ml";
+  if(isRJ)return "rj";
+  return "";
+}
 // Chave de agrupamento do ranking/KPIs: duas grafias diferentes do mesmo
 // arquivo ("RJ Caxias S. Pelegrino" x "RJ CAXIAS SÃO PELEGRINO") só contam
 // como UMA loja quando caem na mesma chave — senão o mês conta em dobro,
 // porque cada corte é acumulado desde o dia 1. Ver canonicalizeLojaNames()
 // nas 3 páginas.
+// A bandeira entra na chave (achado em 06/08/2026, caso "BA Salvador"): sem
+// ela, "RJ Salvador" e "ML Salvador" — duas franquias DIFERENTES na mesma
+// cidade, sem unidade que as distinga — caiam na mesma chave e apareciam
+// juntas como se fossem uma loja só (pills de cortes de negócios diferentes
+// misturados na mesma linha).
 function canonicalGroupKey(loja){
   const loc=lojaLocation(loja);
-  return loc?"loc:"+loc.join("|").toLowerCase():"key:"+locationKey(loja);
+  return loc?"loc:"+bandeiraFromLojaTexto(loja)+"|"+loc.join("|").toLowerCase():"key:"+locationKey(loja);
 }
 // Node (scripts de import/auditoria) usa as mesmas funções do dashboard pra
 // não divergir a regra. No browser `module` não existe e isso é ignorado.
