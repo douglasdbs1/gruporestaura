@@ -37,6 +37,8 @@ const LOJA_LOCATION_OVERRIDES = {
   "ml caxias": ["RS","Caxias do Sul",""],
   "ml curitiba": ["PR","Curitiba",""],
   "ml florianopolis": ["SC","Florianópolis",""],
+  "ml go p amazonia": ["GO","Goiânia","Parque Amazônia"],
+  "ml go parque amazonia": ["GO","Goiânia","Parque Amazônia"],
   "ml goiania oeste": ["GO","Goiânia","Oeste"],
   // confirmado via Presence (CRM): loja do Glávio, contrato assinado 30/06/2026
   "ml guaira": ["PR","Guaíra",""],
@@ -76,6 +78,7 @@ const LOJA_LOCATION_OVERRIDES = {
   "rj catalao": ["GO","Catalão",""],
   "rj chapeco": ["SC","Chapecó",""],
   "rj concordia": ["SC","Concórdia",""],
+  "rj coronel fabriciano": ["MG","Coronel Fabriciano",""],
   "rj caxias centro": ["RS","Caxias do Sul","Centro"],
   "rj caxias s. pelegrino": ["RS","Caxias do Sul","São Pelegrino"],
   "rj caxias sao pelegrino": ["RS","Caxias do Sul","São Pelegrino"],
@@ -159,6 +162,7 @@ const LOJA_LOCATION_OVERRIDES = {
   // agrupamento de "RJ Canoas"/"RJ Canos"). Não mexe nos dados, só
   // faz o dashboard agrupar como a mesma loja.
   "minha lavanderia - teut": ["RS","Teutônia",""],
+  "minha lavanderia parque amazonia": ["GO","Goiânia","Parque Amazônia"],
   "minha lavanderia ba - salvador": ["BA","Salvador",""],
   "minha lavanderia e restaura jeans higien": ["SP","São Paulo","Higienópolis"],
   "minha lavanderia madalena": ["PE","Recife","Madalena"],
