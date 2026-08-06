@@ -36,6 +36,7 @@ const LOJA_LOCATION_OVERRIDES = {
   // está no "Loja:" interno do relatório: MINHA LAVANDERIA - CAMPOS DOS GOYTACAZES
   "ml campos doas goy": ["RJ","Campos dos Goytacazes",""],
   "ml campos dos goytacazes": ["RJ","Campos dos Goytacazes",""],
+  "ml carpina": ["PE","Carpina",""],
   "ml caxias": ["RS","Caxias do Sul",""],
   "ml curitiba": ["PR","Curitiba",""],
   "ml florianopolis": ["SC","Florianópolis",""],
@@ -65,8 +66,10 @@ const LOJA_LOCATION_OVERRIDES = {
   "rj azenha": ["RS","Porto Alegre","Azenha"],
   // mesma loja do "rj azenha" — arquivo veio com "Poa" na frente
   "rj poa azenha": ["RS","Porto Alegre","Azenha"],
+  "rj balneario": ["SC","Balneário Camboriú",""],
   "rj balsas": ["MA","Balsas",""],
   "rj belem": ["PA","Belém",""],
+  "rj belenzinho": ["SP","São Paulo","Belenzinho"],
   "rj belo horizonte": ["MG","Belo Horizonte",""],
   "rj camaqua": ["RS","Camaquã",""],
   "rj campo largo": ["PR","Campo Largo",""],
@@ -93,6 +96,8 @@ const LOJA_LOCATION_OVERRIDES = {
   "rj horizontina": ["RS","Horizontina",""],
   "rj ijui": ["RS","Ijuí",""],
   "rj imbituba": ["SC","Imbituba",""],
+  "rj itajai": ["SC","Itajaí",""],
+  "rj itapema": ["SC","Itapema",""],
   "rj jacana": ["SP","São Paulo","Jaçanã"],
   "rj jardim goias": ["GO","Goiânia","Jardim Goiás"],
   "rj joinville": ["SC","Joinville",""],
@@ -119,6 +124,8 @@ const LOJA_LOCATION_OVERRIDES = {
   "rj passo fundo centro": ["RS","Passo Fundo","Centro"],
   "rj passo fundo s crsitovao": ["RS","Passo Fundo","São Cristóvão"],
   "rj passo fundo sao cristovao": ["RS","Passo Fundo","São Cristóvão"],
+  // arquivo veio "Findo" em vez de "Fundo" (erro de digitação)
+  "rj passo findo s cristovao": ["RS","Passo Fundo","São Cristóvão"],
   "rj pelotas": ["RS","Pelotas",""],
   "rj penha": ["SP","São Paulo","Penha"],
   "rj pq sao jorge": ["SP","São Paulo","Parque São Jorge"],
