@@ -110,6 +110,7 @@ const LOJA_LOCATION_OVERRIDES = {
   // frente; sem o apelido viraria uma segunda loja e o mês contaria em dobro
   "rj poa moinhos": ["RS","Porto Alegre","Moinhos de Vento"],
   "rj montes claros": ["MG","Montes Claros",""],
+  "rj morada do vale": ["RS","Novo Hamburgo","Morada do Vale"],
   "rj novo hamburgo": ["RS","Novo Hamburgo",""],
   "rj parauapebas": ["PA","Parauapebas",""],
   "rj passo fundo": ["RS","Passo Fundo",""],
@@ -162,6 +163,7 @@ const LOJA_LOCATION_OVERRIDES = {
   // agrupamento de "RJ Canoas"/"RJ Canos"). Não mexe nos dados, só
   // faz o dashboard agrupar como a mesma loja.
   "minha lavanderia - teut": ["RS","Teutônia",""],
+  "restaura jeans morada do vale 1": ["RS","Novo Hamburgo","Morada do Vale"],
   "minha lavanderia sc -fraiburgo": ["SC","Fraiburgo",""],
   "minha lavanderia parque amazonia": ["GO","Goiânia","Parque Amazônia"],
   "minha lavanderia ba - salvador": ["BA","Salvador",""],
