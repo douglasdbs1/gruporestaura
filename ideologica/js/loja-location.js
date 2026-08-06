@@ -17,6 +17,9 @@ const LOJA_LOCATION_OVERRIDES = {
   "mega francisco beltrao": ["PR","Francisco Beltrão",""],
   "mega franca": ["SP","Franca",""],
   "mega franscisco beltrao": ["PR","Francisco Beltrão",""],
+  // internamente "MINHA LAVANDERIA SC -FRAIBURGO" (arquivo veio com prefixo
+  // "MEGA" mas o nome interno diz ML — confirmar bandeira com o Glávio)
+  "mega fraiburgo": ["SC","Fraiburgo",""],
   "mega higienopolis": ["SP","São Paulo","Higienópolis"],
   "mega livramento": ["RS","Santana do Livramento",""],
   "mega porto uniao": ["SC","Porto União",""],
@@ -87,6 +90,7 @@ const LOJA_LOCATION_OVERRIDES = {
   "rj imbituba": ["SC","Imbituba",""],
   "rj jacana": ["SP","São Paulo","Jaçanã"],
   "rj jardim goias": ["GO","Goiânia","Jardim Goiás"],
+  "rj joinville": ["SC","Joinville",""],
   // confirmado via Presence (CRM): loja do Glávio, contrato assinado 01/07/2026
   "rj laguna": ["SC","Laguna",""],
   "rj lajeado": ["RS","Lajeado",""],
