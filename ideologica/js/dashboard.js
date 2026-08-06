@@ -351,16 +351,13 @@ function render(){
   renderTable(filtered);
 }
 
-// Painel "Faturamento por Loja" — a métrica rankeada (faturamento total ou
-// uma das 5 categorias) é escolhida pelas pills #rank-loja-metricas.
+// Painel "Ranking por Loja" — a métrica rankeada (faturamento total ou uma
+// das 5 categorias) é escolhida pelas abas #rank-loja-metricas.
 function renderRankLoja(snapshot){
-  const titulo = document.getElementById("rank-loja-titulo");
   if(metricaFiltro==="loja"){
-    titulo.textContent = "Faturamento por Loja (top 10)";
     renderRanking("rank-loja", groupSum(snapshot,"loja"), {isLoja:true});
   }else{
     const bucket = CATEGORIA_BUCKETS[metricaFiltro];
-    titulo.textContent = bucket.titulo;
     renderRanking("rank-loja", groupSumCategoria(snapshot, metricaFiltro), {isLoja:true, comQtd:bucket.comQtd});
   }
 }
@@ -729,11 +726,11 @@ function lojaDetailHtml(lojaName, periodoFim){
 // outros mostram só valor. Dados de 2025 (histórico) não têm quebra por
 // categoria — não entram aqui, só no ranking "Faturamento" (por total_faturado).
 const CATEGORIA_BUCKETS = {
-  couro:      { titulo: "Couro (top 10)",              comQtd: true,  match: it => it.tipo==="servico" && plain(it.categoria)==="couro" },
-  tingimento: { titulo: "Tingimento (top 10)",          comQtd: true,  match: it => it.tipo==="servico" && plain(it.categoria).includes("tingimento") },
-  lavanderia: { titulo: "Lavanderia + Tapetes/Estofados (top 10)", comQtd: false, match: it => it.tipo==="servico" && (plain(it.categoria).startsWith("lavanderia") || plain(it.categoria).includes("tapetes e estofados")) },
-  costura:    { titulo: "Costura (top 10)",             comQtd: false, match: it => it.tipo==="servico" && plain(it.categoria)==="costura" },
-  produtos:   { titulo: "Venda de Produtos (top 10)",   comQtd: false, match: it => it.tipo==="produto" },
+  couro:      { comQtd: true,  match: it => it.tipo==="servico" && plain(it.categoria)==="couro" },
+  tingimento: { comQtd: true,  match: it => it.tipo==="servico" && plain(it.categoria).includes("tingimento") },
+  lavanderia: { comQtd: false, match: it => it.tipo==="servico" && (plain(it.categoria).startsWith("lavanderia") || plain(it.categoria).includes("tapetes e estofados")) },
+  costura:    { comQtd: false, match: it => it.tipo==="servico" && plain(it.categoria)==="costura" },
+  produtos:   { comQtd: false, match: it => it.tipo==="produto" },
 };
 function plain(s){ return (s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().trim(); }
 
@@ -990,10 +987,10 @@ function initFilterHandlers(){
     render();
   });
   document.getElementById("rank-loja-metricas").addEventListener("click",(e)=>{
-    const btn = e.target.closest(".pill-btn");
+    const btn = e.target.closest(".metric-tab");
     if(!btn) return;
     metricaFiltro = btn.dataset.metrica;
-    document.querySelectorAll("#rank-loja-metricas .pill-btn").forEach(b=>b.classList.toggle("on", b===btn));
+    document.querySelectorAll("#rank-loja-metricas .metric-tab").forEach(b=>b.classList.toggle("on", b===btn));
     render();
   });
   // Recolher os 18 estados um a um pra ver só o resumo não valeria o clique;
