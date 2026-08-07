@@ -114,23 +114,32 @@ function extractStores(rows) {
   }
   if (!lojaCol) throw new Error('Não achei a coluna do nome da loja — layout mudou?');
 
+  // Agrupa pelas linhas de "Total" (sempre presentes, uma por loja), não
+  // pela posição do rótulo mesclado — achado em 07/08/2026 no arquivo com
+  // várias lojas por aba (ELISANA/Lojas Presence Julho.xlsx): quando a loja
+  // tem Costura/Couro ANTES de Lavanderia, o rótulo mesclado cai na linha da
+  // Lavanderia (não na primeira linha de item), e a versão antiga (que só
+  // começava a coletar itens depois de ver o rótulo) perdia as categorias
+  // anteriores silenciosamente. Acumula todo item visto desde o Total
+  // anterior e fecha a loja quando acha a linha "X Total" — não importa em
+  // qual linha do meio o rótulo mesclado realmente está.
   const stores = [];
-  let cur = null;
+  let pendingItens = [];
   for (const rn of rowNums) {
     const cells = rows.get(rn);
     const lojaVal = cells.get(lojaCol);
     const grupoVal = cells.get(grupoCol);
-    if (typeof lojaVal === 'string') {
-      const t = lojaVal.trim();
-      if (/\sTotal$/.test(t)) {
-        if (cur) { cur.totalQtde = cells.get(qtdeCol); cur.totalVenda = cells.get(totalCol); }
-      } else if (codePattern.test(t)) {
-        cur = { label: t, itens: [], totalQtde: null, totalVenda: null };
-        stores.push(cur);
-      }
+    if (typeof grupoVal === 'string' && codePattern.test(grupoVal)) {
+      pendingItens.push({ grupo: grupoVal.trim().replace(/^\d+\s*-\s*/, ''), qtde: cells.get(qtdeCol), venda: cells.get(totalCol) });
     }
-    if (cur && typeof grupoVal === 'string' && codePattern.test(grupoVal)) {
-      cur.itens.push({ grupo: grupoVal.trim().replace(/^\d+\s*-\s*/, ''), qtde: cells.get(qtdeCol), venda: cells.get(totalCol) });
+    if (typeof lojaVal === 'string' && /\sTotal$/.test(lojaVal.trim())) {
+      stores.push({
+        label: lojaVal.trim().replace(/\s*Total$/, ''),
+        itens: pendingItens,
+        totalQtde: cells.get(qtdeCol),
+        totalVenda: cells.get(totalCol),
+      });
+      pendingItens = [];
     }
   }
   return stores;
@@ -217,7 +226,16 @@ async function main() {
   }
 }
 
-main().catch(e => {
-  console.error('ERRO:', e.message);
-  process.exit(1);
-});
+if (require.main === module) {
+  main().catch(e => {
+    console.error('ERRO:', e.message);
+    process.exit(1);
+  });
+}
+
+// Exportado pra reaproveitar o parsing em variantes fora do fluxo padrão
+// (ex.: um .xlsx com VÁRIAS lojas em abas separadas, uma por loja — visto
+// pela primeira vez em ELISANA/Lojas Presence Julho.xlsx, 07/08/2026 —
+// onde o nome da loja não dá pra tirar do nome do arquivo, único pro
+// workbook inteiro; precisa vir de fora, aba a aba).
+module.exports = { unzipXlsx, parseSharedStrings, parseSheet, extractStores, toRelatorio };

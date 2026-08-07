@@ -54,6 +54,7 @@ const LOJA_LOCATION_OVERRIDES = {
   "ml mossoro": ["RN","Mossoró",""],
   "ml recife": ["PE","Recife",""],
   "ml recife madalena": ["PE","Recife","Madalena"],
+  "ml palhoca": ["SC","Palhoça",""],
   "ml salvador": ["BA","Salvador",""],
   "ml sao roque": ["SP","São Roque",""],
   "ml sorocaba": ["SP","Sorocaba",""],
@@ -79,6 +80,7 @@ const LOJA_LOCATION_OVERRIDES = {
   // sem o apelido viraria uma loja separada e o mês contaria em dobro
   "rj canos": ["RS","Canoas",""],
   "rj carazinho": ["RS","Carazinho",""],
+  "rj cascavel": ["PR","Cascavel",""],
   "rj cassino": ["RS","Rio Grande","Cassino"],
   // internamente "RESTAURA JEANS GO - CATAL"
   "rj catalao": ["GO","Catalão",""],
